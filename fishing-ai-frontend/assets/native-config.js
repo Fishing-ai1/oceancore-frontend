@@ -1,0 +1,1 @@
+window.OCEANCORE_API_URL = window.OCEANCORE_API_URL || "";

@@ -1,0 +1,39 @@
+node_modules/
+dist/
+build/
+.cache/
+.env
+.env.*
+.env.local
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Separate backend repository.
+fishing-ai-backend/
+
+# Old/experimental workspaces not used by the current frontend/mobile app.
+/ai/
+/src/
+/oceancore-ocean-engine-v1/
+fishing-ai-frontend/frontend/
+fishing-ai-frontend/src/
+fishing-ai-frontend/react-index.html
+fishing-ai-frontend/pnpm-lock.yaml
+fishing-ai-frontend/postcss.config.cjs
+
+# Generated mobile/native build outputs.
+mobile-wrapper/node_modules/
+mobile-wrapper/www/
+mobile-wrapper/android/app/build/
+mobile-wrapper/android/app/src/main/assets/
+mobile-wrapper/android/capacitor-cordova-android-plugins/
+mobile-wrapper/ios/App/App/public/
+mobile-wrapper/ios/capacitor-cordova-ios-plugins/
+
+# Local screenshots and verification captures.
+app-store-ready-check.png
+oceancore-map-windy-verified.png

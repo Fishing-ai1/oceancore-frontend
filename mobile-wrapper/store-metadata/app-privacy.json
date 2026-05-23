@@ -1,0 +1,41 @@
+{
+  "app": "OceanCore AI",
+  "tracking": false,
+  "trackingDomains": [],
+  "dataLinkedToUser": [
+    {
+      "category": "Contact Info",
+      "types": ["Name", "Email Address"],
+      "purposes": ["App Functionality", "Product Personalization", "Customer Support"]
+    },
+    {
+      "category": "Identifiers",
+      "types": ["User ID"],
+      "purposes": ["App Functionality", "Account Management"]
+    },
+    {
+      "category": "Location",
+      "types": ["Precise Location", "Coarse Location"],
+      "purposes": ["App Functionality", "Product Personalization"],
+      "notes": "Only collected when the user chooses GPS, catch location, saved areas, or map conditions."
+    },
+    {
+      "category": "User Content",
+      "types": ["Photos or Videos", "Other User Content"],
+      "purposes": ["App Functionality", "Product Personalization", "Moderation"],
+      "notes": "Catch proof, avatars, community media, reports, feedback, AI prompts, and AI responses. JPG, PNG, and WebP uploads are stripped of common metadata before storage."
+    },
+    {
+      "category": "Purchases",
+      "types": ["Purchase History"],
+      "purposes": ["App Functionality"],
+      "notes": "Plan and subscription status are stored for billing access control."
+    }
+  ],
+  "dataNotLinkedToUser": [],
+  "notCollected": ["Contacts", "Browsing History", "Health", "Fitness", "Sensitive Info"],
+  "accountDeletionUrl": "https://YOUR-PRODUCTION-BACKEND/legal/account-deletion",
+  "privacyPolicyUrl": "https://YOUR-PRODUCTION-BACKEND/legal/privacy-policy",
+  "termsUrl": "https://YOUR-PRODUCTION-BACKEND/legal/terms-of-service",
+  "supportEmail": "support@oceancore.ai"
+}

@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OceanCore Boat AI — Captain System V14 — Learning + Scenarios</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#020617;--card:rgba(15,23,42,.96);--card2:rgba(2,6,23,.76);--line:rgba(148,163,184,.28);
+      --text:#e5e7eb;--muted:#94a3b8;--soft:#64748b;--accent:#22d3ee;--accent2:#38bdf8;
+      --good:#22c55e;--warn:#fbbf24;--bad:#fb7185;--violet:#a78bfa;--shadow:0 22px 60px rgba(0,0,0,.72);
+      --r:18px;
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    html,body{margin:0;min-height:100%;background:radial-gradient(circle at top,#102033 0,#020617 44%,#000 100%);color:var(--text)}
+    body{padding:18px;display:flex;justify-content:center}
+    .app{width:100%;max-width:1280px;border:1px solid rgba(148,163,184,.34);border-radius:26px;background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(2,6,23,.98));box-shadow:var(--shadow);overflow:hidden;position:relative}
+    .glow{position:absolute;inset:-140px;background:radial-gradient(circle at 8% 0,rgba(34,211,238,.16),transparent 35%),radial-gradient(circle at 92% 12%,rgba(14,165,233,.12),transparent 38%),radial-gradient(circle at 55% 110%,rgba(20,184,166,.13),transparent 48%);pointer-events:none}
+    .inner{position:relative;z-index:1;padding:20px}
+    header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+    h1{margin:4px 0 0;font-size:25px;letter-spacing:.08em;text-transform:uppercase;line-height:1.1}.sub{margin:7px 0 0;color:var(--muted);font-size:13px;max-width:760px;line-height:1.45}
+    .badge{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(34,211,238,.68);border-radius:999px;padding:3px 10px;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);background:rgba(34,211,238,.1)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px rgba(34,211,238,.95)}
+    .meta{text-align:right;color:var(--muted);font-size:12px;line-height:1.5}.meta strong{color:#e5e7eb}
+    .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}.tab{border:1px solid var(--line);border-radius:999px;padding:7px 12px;background:rgba(15,23,42,.9);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}.tab.active{color:#ecfeff;border-color:rgba(34,211,238,.72);box-shadow:0 0 0 1px rgba(34,211,238,.28),0 0 25px rgba(34,211,238,.08);background:rgba(8,47,73,.72)}
+    .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:14px}@media(max-width:980px){.grid{grid-template-columns:1fr}header{flex-direction:column}.meta{text-align:left}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;backdrop-filter:blur(18px)}
+    .card + .card{margin-top:12px}.cardHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}.cardTitle{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}.pill{font-size:10px;letter-spacing:.13em;text-transform:uppercase;border:1px solid rgba(148,163,184,.48);color:var(--muted);border-radius:999px;padding:3px 8px;white-space:nowrap}
+    .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px}.row4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:8px}@media(max-width:720px){.row2,.row3,.row4{grid-template-columns:1fr}}
+    label{display:block;font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin:0 0 4px;font-weight:700}label span{color:var(--accent);margin-left:4px}
+    input,select,textarea{width:100%;border:1px solid rgba(148,163,184,.42);border-radius:999px;background:rgba(15,23,42,.92);color:var(--text);padding:8px 12px;font-size:13px;outline:none}textarea{border-radius:14px;min-height:64px;resize:vertical;line-height:1.45}input:focus,select:focus,textarea:focus{border-color:rgba(34,211,238,.85);box-shadow:0 0 0 1px rgba(34,211,238,.34)}.hint{font-size:11px;color:#64748b;margin-top:3px;line-height:1.35}
+    .switchLine{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:9px 10px;background:rgba(2,6,23,.45);margin:8px 0}.switchLine b{font-size:12px}.switchLine span{font-size:11px;color:var(--muted)}
+    .toggle{appearance:none;width:46px;height:25px;border-radius:999px;background:#334155;position:relative;cursor:pointer;border:1px solid rgba(148,163,184,.35);flex:0 0 auto}.toggle:checked{background:rgba(34,211,238,.35);border-color:rgba(34,211,238,.8)}.toggle:before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;background:#e5e7eb;top:2px;left:3px;transition:.16s}.toggle:checked:before{left:22px;background:#a5f3fc}
+    .btnRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.btn{border:0;border-radius:999px;padding:9px 15px;background:radial-gradient(circle at 0 0,rgba(56,189,248,.32),rgba(8,47,73,.98));color:#ecfeff;box-shadow:0 0 0 1px rgba(34,211,238,.56),0 16px 30px rgba(0,0,0,.35);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.btn.secondary{background:rgba(15,23,42,1);box-shadow:0 0 0 1px rgba(148,163,184,.65);color:#e5e7eb}.btn.warn{background:rgba(120,53,15,.95);box-shadow:0 0 0 1px rgba(251,191,36,.65)}
+    .decision{border:1px solid rgba(34,211,238,.65);border-radius:20px;padding:14px;background:linear-gradient(135deg,rgba(8,47,73,.86),rgba(15,23,42,.95));margin-bottom:10px}.decisionTop{display:flex;justify-content:space-between;gap:12px;align-items:center}.decisionWord{font-size:30px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.confidence{font-size:12px;color:var(--muted);text-align:right}.reason{color:#cbd5e1;font-size:13px;margin-top:6px;line-height:1.45}.decision.go{border-color:rgba(34,197,94,.72);background:linear-gradient(135deg,rgba(20,83,45,.62),rgba(15,23,42,.96))}.decision.watch{border-color:rgba(34,211,238,.78);background:linear-gradient(135deg,rgba(8,47,73,.76),rgba(15,23,42,.96))}.decision.caution{border-color:rgba(251,191,36,.78);background:linear-gradient(135deg,rgba(113,63,18,.62),rgba(15,23,42,.96))}.decision.nogo{border-color:rgba(251,113,133,.78);background:linear-gradient(135deg,rgba(127,29,29,.62),rgba(15,23,42,.96))}
+    .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}@media(max-width:620px){.metrics{grid-template-columns:1fr}}
+    .metric{border:1px solid rgba(148,163,184,.42);border-radius:15px;padding:9px;background:radial-gradient(circle at 0 0,rgba(15,23,42,1),rgba(2,6,23,.82))}.metric.hot{border-color:rgba(34,211,238,.72);background:radial-gradient(circle at 0 0,rgba(34,211,238,.14),rgba(2,6,23,.82))}.metric.bad{border-color:rgba(251,113,133,.72)}.mlabel{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:800}.mvalue{font-size:19px;font-weight:850;margin-top:4px}.unit{font-size:11px;color:var(--muted);font-weight:700}.mnote{font-size:11px;color:#64748b;line-height:1.35;margin-top:3px}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(148,163,184,.5);border-radius:999px;padding:4px 8px;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}.chip:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px rgba(34,197,94,.8)}.chip.warn{color:#fde68a;border-color:rgba(251,191,36,.75)}.chip.warn:before{background:var(--warn);box-shadow:0 0 10px rgba(251,191,36,.8)}.chip.bad{color:#fecaca;border-color:rgba(251,113,133,.75)}.chip.bad:before{background:var(--bad);box-shadow:0 0 10px rgba(251,113,133,.8)}.chip.info{color:#bae6fd;border-color:rgba(56,189,248,.68)}.chip.info:before{background:var(--accent2);box-shadow:0 0 10px rgba(56,189,248,.8)}
+    .analysis{border:1px solid rgba(148,163,184,.42);border-radius:15px;background:rgba(2,6,23,.55);padding:11px;font-size:13px;line-height:1.55;color:#dbeafe;max-height:270px;overflow:auto}.analysis h3{font-size:12px;text-transform:uppercase;letter-spacing:.13em;color:#93c5fd;margin:0 0 6px}.analysis ul{margin:6px 0 0 18px;padding:0}.analysis li{margin:3px 0}.small{font-size:11px;color:#64748b;line-height:1.45}.hidden{display:none!important}.sep{height:1px;background:rgba(148,163,184,.16);margin:12px 0}.liveStatus{font-size:11px;color:var(--muted);line-height:1.45}.dataBox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#bae6fd;background:rgba(2,6,23,.7);border:1px solid rgba(56,189,248,.25);border-radius:12px;padding:8px;max-height:105px;overflow:auto;white-space:pre-wrap}.checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}@media(max-width:720px){.checklist{grid-template-columns:1fr}}.check{display:flex;align-items:center;gap:8px;border:1px solid rgba(148,163,184,.22);border-radius:12px;padding:8px;background:rgba(2,6,23,.38);font-size:12px}.check input{width:auto}.history{margin-top:10px;border-top:1px dashed rgba(148,163,184,.25);padding-top:8px;max-height:115px;overflow:auto}.hist{font-size:11px;color:var(--muted);margin:4px 0}.hist b{color:#e5e7eb}.footerWarn{font-size:10px;color:#64748b;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
+
+    .accuracyBanner{border:1px solid rgba(167,139,250,.48);border-radius:14px;background:rgba(88,28,135,.18);padding:9px 10px;margin:8px 0;font-size:12px;color:#ddd6fe;line-height:1.45}.accuracyBanner b{color:#f5f3ff}.learningBox{border:1px dashed rgba(34,211,238,.35);border-radius:14px;padding:10px;background:rgba(2,6,23,.38);margin-top:8px}.calList{max-height:135px;overflow:auto;border-top:1px dashed rgba(148,163,184,.22);margin-top:8px;padding-top:8px}.calItem{font-size:11px;color:var(--muted);margin:4px 0}.calItem b{color:#e5e7eb}.miniGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:8px}@media(max-width:900px){.miniGrid{grid-template-columns:1fr 1fr}}
+
+    .dbResults{margin-top:8px;display:grid;gap:7px;max-height:230px;overflow:auto}.dbItem{border:1px solid rgba(148,163,184,.28);border-radius:13px;background:rgba(2,6,23,.45);padding:9px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.dbItem b{font-size:13px;color:#e5e7eb}.dbMeta{font-size:11px;color:var(--muted);line-height:1.4;margin-top:3px}.dbItem button{border:0;border-radius:999px;background:rgba(8,47,73,.95);color:#ecfeff;box-shadow:0 0 0 1px rgba(34,211,238,.48);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:7px 10px;cursor:pointer;white-space:nowrap}.dbStatus{font-size:11px;color:#bae6fd;background:rgba(2,6,23,.5);border:1px solid rgba(56,189,248,.25);border-radius:12px;padding:8px;margin-top:8px;line-height:1.45}.dbWarn{font-size:11px;color:#fde68a;line-height:1.45;margin-top:6px}
+
+    .explainGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0}@media(max-width:720px){.explainGrid{grid-template-columns:1fr 1fr}}
+    .explainCell{border:1px solid rgba(148,163,184,.28);border-radius:13px;padding:8px;background:rgba(2,6,23,.48)}
+    .explainCell b{display:block;font-size:10px;color:#93c5fd;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}.explainCell span{font-size:16px;font-weight:850}
+    .scenarioGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}@media(max-width:720px){.scenarioGrid{grid-template-columns:1fr}}
+    .scenarioCard{border:1px solid rgba(34,211,238,.25);border-radius:14px;background:rgba(2,6,23,.45);padding:9px;font-size:12px;line-height:1.45}
+    .scenarioCard b{color:#e0f2fe}.scenarioCard .ok{color:#86efac}.scenarioCard .warnTxt{color:#fde68a}.scenarioCard .badTxt{color:#fecaca}
+    .tripLogItem{border-bottom:1px dashed rgba(148,163,184,.18);padding:6px 0;font-size:11px;color:var(--muted);line-height:1.45}.tripLogItem b{color:#e5e7eb}
+
+  </style>
+</head>
+<body>
+<div class="app"><div class="glow"></div><div class="inner">
+  <header>
+    <div><div class="badge"><span class="dot"></span>OceanCore Boat AI</div><h1>Captain System <span style="font-size:13px;color:var(--muted)">/ Accuracy Modes · Calibrated Fuel · Fleet Learning Ready</span></h1><p class="sub">Enter boat + engine details once. Boat AI estimates fuel burn from speed, hull, load and conditions. For best accuracy, calibrate with real gauge/NMEA fuel data. Fleet learning hooks are included for your backend AI system.</p></div>
+    <div class="meta"><div>Profile: <strong id="metaBoat">Unnamed hull</strong></div><div>Mode: <strong id="metaMode">Auto Fuel Model</strong></div><div>Reserve: <strong id="metaReserve">30%</strong></div><div>Build: <strong>BOAT_AI_CAPTAIN_V15_SANITY_FIXES</strong></div></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="planner">Trip Planner</button>
+    <button class="tab" data-tab="database">Boat Database</button>
+    <button class="tab" data-tab="live">Sounder / NMEA</button>
+    <button class="tab" data-tab="checklist">Checklist</button>
+    <button class="tab" data-tab="maint">Maintenance</button>
+    <button class="tab" data-tab="learn">Calibration / Learning</button>
+  </div>
+
+  <div class="grid">
+    <section>
+      <div class="card pane" id="pane-planner">
+        <div class="cardHead"><div class="cardTitle">Boat Profile</div><div class="pill">Step 01 · setup</div></div>
+        <div class="row2"><div><label>Boat Name</label><input id="boatName" placeholder="savage surveyor" value="savage surveyor"><div class="hint">Saved locally in this browser.</div></div><div><label>Hull Type</label><select id="hullType"><option value="glass-mono">Fibreglass mono</option><option value="plate-ally">Plate alloy mono</option><option value="cat">Catamaran</option><option value="tinny">Pressed tinny</option><option value="rib">RIB / inflatable</option></select></div></div>
+        <div class="row4"><div><label>LOA <span>m</span></label><input id="loa" type="number" step="0.1" value="5.9"></div><div><label>Beam <span>m</span></label><input id="beam" type="number" step="0.05" value="2.3"></div><div><label>Loaded Weight <span>kg</span></label><input id="weight" type="number" step="10" value="1300"></div><div><label>Fuel Capacity <span>L</span></label><input id="fuelCapacity" type="number" step="1" value="150"></div></div>
+        <div class="cardHead" style="margin-top:8px"><div class="cardTitle">Engine + Fuel Model</div><div class="pill">Auto burn</div></div>
+        <div class="row3"><div><label>Engine</label><input id="engine" value="2012 Mercury 150hp Optimax Pro XS"></div><div><label>Total HP</label><input id="hp" type="number" step="5" value="145"></div><div><label>Engine Count</label><select id="engineCount"><option value="1">Single</option><option value="2">Twin</option><option value="3">Triple</option></select></div></div>
+        <div class="row3"><div><label>Engine Type</label><select id="engineType"><option value="dfi-2stroke" selected>Optimax / DFI 2-stroke</option><option value="fourstroke">Petrol 4-stroke</option><option value="carb-2stroke">Carb 2-stroke</option><option value="diesel">Diesel</option><option value="unknown">Unknown petrol outboard</option></select></div><div><label>Fuel Onboard <span>L</span></label><input id="fuelNow" type="number" step="1" value="150"></div><div><label>Reserve Target <span>%</span></label><input id="reserve" type="number" step="5" value="30"></div></div>
+        <div class="switchLine"><div><b>Manual fuel burn override</b><br><span>Use only if you know real L/h from gauges, Mercury SmartCraft, NMEA or test runs.</span></div><input class="toggle" id="manualToggle" type="checkbox"></div>
+        <div id="manualBox" class="hidden"><div class="row2"><div><label>Manual Cruise Burn <span>L/h</span></label><input id="manualBurn" type="number" step="0.5" placeholder="30"></div><div><label>Manual WOT Burn <span>L/h</span></label><input id="manualWot" type="number" step="0.5" placeholder="74.5"></div></div></div>
+
+        <div class="cardHead" style="margin-top:8px"><div class="cardTitle">Trip + Conditions</div><div class="pill">Step 02 · plan</div></div>
+        <div class="row4"><div><label>Cruise Speed <span>kn</span></label><input id="speed" type="number" step="0.5" value="22"></div><div><label>Round Trip <span>km</span></label><input id="tripKm" type="number" step="1" value="119"></div><div><label>Roaming <span>km</span></label><input id="extraKm" type="number" step="1" value="25"></div><div><label>Trolling Hours</label><input id="trollHours" type="number" step="0.5" value="0"></div></div>
+        <div class="row4"><div><label>Wind</label><select id="wind"><option value="light">0–10 kn</option><option value="moderate" selected>10–20 kn</option><option value="fresh">20–25 kn</option><option value="rough">25+ kn</option></select></div><div><label>Swell / Sea</label><select id="swell"><option value="low">Below 1 m</option><option value="moderate" selected>1–1.8 m</option><option value="high">2–2.5 m</option><option value="very-high">2.5 m+</option></select></div><div><label>Wind Vs Run</label><select id="windAngle"><option value="unknown" selected>Unknown / mixed</option><option value="with">Mostly with you</option><option value="side">Side sea</option><option value="against">Mostly against you</option></select></div><div><label>Crew + Load</label><select id="load"><option value="light">Light</option><option value="normal" selected>Normal</option><option value="heavy">Heavy</option><option value="very-heavy">Maxed out</option></select></div></div>
+        <div class="row2"><div><label>Trip Type</label><select id="tripType"><option value="inshore">Inshore / bay</option><option value="offshore" selected>Offshore reef run</option><option value="bar">Bar crossing involved</option><option value="remote">Remote / limited help</option></select></div><div><label>Notes</label><input id="notes" placeholder="bar, strong current, trolling, night run..."></div></div>
+        <div class="btnRow"><button class="btn" id="runBtn">● Run Boat AI</button><button class="btn secondary" id="saveBtn">Save Profile</button><button class="btn secondary" id="resetBtn">Reset</button></div><div class="footerWarn">Planning tool only. Always carry reserve fuel, safety gear and use local knowledge.</div>
+      </div>
+
+      <div class="card pane hidden" id="pane-database">
+        <div class="cardHead"><div class="cardTitle">Boat + Outboard Database</div><div class="pill">Supabase search</div></div>
+        <p class="small">Search the Supabase tables you just seeded. Pick a boat and engine to auto-fill the Boat AI profile. If the exact model is not listed yet, use the closest match then adjust the numbers manually.</p>
+        <div class="row2"><div><label>Supabase Project URL</label><input id="sbUrl" placeholder="https://xxxx.supabase.co"></div><div><label>Supabase Anon Key</label><input id="sbAnon" placeholder="paste anon public key"></div></div>
+        <div class="btnRow"><button class="btn secondary" id="saveSbBtn">Save Connection</button><button class="btn secondary" id="testSbBtn">Test Connection</button></div>
+        <div class="sep"></div>
+        <div class="row2"><div><label>Search Boat</label><input id="boatSearch" placeholder="Quintrex, Savage, Bar Crusher, Haines..."></div><div><label>Search Outboard</label><input id="engineSearch" placeholder="Mercury 150 Optimax, Yamaha 115..."></div></div>
+        <div class="btnRow"><button class="btn" id="searchBoatBtn">Search Boats</button><button class="btn" id="searchEngineBtn">Search Engines</button><button class="btn secondary" id="clearDbBtn">Clear Results</button></div>
+        <div class="dbStatus" id="dbStatus">Not connected yet. Paste your Supabase URL + anon key, save, then search.</div>
+        <div class="dbWarn">Tip: Do not paste your service-role key here. Use only the anon public key. The seeded tables are public catalogue data; user/private trip data should stay behind RLS.</div>
+        <div class="row2" style="margin-top:10px">
+          <div><label>Boat Results</label><div class="dbResults" id="boatResults"></div></div>
+          <div><label>Outboard Results</label><div class="dbResults" id="engineResults"></div></div>
+        </div>
+      </div>
+
+      <div class="card pane hidden" id="pane-live">
+        <div class="cardHead"><div class="cardTitle">Sounder / NMEA Live Data</div><div class="pill">Future hardware ready</div></div>
+        <p class="small">A browser cannot plug directly into most sounders. The real setup is: Sounder/engine → NMEA 2000 gateway → small OceanCore hub / laptop → WebSocket → this app. This screen is coded ready for that bridge and includes a simulator for testing.</p>
+        <div class="row2"><div><label>Gateway WebSocket URL</label><input id="wsUrl" value="ws://127.0.0.1:8787"></div><div><label>Data Source</label><select id="liveSource"><option value="sim">Simulator</option><option value="ws">WebSocket gateway</option><option value="paste">Paste JSON</option></select></div></div>
+        <div class="btnRow"><button class="btn" id="connectBtn">Connect / Start</button><button class="btn secondary" id="stopLiveBtn">Stop</button><button class="btn secondary" id="applyLiveBtn">Apply Live Data To Planner</button></div>
+        <div class="sep"></div><div class="liveStatus" id="liveStatus">Not connected.</div><div class="dataBox" id="liveData">Expected JSON: {"sog_kn":22,"fuel_flow_lph":31,"rpm":4200,"depth_m":18,"water_temp_c":24.5,"engine_temp_c":62,"battery_v":12.7,"fuel_remaining_l":140}</div>
+        <div id="pasteBox" class="hidden" style="margin-top:8px"><label>Paste Gateway JSON</label><textarea id="pasteJson" placeholder='{"sog_kn":22,"fuel_flow_lph":31,"fuel_remaining_l":140}'></textarea></div>
+      </div>
+
+      <div class="card pane hidden" id="pane-checklist">
+        <div class="cardHead"><div class="cardTitle">Launch Readiness Checklist</div><div class="pill">Trip safety</div></div>
+        <div class="checklist" id="checklist"></div><div class="btnRow"><button class="btn secondary" id="clearChecks">Clear Checklist</button></div>
+      </div>
+
+      <div class="card pane hidden" id="pane-maint">
+        <div class="cardHead"><div class="cardTitle">Maintenance + Fault Notes</div><div class="pill">Boat health</div></div>
+        <div class="row3"><div><label>Engine Hours</label><input id="engineHours" type="number" step="1" placeholder="320"></div><div><label>Last Service Hours</label><input id="lastService" type="number" step="1" placeholder="280"></div><div><label>Water Pressure / Cooling Note</label><input id="coolingNote" placeholder="good telltale / low psi / hot at idle"></div></div>
+        <label>Fault / Symptom</label><textarea id="fault" placeholder="Example: low water pressure on muffs, hot telltale, battery dropping under load..."></textarea>
+        <div class="btnRow"><button class="btn" id="maintBtn">Run Boat Health Check</button></div>
+      </div>
+
+      <div class="card pane hidden" id="pane-learn">
+        <div class="cardHead"><div class="cardTitle">Calibration + Fleet Learning</div><div class="pill">Accuracy system</div></div>
+        <div class="accuracyBanner"><b>Accuracy truth:</b> Estimate mode is only a prediction. Calibrated mode learns your boat from real L/h readings. Live NMEA mode uses real sensor data and is the highest-confidence source.</div>
+        <div class="miniGrid">
+          <div><label>Speed <span>kn</span></label><input id="calSpeed" type="number" step="0.1" placeholder="22"></div>
+          <div><label>RPM</label><input id="calRpm" type="number" step="50" placeholder="4200"></div>
+          <div><label>Real Burn <span>L/h</span></label><input id="calBurn" type="number" step="0.1" placeholder="30.5"></div>
+          <div><label>Load</label><select id="calLoad"><option value="light">Light</option><option value="normal" selected>Normal</option><option value="heavy">Heavy</option><option value="very-heavy">Maxed out</option></select></div>
+          <div><label>Sea</label><select id="calSea"><option value="low" selected>Below 1 m</option><option value="moderate">1–1.8 m</option><option value="high">2–2.5 m</option><option value="very-high">2.5 m+</option></select></div>
+        </div>
+        <div class="btnRow"><button class="btn" id="addCalBtn">Add Calibration Point</button><button class="btn secondary" id="useCurrentCalBtn">Use Current Planner Values</button><button class="btn secondary" id="clearCalBtn">Clear Calibration</button></div>
+        <div class="learningBox">
+          <div class="switchLine"><div><b>Allow anonymised fleet learning packet</b><br><span>Prepares a backend payload from boat class, speed, burn and conditions. Do not send name, email, exact marks, photos or private trip notes.</span></div><input class="toggle" id="fleetToggle" type="checkbox"></div>
+          <div class="row2"><div><label>Learning Endpoint</label><input id="learnUrl" value="/ai/boat/learning"></div><div><label>Learning Status</label><input id="learnStatus" value="Local only" readonly></div></div>
+          <div class="btnRow"><button class="btn secondary" id="sendLearnBtn">Send Test Learning Packet</button></div>
+        </div>
+        <div class="sep"></div>
+        <div class="cardHead"><div class="cardTitle">Actual Trip Log</div><div class="pill">learn after trip</div></div>
+        <p class="small">After a real run, enter the actual fuel used. OceanCore compares predicted vs actual, saves the correction, and can send an anonymised learning packet to your backend later.</p>
+        <div class="miniGrid">
+          <div><label>Actual Fuel Used <span>L</span></label><input id="actualFuelUsed" type="number" step="0.5" placeholder="82"></div>
+          <div><label>Actual Distance <span>km</span></label><input id="actualDistanceKm" type="number" step="0.5" placeholder="105"></div>
+          <div><label>Actual Avg Speed <span>kn</span></label><input id="actualSpeedKn" type="number" step="0.1" placeholder="22"></div>
+          <div><label>Actual Notes</label><input id="actualTripNotes" placeholder="head sea home, bar delay, extra trolling..."></div>
+        </div>
+        <div class="btnRow"><button class="btn" id="saveActualTripBtn">Save Actual Trip + Learn</button><button class="btn secondary" id="clearTripLogsBtn">Clear Local Trip Logs</button></div>
+        <div class="calList" id="tripLogList">No actual trips logged yet.</div>
+        <div class="sep"></div>
+        <div class="cardHead"><div class="cardTitle">Calibration Points</div><div class="pill">burn curve</div></div>
+        <div class="calList" id="calList">No calibration points yet.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <div class="cardHead"><div class="cardTitle">Captain Output</div><div class="pill">Decision engine</div></div>
+        <div id="decision" class="decision"><div class="decisionTop"><div class="decisionWord" id="decisionWord">READY</div><div class="confidence">Confidence<br><strong id="confidence">–</strong></div></div><div class="reason" id="decisionReason">Enter your details and run Boat AI.</div></div>
+        <div class="chips" id="chips"><span class="chip info">Waiting for run</span></div>
+        <div class="metrics">
+          <div class="metric hot"><div class="mlabel">Predicted / Live Burn</div><div class="mvalue"><span id="burnOut">–</span> <span class="unit">L/h</span></div><div class="mnote" id="burnNote">Estimate, calibrated, or live NMEA burn depending on data source.</div></div>
+          <div class="metric"><div class="mlabel">Safe Range</div><div class="mvalue"><span id="rangeOut">–</span> <span class="unit">km</span></div><div class="mnote" id="rangeNote">Fuel range after reserve and condition penalties.</div></div>
+          <div class="metric"><div class="mlabel">Trip Fuel Required</div><div class="mvalue"><span id="tripFuelOut">–</span> <span class="unit">L</span></div><div class="mnote" id="tripFuelNote">Includes route, roaming and trolling.</div></div>
+          <div class="metric"><div class="mlabel">Spare Above Reserve</div><div class="mvalue"><span id="marginOut">–</span> <span class="unit">L</span></div><div class="mnote" id="marginNote">Fuel left after trip and protected reserve.</div></div>
+          <div class="metric"><div class="mlabel">Trip Time</div><div class="mvalue"><span id="timeOut">–</span> <span class="unit">hrs</span></div><div class="mnote">Engine-on cruise + trolling estimate.</div></div>
+          <div class="metric"><div class="mlabel">WOT Burn Estimate</div><div class="mvalue"><span id="wotOut">–</span> <span class="unit">L/h</span></div><div class="mnote">Used to show how costly hard running is.</div></div>
+          <div class="metric hot"><div class="mlabel">Accuracy Mode</div><div class="mvalue"><span id="accuracyMode">Estimate</span></div><div class="mnote" id="accuracyNote">Estimate mode needs calibration or live data for higher trust.</div></div>
+          <div class="metric"><div class="mlabel">Burn Safety Band</div><div class="mvalue"><span id="burnBand">–</span> <span class="unit">L/h</span></div><div class="mnote" id="burnBandNote">Planning should use the high side unless live fuel flow is connected.</div></div>
+        </div>
+        <div class="analysis" id="analysis"><h3>Boat AI Commentary</h3>Run the planner to get a captain-style briefing.</div>
+        <div class="analysis" id="fuelExplain" style="margin-top:10px"><h3>Fuel Equation</h3>Run the planner to show: fuel onboard - trip fuel - reserve = spare.</div>
+        <div class="analysis" id="scenarioBox" style="margin-top:10px"><h3>What-If Scenarios</h3>Run Boat AI to compare slower speed, extra fuel, and worse wind.</div>
+        <div class="history" id="history"></div>
+      </div>
+    </section>
+  </div>
+</div></div>
+<script>
+
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const num = (id, fallback=0) => { const n = Number($(id)?.value); return Number.isFinite(n) ? n : fallback; };
+  const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
+  const fmt = (n,d=0) => Number.isFinite(n) ? n.toFixed(d) : "–";
+  let liveTimer = null, ws = null, latestLive = null;
+  let lastRun = null;
+  const CAL_KEY = "oceancore_boat_calibration_v5";
+  const TRIP_LOG_KEY = "oceancore_boat_actual_trip_logs_v1";
+
+  const checklistItems = ["Life jackets for every person","EPIRB / PLB in date","VHF / UHF radio charged","Flares / signalling gear","Bilge pump working","Nav lights working","Anchor + rope + chain","Spare fuel / reserve checked","Battery voltage good","Tell someone trip plan","Phone dry bag / charger","First aid kit","Tool kit + spare fuses","Weather window checked"];
+  function buildChecklist(){ $("checklist").innerHTML = checklistItems.map((x,i)=>`<label class="check"><input type="checkbox" id="ck${i}"> ${x}</label>`).join(""); }
+  buildChecklist();
+
+  document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+    document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden')); $('pane-' + btn.dataset.tab).classList.remove('hidden');
+  }));
+  $('manualToggle').addEventListener('change', e => $('manualBox').classList.toggle('hidden', !e.target.checked));
+  $('liveSource').addEventListener('change', e => $('pasteBox').classList.toggle('hidden', e.target.value !== 'paste'));
+
+  function getCalibrations(){
+    try { return JSON.parse(localStorage.getItem(CAL_KEY) || '[]'); } catch { return []; }
+  }
+  function saveCalibrations(rows){ localStorage.setItem(CAL_KEY, JSON.stringify(rows.slice(-60))); renderCalibrations();
+  renderTripLogs(); }
+  function renderCalibrations(){
+    const box = $('calList'); if(!box) return;
+    const rows = getCalibrations();
+    if(!rows.length){ box.innerHTML = 'No calibration points yet.'; return; }
+    box.innerHTML = rows.slice().reverse().map(r => `<div class="calItem"><b>${fmt(r.speedKn,1)}kn</b> · ${r.rpm || '–'}rpm · real ${fmt(r.realBurn,1)}L/h · ${r.load}/${r.sea} · ${new Date(r.ts).toLocaleString()}</div>`).join('');
+  }
+  function addCalibrationPoint(row){
+    if(!row.speedKn || !row.realBurn){ alert('Need speed and real L/h to calibrate.'); return; }
+    const rows = getCalibrations(); rows.push({...row, ts: Date.now()}); saveCalibrations(rows);
+  }
+  function calibratedBurn(input, estimatedBurn){
+    const rows = getCalibrations().filter(r => r.speedKn > 0 && r.realBurn > 0);
+    if(!rows.length) return null;
+    const weighted = rows.map(r => {
+      const speedGap = Math.abs(r.speedKn - input.speedKn);
+      let w = 1 / Math.pow(1 + speedGap, 2);
+      if(r.load === input.load) w *= 1.25;
+      if(r.sea === input.swell) w *= 1.15;
+      return {r,w};
+    }).sort((a,b)=>b.w-a.w).slice(0,6);
+    const totalW = weighted.reduce((a,x)=>a+x.w,0);
+    if(!totalW) return null;
+    const direct = weighted.reduce((a,x)=>a+x.r.realBurn*x.w,0) / totalW;
+    // Blend calibrated evidence with model so one bad sample cannot fully corrupt the system.
+    const trust = clamp(rows.length / 5, .35, .92);
+    const burn = estimatedBurn * (1 - trust) + direct * trust;
+    const nearestGap = Math.min(...rows.map(r=>Math.abs(r.speedKn-input.speedKn)));
+    return {burn, sampleCount: rows.length, nearestGap, trust, direct};
+  }
+  function accuracyProfile(mode, cal){
+    if(mode === 'live') return {label:'Live NMEA', pct:.04, note:'Highest trust: using real fuel flow from engine/sounder gateway.'};
+    if(mode === 'manual') return {label:'Manual Gauge', pct:.07, note:'Using user-entered gauge/SmartCraft fuel burn. Accuracy depends on the source.'};
+    if(mode === 'calibrated') return {label:'Calibrated', pct: cal && cal.sampleCount >= 5 ? .08 : .12, note:`Learnt from ${cal?.sampleCount || 0} calibration point(s). Add more at different speeds for tighter accuracy.`};
+    return {label:'Estimate', pct:.22, note:'Prediction only. Calibrate or connect live fuel flow for serious offshore planning.'};
+  }
+  function getTripLogs(){
+    try { return JSON.parse(localStorage.getItem(TRIP_LOG_KEY) || '[]'); } catch { return []; }
+  }
+  function saveTripLogs(rows){ localStorage.setItem(TRIP_LOG_KEY, JSON.stringify(rows.slice(-80))); renderTripLogs(); }
+  function renderTripLogs(){
+    const box = $('tripLogList'); if(!box) return;
+    const rows = getTripLogs();
+    if(!rows.length){ box.innerHTML = 'No actual trips logged yet.'; return; }
+    box.innerHTML = rows.slice().reverse().map(r => {
+      const cls = Math.abs(r.errorPct || 0) <= 10 ? 'ok' : Math.abs(r.errorPct || 0) <= 20 ? 'warnTxt' : 'badTxt';
+      return `<div class="tripLogItem"><b>${new Date(r.ts).toLocaleString()}</b> · actual ${fmt(r.actualFuelUsed,1)}L vs predicted ${fmt(r.predictedFuelUsed,1)}L · <span class="${cls}">${fmt(r.errorPct,1)}%</span> error · ${fmt(r.actualDistanceKm,0)}km @ ${fmt(r.actualSpeedKn,1)}kn<br>${r.notes || ''}</div>`;
+    }).join('');
+  }
+  function saveActualTrip(){
+    if(!lastRun){ alert('Run Boat AI first so I can compare predicted vs actual.'); return; }
+    const actualFuelUsed = num('actualFuelUsed');
+    const actualDistanceKm = num('actualDistanceKm', lastRun.input.tripKm + lastRun.input.extraKm);
+    const actualSpeedKn = num('actualSpeedKn', lastRun.input.speedKn);
+    if(!actualFuelUsed || !actualDistanceKm || !actualSpeedKn){ alert('Need actual fuel used, distance and average speed.'); return; }
+    const predictedFuelUsed = lastRun.tripFuel;
+    const errorPct = predictedFuelUsed ? ((actualFuelUsed - predictedFuelUsed) / predictedFuelUsed) * 100 : 0;
+    const actualBurn = actualFuelUsed / Math.max(actualDistanceKm / (actualSpeedKn * 1.852), .1);
+    const row = { ts:Date.now(), actualFuelUsed, actualDistanceKm, actualSpeedKn, actualBurn, predictedFuelUsed, predictedBurn:lastRun.burn, errorPct, notes:$('actualTripNotes').value.trim(), decision:lastRun.decision, input:lastRun.input };
+    const logs = getTripLogs(); logs.push(row); saveTripLogs(logs);
+    addCalibrationPoint({ speedKn:actualSpeedKn, rpm:null, realBurn:actualBurn, load:lastRun.input.load, sea:lastRun.input.swell, source:'actual_trip' });
+    $('actualFuelUsed').value=''; $('actualTripNotes').value='';
+    $('learnStatus').value = `Saved actual trip. Model error ${fmt(errorPct,1)}%. Calibration point added.`;
+  }
+
+  function learningPayload(i, result){
+    return {
+      schema:'oceancore_boat_ai_learning_v1',
+      build:'BOAT_AI_CAPTAIN_V14_LEARNING_SCENARIOS',
+      anonymised:true,
+      boat:{ hullType:i.hullType, loa_m:i.loa, beam_m:i.beam, loadedWeightKg:i.weight, hp:i.hp, engineType:i.engineType, engineCount:i.engineCount },
+      trip:{ speedKn:i.speedKn, tripKm:i.tripKm, extraKm:i.extraKm, trollHours:i.trollHours, tripType:i.tripType },
+      conditions:{ wind:i.wind, swell:i.swell, windAngle:i.windAngle, load:i.load, returnBiasPct:result.returnBiasPct, dataQuality:result.dataQuality },
+      result:{ mode:result.mode, burnLph:result.burn, wotLph:result.wot, marginPct:result.marginPct, safeRangeKm:result.safeRange, decision:result.decision },
+      calibrationCount:getCalibrations().length,
+      actualTripLogCount:getTripLogs().length,
+      timestamp:new Date().toISOString()
+    };
+  }
+  async function sendLearningPacket(){
+    if(!$('fleetToggle')?.checked){ $('learnStatus').value = 'Fleet learning off'; return; }
+    if(!lastRun){ $('learnStatus').value = 'Run planner first'; return; }
+    try{
+      $('learnStatus').value = 'Sending...';
+      const res = await fetch($('learnUrl').value || '/ai/boat/learning', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(learningPayload(lastRun.input,lastRun)) });
+      $('learnStatus').value = res.ok ? 'Sent to backend' : `Backend ${res.status}`;
+    }catch(e){ $('learnStatus').value = 'Local only / backend not connected'; }
+  }
+
+  function conditionPenalty(wind, swell, load, tripType, windAngle){
+    let p=0;
+    p += ({light:0,moderate:.08,fresh:.18,rough:.32}[wind] ?? 0);
+    p += ({low:0,moderate:.06,high:.16,"very-high":.28}[swell] ?? 0);
+    p += ({unknown:.04,with:-.03,side:.07,against:.15}[windAngle] ?? .04);
+    p += ({light:0,normal:.04,heavy:.11,"very-heavy":.2}[load] ?? 0);
+    p += ({inshore:0,offshore:.03,bar:.08,remote:.1}[tripType] ?? 0);
+    return clamp(p,0,.75);
+  }
+  function returnTripBias(wind, swell, tripType, windAngle){
+    // Real skipper bias: home leg is commonly slower/thirstier due to wind shift,
+    // chop, fatigue, bar timing, and extra detours. This is a safety allowance,
+    // not a physics claim.
+    let b = .08;
+    b += ({light:0,moderate:.04,fresh:.10,rough:.18}[wind] ?? 0);
+    b += ({low:0,moderate:.04,high:.09,"very-high":.15}[swell] ?? 0);
+    b += ({unknown:.03,with:0,side:.05,against:.12}[windAngle] ?? .03);
+    b += ({inshore:0,offshore:.04,bar:.08,remote:.08}[tripType] ?? 0);
+    return clamp(b, .04, .35);
+  }
+  function dataQuality(input, mode, cal){
+    let score = 100;
+    const missing = [];
+    [['HP',input.hp],['speed',input.speedKn],['fuel onboard',input.fuelNow],['trip distance',input.tripKm],['loaded weight',input.weight],['beam',input.beam],['LOA',input.loa]].forEach(([name,val])=>{ if(!val){ score -= 12; missing.push(name); } });
+    if(mode === 'estimate') score -= 18;
+    if(mode === 'calibrated' && (!cal || cal.sampleCount < 4)) score -= 8;
+    if(input.windAngle === 'unknown') score -= 6;
+    if(input.wind !== 'light') score -= 5;
+    if(input.swell !== 'low') score -= 5;
+    if(input.tripType !== 'inshore') score -= 4;
+    const wInfo = effectiveWeightForModel(input);
+    if(wInfo.adjusted){ score -= 10; missing.push('real loaded weight check'); }
+    if(input.fuelCapacity && input.fuelNow > input.fuelCapacity * 1.05){ score -= 3; }
+    score = clamp(Math.round(score), 35, 98);
+    return {score, missing, label: score >= 85 ? 'HIGH DATA QUALITY' : score >= 68 ? 'MEDIUM DATA QUALITY' : 'LOW DATA QUALITY'};
+  }
+  function decisionConfidence(mode, dq, marginPct, input, decision, riskScore=0){
+    let c = dq.score;
+    if(mode === 'live') c += 8;
+    if(mode === 'manual') c += 4;
+    if(mode === 'estimate') c -= 4;
+    if(Number.isFinite(marginPct) && marginPct < 10) c -= 10;
+    else if(Number.isFinite(marginPct) && marginPct < 25) c -= 6;
+    c -= Math.min(12, riskScore * 3);
+    if(input.wind === 'rough' || input.swell === 'very-high') c += 4; // confident unsafe call
+    if(decision === 'NO GO' && Number.isFinite(marginPct) && marginPct < 0) c += 6;
+    return clamp(Math.round(c), 45, 96);
+  }
+  function hullFactor(type){ return ({"glass-mono":1.00,"plate-ally":.96,cat:.94,tinny:1.06,rib:1.02}[type] ?? 1); }
+  function engineMaxLphPerHp(type){ return ({fourstroke:.38,"dfi-2stroke":.42,"carb-2stroke":.50,diesel:.26,unknown:.40}[type] ?? .40); }
+
+  function minLoadedWeightEstimate(loa, hullType){
+    if(!loa || loa < 3) return 0;
+    const x = Math.max(0, loa - 3);
+    const hull = String(hullType || '').toLowerCase();
+    let base = 450, coeff = 160;
+    if(hull.includes('glass')){ base = 500; coeff = 180; }
+    else if(hull.includes('plate')){ base = 430; coeff = 165; }
+    else if(hull.includes('tinny') || hull.includes('aluminium')){ base = 300; coeff = 125; }
+    else if(hull.includes('cat')){ base = 650; coeff = 210; }
+    return Math.round(base + coeff * Math.pow(x, 1.4));
+  }
+  function effectiveWeightForModel(input){
+    const entered = Number(input.weight || 0);
+    const min = minLoadedWeightEstimate(input.loa, input.hullType);
+    if(min && entered && entered < min * 0.82){
+      return { weight: min, adjusted:true, minEstimate:min, entered };
+    }
+    return { weight: entered || min || 0, adjusted:false, minEstimate:min, entered };
+  }
+
+  function speedLoadFraction(speedKn, loa, hull){
+    // V4 fixed maths: the V3 curve was too aggressive and treated normal cruise
+    // like high engine load. This curve keeps 18-24kn planing cruise near
+    // 42-50% load, which better matches real 150hp outboard numbers.
+    let load;
+    if (speedKn <= 4) load = .08 + speedKn * .012;              // idle / slow steerage
+    else if (speedKn <= 8) load = .13 + (speedKn - 4) * .025;   // displacement / trolling
+    else if (speedKn <= 14) load = .23 + (speedKn - 8) * .025;  // climbing toward plane
+    else if (speedKn <= 18) load = .38 + (speedKn - 14) * .015; // on plane, light cruise
+    else if (speedKn <= 24) load = .44 + (speedKn - 18) * .010; // normal cruise sweet spot
+    else if (speedKn <= 30) load = .50 + (speedKn - 24) * .030; // fast cruise
+    else if (speedKn <= 36) load = .68 + (speedKn - 30) * .030; // hard cruise
+    else load = .86 + Math.min(.10, (speedKn - 36) * .01);      // near WOT
+
+    if (hull === 'cat') load -= .025;
+    if (hull === 'plate-ally') load -= .01;
+    if (hull === 'tinny') load += .025;
+    return clamp(load,.08,.96);
+  }
+  function estimateFuelBurn(input){
+    const maxWot = input.hp * engineMaxLphPerHp(input.engineType);
+    const weightInfo = effectiveWeightForModel(input);
+    const modelWeight = Math.max(weightInfo.weight, 1);
+    const hpWeightRatio = input.hp / Math.max(modelWeight/100, 1); // hp per 100kg
+    let weightFactor = 1;
+    if (hpWeightRatio < 7) weightFactor += .16;
+    else if (hpWeightRatio < 8.5) weightFactor += .10;
+    else if (hpWeightRatio < 10) weightFactor += .05;
+    else if (hpWeightRatio > 16) weightFactor -= .035;
+    const beamRatio = input.loa / Math.max(input.beam,1);
+    let shape = beamRatio < 2.35 ? 1.07 : beamRatio > 3.0 ? .97 : 1;
+    const loadFrac = speedLoadFraction(input.speedKn, input.loa, input.hullType);
+    const baseCruise = maxWot * loadFrac * hullFactor(input.hullType) * weightFactor * shape;
+    const penalty = conditionPenalty(input.wind,input.swell,input.load,input.tripType,input.windAngle);
+    const effectiveCruise = baseCruise * (1 + penalty);
+    const trollBurn = Math.max(input.hp * .045, 2.2) * ({fourstroke:.85,"dfi-2stroke":1,"carb-2stroke":1.22,diesel:.75,unknown:1}[input.engineType] ?? 1);
+    return { baseCruise, effectiveCruise, maxWot, trollBurn, penalty, loadFrac, hpWeightRatio, weightInfo };
+  }
+  function collect(){
+    return { boatName: $('boatName').value.trim() || 'Unnamed hull', hullType:$('hullType').value, loa:num('loa'), beam:num('beam'), weight:num('weight'), fuelCapacity:num('fuelCapacity'), engine:$('engine').value.trim(), hp:num('hp'), engineCount:num('engineCount',1), engineType:$('engineType').value, fuelNow:num('fuelNow'), reserve:clamp(num('reserve',30),10,60), speedKn:num('speed'), tripKm:num('tripKm'), extraKm:num('extraKm'), trollHours:num('trollHours'), wind:$('wind').value, swell:$('swell').value, windAngle:$('windAngle').value, load:$('load').value, tripType:$('tripType').value, notes:$('notes').value.trim(), manual:$('manualToggle').checked, manualBurn:num('manualBurn'), manualWot:num('manualWot') };
+  }
+  function chip(text, level='info'){ return `<span class="chip ${level}">${text}</span>`; }
+  function setDecision(decision, confidence, reason){
+    const d=$('decision');
+    const cls = decision === 'GO' ? 'go' : decision === 'GO — WATCH' ? 'watch' : decision === 'CAUTION' ? 'caution' : decision === 'NO GO' ? 'nogo' : '';
+    d.className = 'decision ' + cls;
+    $('decisionWord').textContent = decision; $('confidence').textContent = confidence ? confidence + '%' : '–'; $('decisionReason').textContent = reason;
+  }
+  function scenarioDecision(spareLitres, marginPct, tripType, wind, swell){
+    if(spareLitres < 0 || wind === 'rough' || swell === 'very-high') return {label:'NO GO', cls:'badTxt'};
+    if(tripType !== 'inshore' && marginPct < 10) return {label:'NO GO', cls:'badTxt'};
+    if(tripType !== 'inshore' && marginPct < 25) return {label:'CAUTION', cls:'warnTxt'};
+    if(marginPct < 12) return {label:'CAUTION', cls:'warnTxt'};
+    if(marginPct < 30) return {label:'GO — WATCH', cls:'warnTxt'};
+    return {label:'GO', cls:'ok'};
+  }
+  function renderFuelExplain(i, result){
+    const reserveLitres = i.fuelNow * (i.reserve/100);
+    const needed = result.tripFuel + reserveLitres;
+    const shortBy = Math.max(0, needed - i.fuelNow);
+    $('fuelExplain').innerHTML = `<h3>Fuel Equation</h3>
+      <div class="explainGrid">
+        <div class="explainCell"><b>Fuel onboard</b><span>${fmt(i.fuelNow,0)}L</span></div>
+        <div class="explainCell"><b>Trip fuel</b><span>${fmt(result.tripFuel,0)}L</span></div>
+        <div class="explainCell"><b>Protected reserve</b><span>${fmt(reserveLitres,0)}L</span></div>
+        <div class="explainCell"><b>Spare / short</b><span>${result.marginLitres >= 0 ? fmt(result.marginLitres,0)+'L spare' : fmt(Math.abs(result.marginLitres),0)+'L short'}</span></div>
+      </div>
+      <b>Equation:</b> ${fmt(i.fuelNow,0)}L onboard - ${fmt(result.tripFuel,0)}L trip fuel - ${fmt(reserveLitres,0)}L reserve = <b>${fmt(result.marginLitres,0)}L</b> spare above reserve.<br>
+      ${shortBy > 0 ? `<span class="badTxt">To protect your reserve, add at least ${fmt(shortBy,0)}L or reduce distance.</span>` : `<span class="ok">Reserve is protected, with ${fmt(result.marginLitres,0)}L spare above reserve.</span>`}`;
+  }
+  function renderScenarios(i, result){
+    const speedKmh = i.speedKn * 1.852;
+    const totalKm = i.tripKm + i.extraKm;
+    const fuelUsedForCalc = i.fuelNow;
+    const reserveLitres = fuelUsedForCalc * (i.reserve/100);
+    const make = (name, newFuelNow, tripFuel, note) => {
+      const spare = newFuelNow - tripFuel - reserveLitres;
+      const marginPct = newFuelNow ? (spare/newFuelNow)*100 : 0;
+      const d = scenarioDecision(spare, marginPct, i.tripType, i.wind, i.swell);
+      return `<div class="scenarioCard"><b>${name}</b><br><span class="${d.cls}">${d.label}</span> · trip fuel ${fmt(tripFuel,0)}L · spare ${fmt(spare,0)}L (${fmt(marginPct,1)}%)<br><span class="small">${note}</span></div>`;
+    };
+    const slowerSpeedKn = Math.max(6, i.speedKn - 3);
+    const slowerTime = totalKm / Math.max(slowerSpeedKn * 1.852, .1);
+    const slowerBurn = result.burn * .88;
+    const slowerTripFuel = slowerTime * slowerBurn + result.trollFuel;
+    const extraFuel = 20;
+    const worseTripFuel = result.tripFuel * 1.15;
+    $('scenarioBox').innerHTML = `<h3>What-If Scenarios</h3><div class="scenarioGrid">${[
+      make('Slow down 3kn', fuelUsedForCalc, slowerTripFuel, `Assumes burn drops ~12% but time increases. New speed ${fmt(slowerSpeedKn,1)}kn.`),
+      make('Add 20L fuel', fuelUsedForCalc + extraFuel, result.tripFuel, 'Shows how much extra buffer one secured 20L tote could add.'),
+      make('Wind worsens 15%', fuelUsedForCalc, worseTripFuel, 'Stress test: more chop/current/throttle correction on the day.')
+    ].join('')}</div>`;
+  }
+
+  function runPlanner(source='manual'){
+    const i=collect();
+    $('metaBoat').textContent = i.boatName; $('metaReserve').textContent = i.reserve + '%';
+    const auxFuelLitres = i.fuelCapacity && i.fuelNow > i.fuelCapacity ? i.fuelNow - i.fuelCapacity : 0;
+    const est = estimateFuelBurn(i);
+    const liveBurnActive = source === 'live' && latestLive && Number(latestLive.fuel_flow_lph) > 0;
+    const cal = (!i.manual && !liveBurnActive) ? calibratedBurn(i, est.effectiveCruise) : null;
+    let mode = 'estimate';
+    let burn = est.effectiveCruise;
+    if(cal){ burn = cal.burn; mode = 'calibrated'; }
+    if(i.manual && i.manualBurn > 0){ burn = i.manualBurn; mode = 'manual'; }
+    if(liveBurnActive){ burn = Number(latestLive.fuel_flow_lph); mode = 'live'; }
+    const returnBias = returnTripBias(i.wind, i.swell, i.tripType, i.windAngle);
+    const wot = i.manual && i.manualWot > 0 ? i.manualWot : est.maxWot;
+    const acc = accuracyProfile(mode, cal);
+    const speedKmh = i.speedKn * 1.852;
+    const totalKm = i.tripKm + i.extraKm;
+    const usableFuel = i.fuelNow * (1 - i.reserve/100);
+
+    // V9 route maths: return bias applies only to the return leg, not the whole trip.
+    // Treat half the route as outbound at base burn and half as return at biased burn.
+    const outboundKm = totalKm / 2;
+    const returnKm = totalKm / 2;
+    const outboundHours = speedKmh > 0 ? outboundKm / speedKmh : 0;
+    const returnHours = speedKmh > 0 ? returnKm / speedKmh : 0;
+    const outboundBurn = burn;
+    const returnBurn = burn * (1 + returnBias);
+    const outboundFuel = outboundHours * outboundBurn;
+    const returnFuel = returnHours * returnBurn;
+    const cruiseHours = outboundHours + returnHours;
+    const trollFuel = i.trollHours * est.trollBurn;
+    const tripFuel = outboundFuel + returnFuel + trollFuel;
+    const planningBurn = cruiseHours > 0 ? (outboundFuel + returnFuel) / cruiseHours : burn;
+    const burnLow = planningBurn * (1 - acc.pct);
+    const burnHigh = planningBurn * (1 + acc.pct);
+    const safeRange = planningBurn > 0 && speedKmh > 0 ? (usableFuel / planningBurn) * speedKmh : 0;
+    const fuelAfter = i.fuelNow - tripFuel;
+    const reserveLitres = i.fuelNow * i.reserve/100;
+    const marginLitres = fuelAfter - reserveLitres;
+    const marginPct = i.fuelNow > 0 ? (marginLitres / i.fuelNow) * 100 : NaN;
+    const totalHours = cruiseHours + i.trollHours;
+
+    $('burnOut').textContent = fmt(planningBurn,1); $('wotOut').textContent = fmt(wot,1); $('rangeOut').textContent = fmt(safeRange,0); $('tripFuelOut').textContent = fmt(tripFuel,0); $('marginOut').textContent = fmt(marginLitres,0); $('timeOut').textContent = fmt(totalHours,1); $('accuracyMode').textContent = acc.label; $('accuracyNote').textContent = acc.note; $('burnBand').textContent = `${fmt(burnLow,1)}–${fmt(burnHigh,1)}`; $('burnBandNote').textContent = `Plan with up to ${fmt(burnHigh,1)} L/h unless live data confirms lower.`; $('metaMode').textContent = acc.label;
+    $('burnNote').textContent = mode === 'live' ? 'Live NMEA/gateway fuel flow is controlling this number.' : mode === 'manual' ? 'Manual override is ON. Boat AI is using your entered burn.' : mode === 'calibrated' ? `Calibrated burn from ${cal.sampleCount} saved point(s), blended with the hull/engine model.` : `Base model: ${fmt(burn,1)} L/h. V15 split-route average applies return bias to the return leg only: ${fmt(planningBurn,1)} L/h.`;
+    $('rangeNote').textContent = `${fmt(usableFuel,0)} L usable after ${i.reserve}% reserve from ${fmt(i.fuelNow,0)} L onboard${auxFuelLitres > 0 ? ` (${fmt(auxFuelLitres,0)} L above tank capacity counted as auxiliary fuel)` : ''}.`;
+    $('tripFuelNote').textContent = `${fmt(totalKm,0)} km cruise: out ${fmt(outboundFuel,0)} L + home ${fmt(returnFuel,0)} L + ${fmt(i.trollHours,1)} h trolling (${fmt(trollFuel,0)} L).`;
+    $('marginNote').textContent = Number.isFinite(marginPct) ? (marginPct >= 0 ? `${fmt(marginPct,1)}% of fuel onboard. This is your extra fuel after trip + reserve.` : `Eats into reserve by ${fmt(Math.abs(marginLitres),0)} L (${fmt(Math.abs(marginPct),1)}%).`) : 'Need fuel and distance inputs.';
+
+    // V10 launch decision engine.
+    // Final labels: GO, GO — WATCH, CAUTION, NO GO.
+    // Principle: NO GO = hard fail. CAUTION = tight margin. GO — WATCH = fuel OK but real-world risk context exists.
+    let decision='GO', reason='Healthy margin and conditions fit the plan.';
+    const ch=[];
+    const dq = dataQuality(i, mode, cal);
+    const offshoreLike = i.tripType === 'offshore' || i.tripType === 'bar' || i.tripType === 'remote';
+    const hardWeather = i.wind === 'rough' || i.swell === 'very-high';
+    const roughWeather = i.wind === 'fresh' || i.swell === 'high';
+    const headSea = i.windAngle === 'against';
+    const unknownSea = i.windAngle === 'unknown';
+    const lowData = dq.score < 68 || dq.missing.length > 0;
+
+    if(dq.missing.length){
+      decision='CAUTION';
+      reason='Need more core data for a strong call: ' + dq.missing.join(', ') + '. Add these before trusting the plan.';
+      ch.push(chip(dq.label,'warn'));
+    } else {
+      ch.push(chip(dq.label, dq.score >= 85 ? 'info' : dq.score >= 68 ? 'warn' : 'bad'));
+    }
+
+    if(Number.isFinite(marginPct)){
+      if(marginPct < 0){
+        decision='NO GO';
+        reason='Trip consumes protected reserve. Add fuel, shorten the run, or wait.';
+      } else if(hardWeather){
+        decision='NO GO';
+        reason='Hard no-go: wind or swell is beyond a sensible planning window regardless of fuel numbers.';
+      } else if(safeRange > 0 && totalKm > safeRange){
+        decision='NO GO';
+        reason='Trip distance exceeds calculated safe range after reserve is protected.';
+      } else if(offshoreLike){
+        if(marginPct < 10){
+          decision='CAUTION';
+          reason='Offshore margin is very thin. Trip is possible on paper, but any change can burn the spare quickly.';
+        } else if(marginPct < 25){
+          decision='CAUTION';
+          reason='Offshore trip is possible, but reserve margin is tight. Keep speed conservative and protect fuel.';
+        } else if(marginPct < 35 && (mode === 'estimate' || lowData || roughWeather || headSea || unknownSea)){
+          decision='GO — WATCH';
+          reason='Fuel is workable, but this is estimate-mode/offshore planning. Watch conditions and confirm with real data when possible.';
+        } else {
+          decision='GO';
+          reason='Offshore reserve looks healthy after split-route return bias, assuming forecast and inputs are correct.';
+        }
+      } else {
+        if(marginPct < 8){
+          decision='CAUTION';
+          reason='Trip is possible but fuel margin is thin. No room for detours, gauge error or rougher return.';
+        } else if(marginPct < 18){
+          decision='GO — WATCH';
+          reason='Reasonable but not generous. Keep speed conservative and protect your reserve.';
+        } else {
+          decision='GO';
+          reason='Fuel buffer looks healthy for the plan, assuming the forecast holds.';
+        }
+      }
+    } else {
+      decision='CAUTION';
+      reason='Need fuel, speed and distance to make a reliable decision.';
+    }
+
+    let riskScore = 0;
+    if(offshoreLike) riskScore += 1;
+    if(roughWeather) riskScore += 1;
+    if(headSea) riskScore += 1;
+    if(unknownSea) riskScore += 1;
+    if(mode === 'estimate') riskScore += 1;
+    if(lowData) riskScore += 1;
+
+    // Risk stacking can downgrade GO to GO — WATCH, and GO — WATCH to CAUTION only when margin is not generous.
+    if(Number.isFinite(marginPct) && decision === 'GO' && riskScore >= 3 && marginPct < 40){
+      decision='GO — WATCH';
+      reason='Fuel maths is healthy, but multiple real-world risks mean you should watch conditions and keep reserve protected.';
+    }
+    if(Number.isFinite(marginPct) && decision === 'GO — WATCH' && riskScore >= 4 && marginPct < 28){
+      decision='CAUTION';
+      reason='Multiple risk factors reduce real-world margin. Confirm with live/calibrated data or carry extra fuel.';
+    }
+    if(roughWeather && decision==='GO'){
+      decision='GO — WATCH';
+      reason='Conditions add burn, fatigue and slower return speed. Treat range as optimistic.';
+    }
+    if(headSea && decision==='GO'){
+      decision='GO — WATCH';
+      reason='Head-sea/head-wind run: burn and time can jump. Confirm with live data or carry extra reserve.';
+    }
+    if(i.tripType==='bar'){
+      if(decision==='GO') decision='GO — WATCH';
+      if(reason === 'Healthy margin and conditions fit the plan.') reason='Bar crossing involved: fuel is OK, but crossing timing and conditions must be checked locally.';
+      ch.push(chip('Bar crossing risk','warn'));
+    }
+    if(i.tripType==='remote'){
+      if(decision==='GO') decision='GO — WATCH';
+      if(reason === 'Healthy margin and conditions fit the plan.') reason='Remote run: carry extra reserve and keep a backup plan.';
+      ch.push(chip('Remote run: carry extra reserve','warn'));
+    }
+    const conf = decisionConfidence(mode, dq, marginPct, i, decision, riskScore);
+    if(auxFuelLitres > 0) ch.push(chip(`${fmt(auxFuelLitres,0)}L aux fuel counted`, 'info'));
+    if(est.weightInfo && est.weightInfo.adjusted) ch.push(chip(`weight auto-sanity: ${fmt(est.weightInfo.entered,0)}→${fmt(est.weightInfo.weight,0)}kg`, 'warn'));
+    if(safeRange && totalKm){ const ratio=totalKm/safeRange; ch.push(chip(ratio<=.6?'Comfortable range':ratio<=.9?'Tight range':'Range exceeded', ratio<=.6?'info':ratio<=.9?'warn':'bad')); }
+    ch.push(chip(`${acc.label} accuracy`, mode === 'estimate' ? 'warn' : 'info'));
+    ch.push(chip(`${fmt(returnBias*100,0)}% return bias`, returnBias > .18 ? 'warn' : 'info'));
+    if(i.windAngle !== 'unknown') ch.push(chip(`Wind ${i.windAngle}`, i.windAngle === 'against' ? 'warn' : 'info'));
+    ch.push(chip(`${fmt(est.loadFrac*100,0)}% estimated engine load`, 'info'));
+    if(est.penalty>.25) ch.push(chip('High condition penalty','warn'));
+    if(wot && burn) ch.push(chip(`WOT ≈ ${(wot/burn).toFixed(1)}× cruise burn`, 'info'));
+    if(i.hp && i.weight && est.hpWeightRatio < 9) ch.push(chip('Underpowered/heavy load bias','warn'));
+    $('chips').innerHTML = ch.join('') || chip('Ready','info');
+    setDecision(decision, conf, reason);
+
+    const engineTxt = `${i.engine || i.hp + 'hp engine'} (${i.engineType.replace(/-/g,' ')})`;
+    const weightNote = est.weightInfo && est.weightInfo.adjusted ? ` Entered weight ${fmt(est.weightInfo.entered,0)}kg looks low for this hull, so the fuel model used ${fmt(est.weightInfo.weight,0)}kg as a sanity floor. Update loaded weight if you know the real number.` : '';
+    const auxNote = auxFuelLitres > 0 ? ` Fuel onboard is ${fmt(auxFuelLitres,0)}L above tank capacity, so Boat AI treats that as auxiliary/jerry fuel and counts it in range.` : '';
+    const profile = `Boat profile: ${i.loa}m ${i.hullType.replace('-', ' ')} around ${fmt(i.weight,0)}kg entered loaded weight, ${engineTxt}.${weightNote}${auxNote}`;
+    const fuelModel = `${acc.label} mode base is ${fmt(burn,1)} L/h at ${fmt(i.speedKn,1)}kn. V15 split-route maths: outbound ${fmt(outboundKm,0)}km at ${fmt(outboundBurn,1)} L/h = ${fmt(outboundFuel,0)}L, return ${fmt(returnKm,0)}km at ${fmt(returnBurn,1)} L/h = ${fmt(returnFuel,0)}L. Average planning burn is ${fmt(planningBurn,1)} L/h. Safe planning band: ${fmt(burnLow,1)}–${fmt(burnHigh,1)} L/h. Flat-water model estimate would be about ${fmt(est.baseCruise,1)} L/h.`;
+    const fuelPic = `Fuel accounting: ${fmt(i.fuelNow,0)}L onboard - ${fmt(tripFuel,0)}L trip fuel - ${fmt(reserveLitres,0)}L protected reserve = ${fmt(marginLitres,0)}L spare above reserve (${fmt(marginPct,1)}%). Nothing is hidden or unaccounted for.`;
+    const advice = [];
+    if(decision==='NO GO') advice.push('Do not run this plan as entered. Add fuel, reduce distance, pick a closer mark, or wait for a better weather window.');
+    if(decision==='CAUTION') advice.push('Keep cruise speed conservative, avoid WOT, and strongly consider extra fuel, shorter distance, or better conditions.');
+    if(decision==='GO — WATCH') advice.push('Fuel maths is acceptable, but watch the risk flags, keep reserve protected, and reassess before committing offshore or crossing a bar.');
+    if(i.windAngle==='against') advice.push('You marked wind/sea mostly against the run. Plan lower speed, more fuel burn and more fatigue.');
+    if(dq.score < 70) advice.push('Data quality is not high enough for a serious offshore call. Add missing boat specs or use calibrated/live fuel flow.');
+    if(decision==='GO') advice.push('Plan is inside the fuel model, but still keep reserve protected and reassess if wind/tide changes.');
+    if(i.trollHours>0) advice.push(`Trolling has been included at roughly ${fmt(est.trollBurn,1)} L/h for ${fmt(i.trollHours,1)} hours.`);
+    if(i.notes) advice.push(`You noted: “${i.notes}”. Treat that as another reason to stay conservative.`);
+    $('analysis').innerHTML = `<h3>Captain Briefing</h3><b>${decision}:</b> ${reason}<br><br><b>${profile}</b><br><br>${fuelModel}<br><br>${fuelPic}<ul>${advice.map(a=>`<li>${a}</li>`).join('')}</ul><br><span class="small">Launch foundation: Estimate now, Calibrated learning next, Live NMEA later. Fleet learning should use anonymised burn/speed/boat-class data only.</span>`;
+
+    const hist = document.createElement('div'); hist.className='hist'; hist.innerHTML = `<b>${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</b> · ${decision} · ${i.boatName} · ${fmt(totalKm,0)}km · reserve ${fmt(i.reserve,0)}% · ${acc.label} · base ${fmt(burn,1)}L/h · avg ${fmt(planningBurn,1)}L/h · fuel ${fmt(tripFuel,0)}L · spare ${fmt(marginLitres,0)}L (${fmt(marginPct,1)}%)`; $('history').prepend(hist);
+    lastRun = {decision, burn:planningBurn, rawBurn:burn, outboundBurn, returnBurn, outboundFuel, returnFuel, wot, safeRange, tripFuel, marginPct, marginLitres, trollFuel, mode, input:i, returnBiasPct:returnBias*100, dataQuality:dq.score};
+    renderFuelExplain(i, lastRun);
+    renderScenarios(i, lastRun);
+    return lastRun;
+  }
+
+  function saveProfile(){
+    const ids=['boatName','hullType','loa','beam','weight','fuelCapacity','engine','hp','engineCount','engineType','fuelNow','reserve','speed','tripKm','extraKm','trollHours','wind','swell','windAngle','load','tripType','notes'];
+    const data={}; ids.forEach(id=>data[id]=$(id).value); localStorage.setItem('oceancore_boat_profile_v3', JSON.stringify(data)); alert('Boat profile saved on this browser.');
+  }
+  function loadProfile(){ try{ const data=JSON.parse(localStorage.getItem('oceancore_boat_profile_v3')||'{}'); Object.entries(data).forEach(([id,v])=>{ if($(id)) $(id).value=v; }); }catch{} }
+  function reset(){ localStorage.removeItem('oceancore_boat_profile_v3'); location.reload(); }
+
+  function stopLive(){ if(liveTimer){clearInterval(liveTimer); liveTimer=null;} if(ws){try{ws.close()}catch{} ws=null;} $('liveStatus').textContent='Stopped.'; }
+  function handleLive(data){ latestLive=data; $('liveData').textContent=JSON.stringify(data,null,2); $('liveStatus').textContent=`Live packet received ${new Date().toLocaleTimeString()}. SOG ${data.sog_kn ?? '–'}kn, fuel ${data.fuel_flow_lph ?? '–'}L/h, depth ${data.depth_m ?? '–'}m.`; }
+  function startLive(){ stopLive(); const mode=$('liveSource').value;
+    if(mode==='sim'){ liveTimer=setInterval(()=>{ const t=Date.now()/1000; handleLive({sog_kn: +(21.5+Math.sin(t/6)*1.3).toFixed(1), fuel_flow_lph:+(30+Math.sin(t/5)*3).toFixed(1), rpm: Math.round(4100+Math.sin(t/4)*180), depth_m:+(18+Math.sin(t/9)*4).toFixed(1), water_temp_c:24.6, engine_temp_c:+(62+Math.sin(t/7)*2).toFixed(1), battery_v:+(12.7+Math.sin(t/8)*.08).toFixed(2), fuel_remaining_l:num('fuelNow',150)}); },1000); $('liveStatus').textContent='Simulator running.'; }
+    if(mode==='paste'){ try{ handleLive(JSON.parse($('pasteJson').value)); }catch(e){ $('liveStatus').textContent='JSON paste error: '+e.message; } }
+    if(mode==='ws'){ try{ ws=new WebSocket($('wsUrl').value); ws.onopen=()=>$('liveStatus').textContent='WebSocket connected. Waiting for NMEA gateway packets...'; ws.onmessage=(ev)=>{ try{ handleLive(JSON.parse(ev.data)); }catch{ $('liveData').textContent=ev.data; } }; ws.onerror=()=>$('liveStatus').textContent='WebSocket error. Make sure the local OceanCore/NMEA gateway is running.'; ws.onclose=()=>$('liveStatus').textContent='WebSocket closed.'; }catch(e){ $('liveStatus').textContent='WebSocket failed: '+e.message; } }
+  }
+  function applyLive(){ if(!latestLive){ $('liveStatus').textContent='No live data to apply yet.'; return; } if(latestLive.sog_kn) $('speed').value=latestLive.sog_kn; if(latestLive.fuel_remaining_l) $('fuelNow').value=latestLive.fuel_remaining_l; if(latestLive.fuel_flow_lph){ $('manualToggle').checked=false; $('manualBox').classList.add('hidden'); } runPlanner('live'); }
+  function getSbConfig(){
+    const url = ($('sbUrl')?.value || localStorage.getItem('oceancore_supabase_url') || '').trim().replace(/\/$/, '');
+    const anon = ($('sbAnon')?.value || localStorage.getItem('oceancore_supabase_anon') || '').trim();
+    return {url, anon};
+  }
+  function saveSbConfig(){
+    const {url, anon} = getSbConfig();
+    if(!url || !anon){ $('dbStatus').textContent = 'Need Supabase URL and anon key.'; return; }
+    localStorage.setItem('oceancore_supabase_url', url);
+    localStorage.setItem('oceancore_supabase_anon', anon);
+    $('dbStatus').textContent = 'Supabase connection saved locally in this browser.';
+  }
+  function loadSbConfig(){
+    if($('sbUrl')) $('sbUrl').value = localStorage.getItem('oceancore_supabase_url') || '';
+    if($('sbAnon')) $('sbAnon').value = localStorage.getItem('oceancore_supabase_anon') || '';
+  }
+  async function sbFetch(table, params){
+    const {url, anon} = getSbConfig();
+    if(!url || !anon) throw new Error('Missing Supabase URL or anon key');
+    const qs = new URLSearchParams(params);
+    const res = await fetch(`${url}/rest/v1/${table}?${qs.toString()}`, {
+      headers: { apikey: anon, Authorization: `Bearer ${anon}`, Accept: 'application/json' }
+    });
+    if(!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+    return res.json();
+  }
+  function materialToHull(material='', hull=''){
+    const x = `${material} ${hull}`.toLowerCase();
+    if(x.includes('cat')) return 'cat';
+    if(x.includes('plate')) return 'plate-ally';
+    if(x.includes('aluminium') || x.includes('alloy')) return 'tinny';
+    if(x.includes('fibreglass') || x.includes('glass')) return 'glass-mono';
+    return 'glass-mono';
+  }
+  function engineTechToType(stroke='', induction='', model=''){
+    const x = `${stroke} ${induction} ${model}`.toLowerCase();
+    if(x.includes('optimax') || x.includes('dfi') || x.includes('direct')) return 'dfi-2stroke';
+    if(x.includes('diesel')) return 'diesel';
+    if(x.includes('carb') || (x.includes('2') && x.includes('stroke'))) return 'carb-2stroke';
+    if(x.includes('4') || x.includes('four')) return 'fourstroke';
+    return 'unknown';
+  }
+  function escapeHtml(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  async function testSupabase(){
+    try{ saveSbConfig(); const rows = await sbFetch('boat_models', {select:'id,brand,model', limit:'1'}); $('dbStatus').textContent = `Connected. Found ${rows.length ? 'boat model data' : 'the table, but no rows yet'}.`; }
+    catch(e){ $('dbStatus').textContent = 'Connection failed: ' + e.message; }
+  }
+  function cleanSearchText(value){
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s.\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function uniqueById(rows){
+    const map = new Map();
+    (rows || []).forEach(r => {
+      const key = r.id || `${r.brand || ''}|${r.model || ''}|${r.hp || ''}`;
+      if(!map.has(key)) map.set(key, r);
+    });
+    return [...map.values()];
+  }
+  function postgrestOrFor(columns, term){
+    const safe = cleanSearchText(term);
+    if(!safe) return '';
+    return `(${columns.map(c => `${c}.ilike.*${safe}*`).join(',')})`;
+  }
+  async function searchBoats(){
+    try{
+      saveSbConfig();
+      const raw = $('boatSearch').value || '';
+      const q = cleanSearchText(raw);
+      const select = 'id,brand,model,year_from,year_to,material,loa_m,beam_m,fuel_l,dry_tow_weight_kg,min_hp,max_hp,persons,data_quality,source_name';
+      let rows = [];
+
+      if(!q){
+        rows = await sbFetch('boat_models', {select, limit:'30', order:'brand.asc'});
+      } else {
+        // 1) Search the full phrase first. Example: "haines hunter".
+        try{
+          rows = rows.concat(await sbFetch('boat_models', {select, limit:'30', order:'brand.asc', or: postgrestOrFor(['brand','model','material'], q)}));
+        }catch(_){}
+
+        // 2) Then search each word as a fallback. Example: "hains hunter" can still find "Hunter" entries.
+        const parts = q.split(' ').filter(w => w.length >= 2).slice(0, 4);
+        for(const part of parts){
+          try{
+            rows = rows.concat(await sbFetch('boat_models', {select, limit:'20', order:'brand.asc', or: postgrestOrFor(['brand','model','material'], part)}));
+          }catch(_){}
+        }
+        rows = uniqueById(rows).slice(0, 30);
+      }
+
+      window.__ocBoatRows = rows;
+      $('boatResults').innerHTML = rows.length
+        ? rows.map((r,i)=>`<div class="dbItem"><div><b>${escapeHtml(r.brand)} ${escapeHtml(r.model)}</b><div class="dbMeta">${escapeHtml(r.material||'unknown')} · ${r.loa_m||'–'}m x ${r.beam_m||'–'}m · fuel ${r.fuel_l||'–'}L · HP ${r.min_hp||'–'}-${r.max_hp||'–'} · ${escapeHtml(r.data_quality||'seed')}</div></div><button data-boat-idx="${i}">Use</button></div>`).join('')
+        : `<div class="small"><b>No matching boats in Supabase yet.</b><br>Try a shorter search like "hunter", "bar", "quintrex", or use manual entry. If it still does not show, that model is not in your seed data yet.</div>`;
+      document.querySelectorAll('[data-boat-idx]').forEach(b=>b.addEventListener('click',()=>applyBoat(rows[Number(b.dataset.boatIdx)])));
+      $('dbStatus').textContent = `Boat search returned ${rows.length} result(s).`;
+    }catch(e){ $('dbStatus').textContent = 'Boat search failed: ' + e.message; }
+  }
+  async function searchEngines(){
+    try{
+      saveSbConfig();
+      const raw = $('engineSearch').value || '';
+      const q = cleanSearchText(raw);
+      const select = 'id,brand,model,hp,engine_type,fuel_type';
+      let rows = [];
+
+      if(!q){
+        rows = await sbFetch('outboard_models', {select, limit:'30', order:'brand.asc'});
+      } else {
+        try{
+          rows = rows.concat(await sbFetch('outboard_models', {select, limit:'30', order:'brand.asc', or: postgrestOrFor(['brand','model'], q)}));
+        }catch(_){}
+        const parts = q.split(' ').filter(w => w.length >= 2).slice(0, 4);
+        for(const part of parts){
+          try{
+            rows = rows.concat(await sbFetch('outboard_models', {select, limit:'20', order:'brand.asc', or: postgrestOrFor(['brand','model'], part)}));
+          }catch(_){}
+        }
+        rows = uniqueById(rows).slice(0, 30);
+      }
+
+      window.__ocEngineRows = rows;
+      $('engineResults').innerHTML = rows.length
+        ? rows.map((r,i)=>`<div class="dbItem"><div><b>${escapeHtml(r.brand)} ${escapeHtml(r.model)}</b><div class="dbMeta">${r.hp||'–'}hp · ${escapeHtml(r.engine_type || engineTechToType('', '', `${r.brand||''} ${r.model||''}`))}</div></div><button data-engine-idx="${i}">Use</button></div>`).join('')
+        : `<div class="small"><b>No matching engines in Supabase yet.</b><br>Try "Mercury", "Yamaha", "Suzuki", "150", or use manual entry and add the model to your seed data later.</div>`;
+      document.querySelectorAll('[data-engine-idx]').forEach(b=>b.addEventListener('click',()=>applyEngine(rows[Number(b.dataset.engineIdx)])));
+      $('dbStatus').textContent = `Engine search returned ${rows.length} result(s).`;
+    }catch(e){ $('dbStatus').textContent = 'Engine search failed: ' + e.message; }
+  }
+  function applyBoat(r){
+    if(!r) return;
+    $('boatName').value = `${r.brand || ''} ${r.model || ''}`.trim();
+    $('hullType').value = materialToHull(r.material, '');
+    if(r.loa_m) $('loa').value = r.loa_m;
+    if(r.beam_m) $('beam').value = r.beam_m;
+    if(r.fuel_l) $('fuelCapacity').value = r.fuel_l;
+    const dryTowWeight = Number(r.dry_tow_weight_kg || 0);
+    if(dryTowWeight) $('weight').value = Math.round(dryTowWeight + 300); // basic loaded fishing estimate; user can adjust
+    if(r.max_hp && !$('hp').value) $('hp').value = r.max_hp;
+    $('dbStatus').textContent = `Applied boat: ${r.brand} ${r.model}. Check loaded weight because real fuel burn depends heavily on actual load.`;
+    saveProfile(); runPlanner();
+  }
+  function compactEngineName(r){
+    const brand = String(r.brand || '').trim();
+    let model = String(r.model || '').trim();
+    if(brand && model.toLowerCase().startsWith(brand.toLowerCase() + ' ')) model = model.slice(brand.length).trim();
+    return `${brand} ${model}`.trim();
+  }
+  function applyEngine(r){
+    if(!r) return;
+    $('engine').value = compactEngineName(r);
+    if(r.hp) $('hp').value = r.hp;
+    $('engineType').value = engineTechToType(r.engine_type || '', '', `${r.brand} ${r.model}`);
+    $('dbStatus').textContent = `Applied engine: ${compactEngineName(r)}. Boat AI will now use this HP and engine tech for fuel estimates.`;
+    saveProfile(); runPlanner();
+  }
+
+  function healthCheck(){ const hrs=num('engineHours'), last=num('lastService'), due=(hrs&&last)?hrs-last:NaN; const fault=$('fault').value.trim(), cool=$('coolingNote').value.trim(); const notes=[]; if(Number.isFinite(due)){ notes.push(due>=100?`Service is due/overdue: ${due} hours since last service.`:due>=80?`Service coming soon: ${due} hours since last service.`:`Service interval looks okay: ${due} hours since last service.`); } if(cool) notes.push(`Cooling note: ${cool}. If pressure drops or telltale is hot, check intake, impeller, poppet/thermostats and blockages before running hard.`); if(fault) notes.push(`Fault note: ${fault}. Log this with date/time and avoid offshore runs until the cause is known if it affects cooling, steering, fuel, battery, bilge or alarms.`); $('analysis').innerHTML=`<h3>Boat Health Check</h3><ul>${(notes.length?notes:['Add engine hours, last service and symptoms to get a health check.']).map(n=>`<li>${n}</li>`).join('')}</ul>`; setDecision(notes.some(n=>n.includes('overdue')||n.includes('avoid offshore'))?'CAUTION':'READY',70,'Maintenance check updated.'); }
+
+  $('runBtn').addEventListener('click',()=>runPlanner()); $('saveBtn').addEventListener('click',saveProfile); $('resetBtn').addEventListener('click',reset); $('connectBtn').addEventListener('click',startLive); $('stopLiveBtn').addEventListener('click',stopLive); $('applyLiveBtn').addEventListener('click',applyLive); $('maintBtn').addEventListener('click',healthCheck); $('clearChecks').addEventListener('click',()=>document.querySelectorAll('#checklist input').forEach(x=>x.checked=false));
+  $('saveSbBtn')?.addEventListener('click',saveSbConfig); $('testSbBtn')?.addEventListener('click',testSupabase); $('searchBoatBtn')?.addEventListener('click',searchBoats); $('searchEngineBtn')?.addEventListener('click',searchEngines); $('clearDbBtn')?.addEventListener('click',()=>{ $('boatResults').innerHTML=''; $('engineResults').innerHTML=''; $('dbStatus').textContent='Results cleared.'; });
+  $('boatSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchBoats(); }); $('engineSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchEngines(); });
+  $('addCalBtn').addEventListener('click',()=>addCalibrationPoint({speedKn:num('calSpeed'), rpm:num('calRpm'), realBurn:num('calBurn'), load:$('calLoad').value, sea:$('calSea').value}));
+  $('useCurrentCalBtn').addEventListener('click',()=>{ const i=collect(); const burn = latestLive?.fuel_flow_lph || i.manualBurn; $('calSpeed').value=i.speedKn||''; $('calBurn').value=burn||''; $('calLoad').value=i.load; $('calSea').value=i.swell; });
+  $('clearCalBtn').addEventListener('click',()=>{ if(confirm('Clear saved calibration points for this browser?')) saveCalibrations([]); });
+  $('sendLearnBtn').addEventListener('click',sendLearningPacket);
+  $('saveActualTripBtn')?.addEventListener('click', saveActualTrip);
+  $('clearTripLogsBtn')?.addEventListener('click',()=>{ if(confirm('Clear local actual trip logs?')) saveTripLogs([]); });
+  loadProfile(); loadSbConfig(); renderCalibrations(); runPlanner();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{
+  "name": "OceanCore AI",
+  "short_name": "OceanCore",
+  "description": "Plan fishing trips, log catches, read marine conditions, manage boat safety, and use AI fishing support.",
+  "id": "/app/",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait",
+  "background_color": "#040813",
+  "theme_color": "#040813",
+  "categories": ["sports", "navigation", "weather", "lifestyle"],
+  "lang": "en-AU",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/app/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app/assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log Catch",
+      "short_name": "Catch",
+      "description": "Open OceanCore Catch Log.",
+      "url": "/app/#catch",
+      "icons": [{ "src": "/app/assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Map & Conditions",
+      "short_name": "Map",
+      "description": "Open marine map and conditions.",
+      "url": "/app/#map",
+      "icons": [{ "src": "/app/assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
