@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/sw.js",
+      "destination": "/fishing-ai-frontend/sw.js"
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "destination": "/fishing-ai-frontend/manifest.webmanifest"
+    },
+    {
+      "source": "/offline.html",
+      "destination": "/fishing-ai-frontend/offline.html"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/fishing-ai-frontend/assets/:path*"
+    },
+    {
       "source": "/health",
       "destination": "https://fishing-ai-backend.onrender.com/health"
     },
