@@ -25,6 +25,10 @@
       "destination": "https://fishing-ai-backend.onrender.com/auth/:path*"
     },
     {
+      "source": "/admin/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/admin/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://fishing-ai-backend.onrender.com/api/:path*"
     },
