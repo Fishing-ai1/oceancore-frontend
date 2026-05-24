@@ -718,6 +718,11 @@
       <button class="btn ghost" id="btnGateResetPassword">Reset Password</button>
       <button class="btn ghost" id="btnGateMagicLink">Magic Link</button>
     </div>
+    <div class="auth-actions">
+      <button class="btn ghost" id="btnGateUseCloudApi" type="button">Use cloud API</button>
+      <button class="btn ghost" id="btnGateUseLocalApi" type="button">Use local backend</button>
+      <button class="btn ghost" id="btnGateResetDevice" type="button">Clear saved login</button>
+    </div>
 
     <div class="legal-signup-box">
       <label class="chip"><input type="checkbox" id="gateSignupLegalAgree"/> I agree to the Terms, Privacy Policy, and Marine Disclaimer</label>
@@ -1838,9 +1843,31 @@ function currentHttpOrigin(){
   return /^https?:$/i.test(window.location.protocol) ? window.location.origin : '';
 }
 
+function isLocalDevApiUrl(value){
+  try{
+    const url = new URL(normalizeApiUrl(value));
+    const host = url.hostname;
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    );
+  }catch(_e){
+    return false;
+  }
+}
+
 function localBackendUrl(){
-  const origin = currentHttpOrigin();
-  if(origin && /^(https?:\/\/)(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return origin;
+  if(/^https?:$/i.test(window.location.protocol)){
+    const host = window.location.hostname;
+    if(host === 'localhost' || host === '127.0.0.1' || host === '::1'){
+      if(host === '::1') return `${window.location.protocol}//[::1]:4000`;
+      return `${window.location.protocol}//${host}:4000`;
+    }
+  }
   return 'http://localhost:4000';
 }
 
@@ -1854,8 +1881,10 @@ function defaultApiUrl(){
   const origin = normalizeApiUrl(currentHttpOrigin());
   const servedByBackend = origin && window.location.pathname.startsWith('/app');
   if(servedByBackend) return origin;
+  if(window.location.protocol === 'file:'){
+    return saved && isLocalDevApiUrl(saved) ? saved : localBackendUrl();
+  }
   if(saved && !saved.includes('vercel.app:4000')) return saved;
-  if(window.location.protocol === 'file:') return localBackendUrl();
   return configuredApiUrl();
 }
 
@@ -2104,6 +2133,21 @@ function setAuthFeedback(msg){
   setStatusMessage('gateMsg', text);
 }
 
+function apiReachabilityMessage(apiBase){
+  const base = normalizeApiUrl(apiBase || state.apiUrl || defaultApiUrl());
+  if(window.location.protocol === 'file:'){
+    return `Could not reach ${base}. This page is opened as a local file, so cloud backends can reject it as Origin: null. For testing, run the local backend and click Use local backend, or open the hosted/mobile app build.`;
+  }
+  const origin = currentHttpOrigin();
+  if(origin && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(origin) && !/(:4000)$/i.test(origin)){
+    return `Could not reach ${base}. If you are testing from ${origin}, add that origin to ALLOWED_ORIGINS on the backend and redeploy, or click Use local backend with the backend running on port 4000.`;
+  }
+  if(origin){
+    return `Could not reach ${base}. Add ${origin} to the backend ALLOWED_ORIGINS setting and redeploy/restart the backend, then try again.`;
+  }
+  return `Could not reach ${base}. Check the backend URL, CORS allowed origins, and whether the backend is running.`;
+}
+
 function mirrorAuthEmail(value = ''){
   const next = String(value || '').trim();
   if($('authEmail')) $('authEmail').value = next;
@@ -2337,9 +2381,10 @@ async function refreshSession(){
   if(!state.refreshToken) return false;
   if(state.refreshingSession) return state.refreshingSession;
 
+  const apiBase = normalizeApiUrl(state.apiUrl);
   state.refreshingSession = (async ()=>{
     try{
-      const res = await fetch(`${normalizeApiUrl(state.apiUrl)}/auth/refresh`, {
+      const res = await fetch(`${apiBase}/auth/refresh`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ refresh_token: state.refreshToken }),
@@ -2355,6 +2400,7 @@ async function refreshSession(){
       return true;
     }catch(_e){
       clearAuth();
+      setAuthFeedback(apiReachabilityMessage(apiBase));
       return false;
     }finally{
       state.refreshingSession = null;
@@ -2455,7 +2501,7 @@ async function api(path, opts = {}, allowRefresh = true, apiBaseOverride = ''){
   try{
     res = await fetch(`${apiBase}${path}`, {...opts, headers});
   }catch(_e){
-    const err = new Error(`Could not reach ${apiBase}. If backend is on your PC and frontend is on your phone, do not use 127.0.0.1. Use your PC's LAN IP like http://192.168.x.x:4000 and run backend with HOST=0.0.0.0.`);
+    const err = new Error(apiReachabilityMessage(apiBase));
     err.network = true;
     err.apiBase = apiBase;
     throw err;
@@ -4846,13 +4892,32 @@ async function saveApiUrl(){
   await refreshHealth();
 }
 
+async function useCloudApiUrl(){
+  state.apiUrl = configuredApiUrl();
+  localStorage.setItem('oceancore_api_url', state.apiUrl);
+  if($('apiUrl')) $('apiUrl').value = state.apiUrl;
+  setAuthFeedback(`Using cloud backend: ${state.apiUrl}`);
+  await refreshHealth();
+}
+
 async function useLocalApiUrl(){
   state.apiUrl = normalizeApiUrl(localBackendUrl());
   localStorage.setItem('oceancore_api_url', state.apiUrl);
-  $('apiUrl').value = state.apiUrl;
+  if($('apiUrl')) $('apiUrl').value = state.apiUrl;
   setStatusMessage('authMsg', `Using local backend: ${state.apiUrl}`);
+  setStatusMessage('gateMsg', `Using local backend: ${state.apiUrl}`);
   await refreshHealth();
   await loadCommunityPosts().catch(()=>null);
+}
+
+async function resetGateDeviceState(){
+  clearAuth();
+  clearAuthPasswords();
+  localStorage.removeItem('oceancore_api_url');
+  state.apiUrl = defaultApiUrl();
+  if($('apiUrl')) $('apiUrl').value = state.apiUrl;
+  setAuthFeedback(`Cleared saved login on this device. Using ${state.apiUrl}.`);
+  await refreshHealth();
 }
 
 
@@ -5554,6 +5619,9 @@ $('btnGateSignIn').addEventListener('click', ()=>signIn('gate'));
 $('btnGateSignUp').addEventListener('click', ()=>signUp('gate'));
 $('btnGateResetPassword').addEventListener('click', ()=>sendResetPassword('gate'));
 $('btnGateMagicLink').addEventListener('click', ()=>sendMagicLink('gate'));
+$('btnGateUseCloudApi')?.addEventListener('click', useCloudApiUrl);
+$('btnGateUseLocalApi')?.addEventListener('click', useLocalApiUrl);
+$('btnGateResetDevice')?.addEventListener('click', resetGateDeviceState);
 $('btnGateReadLegal')?.addEventListener('click', ()=>{
   const panel = $('gateLegalDetails');
   const btn = $('btnGateReadLegal');
