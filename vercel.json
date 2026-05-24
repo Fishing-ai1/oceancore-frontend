@@ -1,0 +1,36 @@
+{
+  "rewrites": [
+    {
+      "source": "/health",
+      "destination": "https://fishing-ai-backend.onrender.com/health"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/api/:path*"
+    },
+    {
+      "source": "/ai/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/ai/:path*"
+    },
+    {
+      "source": "/community/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/community/:path*"
+    },
+    {
+      "source": "/billing/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/billing/:path*"
+    },
+    {
+      "source": "/legal/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/legal/:path*"
+    },
+    {
+      "source": "/species-detect",
+      "destination": "https://fishing-ai-backend.onrender.com/species-detect"
+    }
+  ]
+}

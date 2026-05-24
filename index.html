@@ -1873,17 +1873,28 @@ function localBackendUrl(){
 
 function configuredApiUrl(){
   const meta = document.querySelector('meta[name="oceancore-api-url"]')?.content || '';
-  return normalizeApiUrl(window.OCEANCORE_API_URL || meta || 'https://fishing-ai-backend.onrender.com');
+  return normalizeApiUrl(window.OCEANCORE_API_URL || meta || sameOriginProxyApiUrl() || 'https://fishing-ai-backend.onrender.com');
+}
+
+function sameOriginProxyApiUrl(){
+  const origin = normalizeApiUrl(currentHttpOrigin());
+  return /^https:\/\/oceancore-frontend\.vercel\.app$/i.test(origin) ? origin : '';
+}
+
+function isRenderCloudApiUrl(value){
+  return /^https:\/\/fishing-ai-backend\.onrender\.com$/i.test(normalizeApiUrl(value));
 }
 
 function defaultApiUrl(){
   const saved = normalizeApiUrl(localStorage.getItem('oceancore_api_url') || '');
   const origin = normalizeApiUrl(currentHttpOrigin());
+  const proxyApi = sameOriginProxyApiUrl();
   const servedByBackend = origin && window.location.pathname.startsWith('/app');
   if(servedByBackend) return origin;
   if(window.location.protocol === 'file:'){
     return saved && isLocalDevApiUrl(saved) ? saved : localBackendUrl();
   }
+  if(proxyApi && (!saved || isRenderCloudApiUrl(saved))) return proxyApi;
   if(saved && !saved.includes('vercel.app:4000')) return saved;
   return configuredApiUrl();
 }
