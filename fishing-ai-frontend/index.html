@@ -564,37 +564,38 @@
        OceanCore mobile app mode — bottom tabs + app-like screens
        ============================================================ */
     .mobile-nav{
-      position:fixed;left:0;right:0;bottom:0;z-index:160;min-height:76px;
-      display:none;align-items:center;justify-content:space-around;gap:4px;
-      padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+      position:fixed;left:0;right:0;bottom:0;z-index:160;min-height:118px;
+      display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;
+      padding:10px 10px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid rgba(148,163,184,.18);
       background:linear-gradient(180deg,rgba(6,10,22,.86),rgba(2,5,14,.98));
       backdrop-filter:blur(18px);box-shadow:0 -18px 40px rgba(0,0,0,.42);
     }
     .mobile-nav button{
-      appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;
-      flex:1 1 0;min-width:0;min-height:54px;border-radius:16px;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;gap:2px;font-size:19px;font-weight:950;
+      appearance:none;border:1px solid rgba(148,163,184,.16);
+      background:linear-gradient(180deg,rgba(15,23,42,.78),rgba(7,12,24,.88));
+      color:#b9c8e7;cursor:pointer;min-width:0;min-height:48px;border-radius:14px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+      font-size:15px;font-weight:950;box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
     }
     .mobile-nav button span{font-size:10px;letter-spacing:.04em;font-weight:900}
-    .mobile-nav button.active{color:#04121a;background:linear-gradient(135deg,var(--brand2),var(--brand));box-shadow:0 10px 26px rgba(73,231,255,.22)}
+    .mobile-nav button.active{color:#04121a;background:linear-gradient(135deg,var(--brand2),var(--brand));border-color:rgba(125,255,213,.58);box-shadow:0 10px 26px rgba(73,231,255,.22)}
     .mobile-nav button.plus-tab{
-      flex:0 0 66px;width:66px;height:66px;min-height:66px;border-radius:999px;
-      margin-top:-28px;font-size:36px;line-height:1;color:#fff;
-      background:radial-gradient(circle at 30% 20%,rgba(73,231,255,.35),transparent 30%),#020b18;
-      border:1px solid rgba(73,231,255,.42);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 30px rgba(73,231,255,.22);
+      font-size:22px;line-height:1;color:#fff;
+      background:radial-gradient(circle at 30% 20%,rgba(73,231,255,.32),transparent 34%),linear-gradient(180deg,rgba(9,20,44,.94),rgba(3,8,20,.98));
+      border-color:rgba(73,231,255,.42);box-shadow:0 10px 28px rgba(0,0,0,.42),0 0 24px rgba(73,231,255,.16);
     }
-    .mobile-nav button.plus-tab span{font-size:10px;margin-top:-2px;color:#d8f8ff}
+    .mobile-nav button.plus-tab span{font-size:10px;color:#d8f8ff}
     .mobile-nav button.plus-tab.active{color:#04121a;background:linear-gradient(135deg,var(--brand2),var(--brand));}
     .mobile-nav button.admin-tab{display:none}
     @media(max-width:900px){
       body{overscroll-behavior-y:none}
-      .shell{padding:10px 10px calc(96px + env(safe-area-inset-bottom));max-width:100%}
+      .shell{padding:10px 10px calc(136px + env(safe-area-inset-bottom));max-width:100%}
       .topbar{position:sticky;top:0;z-index:70;margin:-10px -10px 10px;padding:10px;background:rgba(2,5,14,.82);backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,163,184,.12)}
       .brand{padding:9px 10px;border-radius:18px;box-shadow:none}.brand h1{font-size:14px}.brand .subtle{display:none}.logo{width:34px;height:34px;border-radius:12px}
       .app-actions{margin-left:auto;gap:7px}.top-icon{width:38px;min-width:38px;height:38px}.pro-pill{height:38px;min-width:68px;padding:0 10px;font-size:12px}
       .status{display:none}
-      .layout{display:block}.nav{display:none!important}.mobile-nav{display:flex}
+      .layout{display:block}.nav{display:none!important}.mobile-nav{display:grid}
       main{min-height:calc(100vh - 110px)}.section.active{animation:appScreenIn .16s ease-out}
       #section-home .grid-4{grid-template-columns:repeat(2,1fr)}
       #section-home .grid-2{grid-template-columns:1fr}
@@ -1810,11 +1811,16 @@
 </div>
 
 <div class="mobile-nav" aria-label="Mobile app navigation">
-  <button class="mobile-tab active" data-section="home" type="button">⌂<span>Home</span></button>
-  <button class="mobile-tab" data-section="map" type="button">⌖<span>Map</span></button>
+  <button class="mobile-tab active" data-section="home" type="button">H<span>Home</span></button>
   <button class="mobile-tab plus-tab" data-section="catch" type="button">+<span>Catch</span></button>
   <button class="mobile-tab" data-section="ai" type="button">AI<span>Chat</span></button>
-  <button class="mobile-tab" data-section="boat-ai" type="button">⚓<span>Boat</span></button>
+  <button class="mobile-tab" data-section="map" type="button">M<span>Map</span></button>
+  <button class="mobile-tab" data-section="boat-ai" type="button">B<span>Boat</span></button>
+  <button class="mobile-tab" data-section="community" type="button">C<span>Crew</span></button>
+  <button class="mobile-tab" data-section="areas" type="button">S<span>Saved</span></button>
+  <button class="mobile-tab" data-section="stats" type="button">I<span>Stats</span></button>
+  <button class="mobile-tab" data-section="account" type="button">A<span>Settings</span></button>
+  <button class="mobile-tab" data-section="billing" type="button">P<span>Plans</span></button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
