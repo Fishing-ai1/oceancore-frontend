@@ -417,6 +417,25 @@
     .plan-card ul{margin:10px 0 0;padding-left:18px;color:#bfd0ee;font-size:13px;line-height:1.7}
     .plan-current{display:inline-flex;padding:5px 9px;border-radius:999px;border:1px solid rgba(124,249,189,.35);color:var(--good);font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
     .ad-slot{padding:12px;border-radius:14px;border:1px dashed rgba(73,231,255,.32);background:rgba(73,231,255,.06);color:#bdf8ff;font-size:12px;text-align:center;letter-spacing:.08em;text-transform:uppercase}
+    .reward-hero{padding:18px;border:1px solid rgba(73,231,255,.34);background:linear-gradient(135deg,rgba(73,231,255,.12),rgba(124,249,189,.05));margin-bottom:14px}
+    .reward-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .reward-balance{font-size:40px;font-weight:950;line-height:1;color:#eaffff}
+    .reward-balance small{display:block;margin-top:7px;color:var(--brand);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+    .reward-level{font-size:20px;font-weight:950}
+    .reward-progress{height:10px;border-radius:999px;background:rgba(148,163,184,.16);overflow:hidden;margin-top:14px}
+    .reward-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand2),var(--brand));border-radius:999px;transition:width .25s ease}
+    .reward-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .reward-catalog{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .reward-catalog-item{padding:14px;border:1px solid var(--border);background:rgba(7,12,24,.62)}
+    .reward-catalog-item h4{margin:0 0 6px}
+    .reward-catalog-item p{margin:0;color:#bfd0ee;font-size:12px;line-height:1.5}
+    .reward-points{color:var(--brand);font-weight:900}
+    .reward-activity{display:grid;gap:8px}
+    .reward-activity-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:11px 0;border-bottom:1px solid rgba(148,163,184,.13)}
+    .reward-activity-row:last-child{border-bottom:0}
+    .reward-activity-row strong{display:block;font-size:13px}
+    .reward-activity-row small{color:var(--muted)}
+    .reward-activity-row b{color:var(--good);font-size:14px}
     .admin-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
     .admin-tools .fld{min-width:220px}
     .admin-user-card,.admin-catch-card{cursor:pointer}
@@ -432,7 +451,7 @@
     @media(max-width:980px){.admin-detail-grid{grid-template-columns:1fr}}
 
     @media(max-width:980px){
-      .chat-shell,.stats-grid,.admin-grid,.pricing-grid{grid-template-columns:1fr}
+      .chat-shell,.stats-grid,.admin-grid,.pricing-grid,.reward-grid,.reward-catalog{grid-template-columns:1fr}
       .layout{grid-template-columns:1fr}
       .nav{position:static}
       .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
@@ -735,11 +754,11 @@
     <div id="gateLegalDetails" class="muted-box gate-legal-details" hidden>
       <div>
         <strong>Terms of Service</strong>
-        <p>OceanCore AI is a beta trip planning, catch logging, boating, and marine assistant app. You are responsible for how you use the information in real conditions.</p>
+        <p>OceanCore AI is a beta trip planning, catch logging, boating, marine assistant, and rewards app. OceanPoints have no cash value and may be withheld or reversed for duplicate, unsafe, misleading, or abusive activity.</p>
       </div>
       <div>
         <strong>Privacy Policy</strong>
-        <p>The app may use account details, profile settings, catch logs, saved areas, uploads, AI prompts, and optional location data to provide your OceanCore features.</p>
+        <p>The app may use account details, profile settings, catch logs, saved areas, uploads, AI prompts, optional location data, and contribution activity to provide OceanCore features and calculate eligible OceanPoints.</p>
       </div>
       <div>
         <strong>Marine Disclaimer</strong>
@@ -793,6 +812,7 @@
       <button class="btn block nav-btn" data-section="community">Community</button>
       <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
       <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
+      <button class="btn block nav-btn" data-section="rewards">Rewards</button>
       <button class="btn block nav-btn" data-section="account">Account</button>
       <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
       <button class="btn block nav-btn" data-section="feedback">Feedback</button>
@@ -827,6 +847,7 @@
             <button class="btn" data-jump="map">Open Map</button>
             <button class="btn" data-jump="boat-ai">Boat AI</button>
             <button class="btn ghost" data-jump="community">Community</button>
+            <button class="btn ghost" data-jump="rewards">Rewards</button>
           </div>
         </div>
 
@@ -1623,6 +1644,65 @@
         </div>
       </section>
 
+      <section class="section" id="section-rewards">
+        <div class="reward-hero">
+          <div class="reward-hero-top">
+            <div>
+              <div class="chip signal green">OceanCore Rewards</div>
+              <h2 style="margin:10px 0 6px">Your contribution should count.</h2>
+              <p class="subtle" style="margin:0">Earn OceanPoints when your catches, reports, clips, and community activity make OceanCore more useful.</p>
+            </div>
+            <div class="reward-balance"><span id="rewardBalance">0</span><small>OceanPoints</small></div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="reward-hero-top"><div class="reward-level" id="rewardLevel">Level 1 - Deckhand</div><div class="subtle" id="rewardNextLevel">Start contributing to level up.</div></div>
+            <div class="reward-progress" aria-label="Reward level progress"><span id="rewardProgressBar"></span></div>
+          </div>
+          <div class="row" style="margin-top:14px">
+            <button class="btn primary" id="btnSyncRewards" type="button">Sync My Activity</button>
+            <button class="btn" id="btnRefreshRewards" type="button">Refresh Points</button>
+            <button class="btn ghost" data-jump="community" type="button">Contribute to Community</button>
+          </div>
+          <div id="rewardsMsg" class="subtle" style="margin-top:10px">Sign in to load your OceanPoints.</div>
+        </div>
+
+        <div class="reward-grid">
+          <div class="stat"><div class="label">This Month</div><div class="value" id="rewardMonthPoints">0</div><div class="hint">Points earned during the current month.</div></div>
+          <div class="stat"><div class="label">Creator Program</div><div class="value" id="rewardCreatorStatus">Opening Soon</div><div class="hint">First 100 approved creators can qualify for Founder Creator benefits.</div></div>
+          <div class="stat"><div class="label">Reward Store</div><div class="value">In Review</div><div class="hint">Partner vouchers and giveaways will only open after terms and fulfilment are approved.</div></div>
+        </div>
+
+        <div class="grid-2" style="margin-top:14px">
+          <div class="panel">
+            <div class="hd"><h2>Recent OceanPoints</h2></div>
+            <div class="bd"><div id="rewardActivity" class="reward-activity"><div class="muted-box">No reward activity yet.</div></div></div>
+          </div>
+          <div class="panel">
+            <div class="hd"><h2>Ways to Earn</h2></div>
+            <div class="bd"><div id="rewardRules" class="list"><div class="muted-box">Loading earning rules...</div></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="hd"><h2>Future Reward Store</h2></div>
+          <div class="bd">
+            <div id="rewardCatalog" class="reward-catalog"></div>
+            <div class="muted-box" style="margin-top:12px"><strong>Important:</strong> OceanPoints currently track contribution and level progress. They have no cash value. Vouchers, giveaways, creator payouts, and redemptions remain unavailable until OceanCore publishes the relevant terms and confirms fulfilment partners.</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel"><div class="hd"><h2>OceanCore+</h2></div><div class="bd"><div class="list">
+            <div class="item"><h4>Premium fishing intelligence</h4><p>Unlimited AI assistant access, advanced forecasts, premium maps, analytics, and historical patterns are the planned OceanCore+ core.</p><div class="actions"><button class="btn primary" data-jump="billing" type="button">View Plans</button></div></div>
+            <div class="item"><h4>Future partner benefits</h4><p>Fuel, tackle, boating, camping, insurance, and marine electronics benefits require active partner agreements before launch.</p></div>
+          </div></div></div>
+          <div class="panel"><div class="hd"><h2>Creator & Data Programs</h2></div><div class="bd"><div class="list">
+            <div class="item"><h4>Founder Creators</h4><p>Applications for the first 100 approved creators will open after creator verification, payout terms, and view-quality protections are ready.</p></div>
+            <div class="item"><h4>Quality data bonuses</h4><p>Monthly contributor bonuses are planned. OceanCore will score completeness, usefulness, trust, and fraud signals before bonuses are issued.</p></div>
+          </div></div></div>
+        </div>
+      </section>
+
             <section class="section" id="section-billing">
         <div class="panel">
           <div class="hd"><h2>Plans & Billing</h2><button class="btn" id="btnRefreshBilling" type="button">Refresh Billing</button></div>
@@ -1819,6 +1899,7 @@
   <button class="mobile-tab" data-section="community" type="button">C<span>Crew</span></button>
   <button class="mobile-tab" data-section="areas" type="button">S<span>Saved</span></button>
   <button class="mobile-tab" data-section="stats" type="button">I<span>Stats</span></button>
+  <button class="mobile-tab" data-section="rewards" type="button">R<span>Rewards</span></button>
   <button class="mobile-tab" data-section="account" type="button">A<span>Settings</span></button>
   <button class="mobile-tab" data-section="billing" type="button">P<span>Plans</span></button>
 </div>
@@ -2083,6 +2164,7 @@ const state = {
   stats: null,
   admin: { isAdmin:false, overview:null, users:[], catches:[], feedback:[], audit:[], community:[], communityReports:[], health:null, selectedUser:null, selectedCatches:[], search:'', loading:false, message:'' },
   billing: { profile:null, entitlements:null, plans:null, loading:false, message:'' },
+  rewards: { balance:0, lifetime_points:0, month_points:0, level:null, activity:[], rules:[], catalog:[], creator:null, storage:'', loading:false, message:'' },
   featureSettings: loadFeatureSettings(),
   featureSettingsSync: { storage:'device', warning:'', updated_at:null },
   aiBrain: { cloudReady:false, memory:[], loading:false },
@@ -2113,6 +2195,7 @@ const state = {
   catchPhotoSource: '',
   catchPhotoName: '',
   catchCameraStream: null,
+  detectedSpecies: '',
   communityPosts: [],
   communityMediaDataUrl: "",
   communityMediaMime: "",
@@ -2472,6 +2555,7 @@ function showSection(name){
 
   if(name === 'ai') renderChat();
   if(name === 'billing') loadBilling();
+  if(name === 'rewards') loadRewards();
   if(name === 'admin') loadAdminDashboard();
   if(name === 'beta-checklist') renderBetaChecklist();
 }
@@ -3420,14 +3504,15 @@ async function saveCatch(){
       privacy: getSetting('privacy.defaultCatchPrivacy') || 'private',
       notes: buildCatchNotes({ includeArea:false }),
       photo_data_url: photoDataUrl || undefined,
+      species_confirmed: !!state.detectedSpecies && state.detectedSpecies.toLowerCase() === species.toLowerCase(),
     };
 
-    await api('/catches', {
+    const saved = await api('/catches', {
       method:'POST',
       body: JSON.stringify(payload),
     });
 
-    setStatusMessage('catchMsg','Catch saved.');
+    setStatusMessage('catchMsg',`Catch saved.${rewardAwardMessage(saved.rewards)}`);
     $('catchSpecies').value = '';
     $('catchWeight').value = '';
     $('catchLength').value = '';
@@ -3436,10 +3521,12 @@ async function saveCatch(){
     if($('catchLat')) $('catchLat').value = '';
     if($('catchLng')) $('catchLng').value = '';
     $('catchNotes').value = '';
+    state.detectedSpecies = '';
     clearCatchPhoto(true);
     closeCatchCamera();
     await loadCatches();
     await loadStats();
+    await loadRewards().catch(()=>null);
   }catch(e){
     setStatusMessage('catchMsg', e.message || String(e));
   }
@@ -3916,7 +4003,10 @@ async function detectSpecies(){
       }
     );
 
-    if(j?.species) $('catchSpecies').value = j.species;
+    if(j?.species){
+      $('catchSpecies').value = j.species;
+      state.detectedSpecies = String(j.species).trim();
+    }
 
     $('speciesDetectResult').textContent = j?.species
       ? `Suggested species: ${j.species}`
@@ -3967,12 +4057,100 @@ async function loadAll(){
     loadCatches(),
     loadLegal(),
     loadBilling(),
+    loadRewards(),
     loadSavedAreas(),
   ]);
   await checkAdminAccess();
   renderChatSessions();
   renderChat();
   renderStats();
+}
+
+function rewardStatusLabel(status){
+  const value = String(status || '').replaceAll('_',' ');
+  return value ? value.replace(/\b\w/g, letter=>letter.toUpperCase()) : 'Coming Soon';
+}
+
+function formatRewardDate(value){
+  if(!value) return '';
+  try{return new Date(value).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}catch(_e){return String(value);}
+}
+
+function rewardAwardMessage(awards){
+  const earned = (Array.isArray(awards) ? awards : []).filter(row=>row?.awarded);
+  const points = earned.reduce((sum,row)=>sum + Number(row.points || 0), 0);
+  return points > 0 ? ` +${points} OceanPoints earned.` : '';
+}
+
+function renderRewards(){
+  const rewards = state.rewards || {};
+  const level = rewards.level || {level:1,name:'Deckhand',progress_percent:0,points_to_next:100,next:{name:'Crew Member'}};
+  if($('rewardBalance')) $('rewardBalance').textContent = Number(rewards.balance || 0).toLocaleString();
+  if($('rewardMonthPoints')) $('rewardMonthPoints').textContent = Number(rewards.month_points || 0).toLocaleString();
+  if($('rewardLevel')) $('rewardLevel').textContent = `Level ${level.level || 1} - ${level.name || 'Deckhand'}`;
+  if($('rewardNextLevel')) $('rewardNextLevel').textContent = level.next
+    ? `${Number(level.points_to_next || 0).toLocaleString()} points to ${level.next.name}.`
+    : 'Top level reached. OceanCore Legend status unlocked.';
+  if($('rewardProgressBar')) $('rewardProgressBar').style.width = `${Math.max(0,Math.min(100,Number(level.progress_percent || 0)))}%`;
+  if($('rewardCreatorStatus')) $('rewardCreatorStatus').textContent = rewards.creator?.enrolled
+    ? rewardStatusLabel(rewards.creator.level || 'Creator')
+    : 'Opening Soon';
+  if($('rewardsMsg')) $('rewardsMsg').textContent = rewards.message || (isSignedIn()
+    ? `OceanPoints loaded from ${rewards.storage || 'OceanCore'}.`
+    : 'Sign in to earn and track OceanPoints.');
+
+  const activity = $('rewardActivity');
+  if(activity){
+    activity.innerHTML = Array.isArray(rewards.activity) && rewards.activity.length
+      ? rewards.activity.slice(0,20).map(row=>`<div class="reward-activity-row"><div><strong>${escapeHtml(row.title || 'OceanPoints earned')}</strong><small>${escapeHtml(formatRewardDate(row.created_at))}</small></div><b>+${Number(row.points || 0).toLocaleString()}</b></div>`).join('')
+      : `<div class="muted-box">No OceanPoints yet. Log a catch, share a useful report, or sync your existing activity.</div>`;
+  }
+
+  const rules = $('rewardRules');
+  if(rules){
+    rules.innerHTML = Array.isArray(rewards.rules) && rewards.rules.length
+      ? rewards.rules.map(rule=>`<div class="item"><h4>${escapeHtml(rule.title || rewardStatusLabel(rule.event_type))}</h4><p><span class="reward-points">+${Number(rule.points || 0)} points</span> · Daily quality cap: ${Number(rule.dailyLimit || 0)}</p></div>`).join('')
+      : `<div class="muted-box">Earning rules are loading...</div>`;
+  }
+
+  const catalog = $('rewardCatalog');
+  if(catalog){
+    catalog.innerHTML = Array.isArray(rewards.catalog) && rewards.catalog.length
+      ? rewards.catalog.map(item=>`<div class="reward-catalog-item"><h4>${escapeHtml(item.name || 'Future reward')}</h4><p><span class="reward-points">${Number(item.points || 0).toLocaleString()} points</span><br>${escapeHtml(rewardStatusLabel(item.status))}</p></div>`).join('')
+      : `<div class="muted-box">Reward partners and fulfilment are still being prepared.</div>`;
+  }
+}
+
+async function loadRewards(){
+  try{
+    state.rewards.loading = true;
+    if(!isSignedIn()){
+      const catalog = await api('/rewards/catalog');
+      state.rewards = {...state.rewards, rules:catalog.rules||[], catalog:catalog.catalog||[], loading:false, message:'Sign in to earn and track OceanPoints.'};
+      renderRewards();
+      return;
+    }
+    const j = await api('/rewards/me');
+    state.rewards = {...state.rewards, ...j, loading:false, message:j.storage === 'local' ? 'OceanPoints loaded. Run the Supabase rewards migration before production launch.' : 'OceanPoints are up to date.'};
+  }catch(e){
+    state.rewards.loading = false;
+    state.rewards.message = e.message || String(e);
+  }
+  renderRewards();
+}
+
+async function syncRewards(){
+  try{
+    if(!isSignedIn()) throw new Error('Sign in first to sync your contribution history.');
+    setStatusMessage('rewardsMsg','Checking existing catches and community contributions...');
+    const j = await api('/rewards/reconcile',{method:'POST',body:JSON.stringify({})});
+    await loadRewards();
+    setStatusMessage('rewardsMsg', j.awarded_points > 0
+      ? `Activity synced. You earned ${Number(j.awarded_points).toLocaleString()} OceanPoints.`
+      : `Activity synced. ${Number(j.checked || 0).toLocaleString()} contributions checked; no unclaimed points remained.`);
+  }catch(e){
+    setStatusMessage('rewardsMsg', e.message || String(e));
+  }
 }
 
 
@@ -5675,6 +5853,8 @@ $('btnRefreshCatches')?.addEventListener('click', loadCatches);
 $('btnRefreshStats')?.addEventListener('click', loadStats);
 $('btnRefreshAdmin')?.addEventListener('click', loadAdminDashboard);
 $('btnRefreshBilling')?.addEventListener('click', loadBilling);
+$('btnRefreshRewards')?.addEventListener('click', loadRewards);
+$('btnSyncRewards')?.addEventListener('click', syncRewards);
 $('btnRefreshSavedAreas')?.addEventListener('click', loadSavedAreas);
 $('btnSaveCurrentArea')?.addEventListener('click', saveCurrentArea);
 $('btnSavedAreaUseGps')?.addEventListener('click', useGpsForSavedArea);
@@ -5691,6 +5871,9 @@ $('adminSearch')?.addEventListener('input', ()=>{ state.admin.search = $('adminS
 
 $('btnAdminClearSearch')?.addEventListener('click', ()=>{ if($('adminSearch')) $('adminSearch').value = ''; state.admin.search = ''; renderAdminDashboard(); });
 $('btnDetectSpecies')?.addEventListener('click', detectSpecies);
+$('catchSpecies')?.addEventListener('input', ()=>{
+  if(state.detectedSpecies && $('catchSpecies').value.trim().toLowerCase() !== state.detectedSpecies.toLowerCase()) state.detectedSpecies = '';
+});
 $('btnLoadMapData')?.addEventListener('click', loadMapData);
 $('btnUseGps')?.addEventListener('click', useGps);
 $('btnSearchLocation')?.addEventListener('click', searchMapLocation);
@@ -5874,7 +6057,7 @@ async function publishCommunityPost(){
     const post = j?.post;
     state.communityPosts = post ? [post, ...(state.communityPosts||[])].slice(0,50) : (state.communityPosts || []);
     ['communitySpecies','communityArea','communityCaption'].forEach(id=>{ if($(id)) $(id).value=''; });
-    if($('communityMedia')) $('communityMedia').value=''; state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); await loadCommunityPosts(); setCommunityMsg('Posted to OceanCore Community.');
+    if($('communityMedia')) $('communityMedia').value=''; state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); await loadCommunityPosts(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); }
 }
 
@@ -5885,6 +6068,7 @@ async function likeCommunityPost(id){
     const post = (state.communityPosts || []).find(x=>String(x.id) === String(id));
     if(post) post.likes_count = j.likes_count;
     renderCommunityFeed();
+    if(rewardAwardMessage(j.rewards)) setCommunityMsg(`Community milestone reached.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); }
 }
 
@@ -5920,7 +6104,9 @@ async function submitCommunityComment(id){
     const j = await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`]);
     renderCommunityCommentsBox(id, Array.isArray(j.comments) ? j.comments : []);
     await loadCommunityPosts();
+    await loadRewards().catch(()=>null);
     if(posted?.held_for_review) setCommunityMsg('Comment held for review by your community filters.');
+    else setCommunityMsg(`Comment posted.${rewardAwardMessage(posted?.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); }
 }
 
