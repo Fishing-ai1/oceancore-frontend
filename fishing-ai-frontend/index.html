@@ -583,8 +583,8 @@
        OceanCore mobile app mode — bottom tabs + app-like screens
        ============================================================ */
     .mobile-nav{
-      position:fixed;left:0;right:0;bottom:0;z-index:160;min-height:118px;
-      display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;
+      position:fixed;left:0;right:0;bottom:0;z-index:160;min-height:82px;
+      display:none;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;
       padding:10px 10px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid rgba(148,163,184,.18);
       background:linear-gradient(180deg,rgba(6,10,22,.86),rgba(2,5,14,.98));
@@ -593,7 +593,7 @@
     .mobile-nav button{
       appearance:none;border:1px solid rgba(148,163,184,.16);
       background:linear-gradient(180deg,rgba(15,23,42,.78),rgba(7,12,24,.88));
-      color:#b9c8e7;cursor:pointer;min-width:0;min-height:48px;border-radius:14px;
+      color:#b9c8e7;cursor:pointer;min-width:0;min-height:56px;border-radius:14px;
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
       font-size:15px;font-weight:950;box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
     }
@@ -609,7 +609,7 @@
     .mobile-nav button.admin-tab{display:none}
     @media(max-width:900px){
       body{overscroll-behavior-y:none}
-      .shell{padding:10px 10px calc(136px + env(safe-area-inset-bottom));max-width:100%}
+      .shell{padding:10px 10px calc(100px + env(safe-area-inset-bottom));max-width:100%}
       .topbar{position:sticky;top:0;z-index:70;margin:-10px -10px 10px;padding:10px;background:rgba(2,5,14,.82);backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,163,184,.12)}
       .brand{padding:9px 10px;border-radius:18px;box-shadow:none}.brand h1{font-size:14px}.brand .subtle{display:none}.logo{width:34px;height:34px;border-radius:12px}
       .app-actions{margin-left:auto;gap:7px}.top-icon{width:38px;min-width:38px;height:38px}.pro-pill{height:38px;min-width:68px;padding:0 10px;font-size:12px}
@@ -719,6 +719,44 @@
     @media(max-width:980px){.community-live-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.community-live-wide{grid-column:span 2}}
     @media(max-width:700px){.crew-type-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.crew-detail-grid{grid-template-columns:1fr}.community-live-grid{grid-template-columns:1fr}.community-live-wide{grid-column:span 1}}
 
+    /*
+      OceanCore social shell: original fishing-first layout inspired by familiar
+      social/video patterns without copying any single platform.
+    */
+    .oc-top-feed{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:14px;margin-bottom:14px}.oc-top-feed>*{min-width:0}
+    .oc-feed-hero{position:relative;overflow:hidden;border:1px solid rgba(73,231,255,.28);border-radius:24px;background:linear-gradient(135deg,rgba(73,231,255,.13),rgba(8,14,32,.98) 36%,rgba(125,255,213,.06));padding:18px;min-height:270px}
+    .oc-feed-hero h2{font-size:34px;line-height:1.05;margin:8px 0 8px;max-width:720px}
+    .oc-feed-hero p{max-width:760px;color:#b9c8e6;font-size:15px;line-height:1.55}
+    .oc-hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+    .oc-hero-card{border:1px solid rgba(148,163,184,.16);background:rgba(2,6,16,.44);border-radius:18px;padding:13px;min-height:96px}
+    .oc-hero-card b{display:block;font-size:13px;margin-bottom:6px}.oc-hero-card span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
+    .oc-story-rail,.oc-chip-rail{display:flex;gap:10px;overflow:auto;padding:2px 2px 8px;scrollbar-width:thin}
+    .oc-story{min-width:94px;border:1px solid rgba(73,231,255,.20);background:linear-gradient(180deg,rgba(8,18,39,.96),rgba(4,9,21,.96));border-radius:18px;padding:9px;text-align:center}
+    .oc-story .avatar{width:58px;height:58px;margin:0 auto 7px;border-radius:18px;background:conic-gradient(from 120deg,#7dffd5,#49e7ff,#4d6fff,#7dffd5);box-shadow:0 0 22px rgba(73,231,255,.20)}
+    .oc-story strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .oc-composer{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid rgba(73,231,255,.24);background:rgba(7,12,24,.76);border-radius:22px;padding:12px;margin-bottom:14px;min-width:0}
+    .oc-avatar{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,var(--brand2),var(--brand));display:grid;place-items:center;color:#04121a;font-weight:1000}
+    .oc-composer button.fake-input{min-height:48px;min-width:0;white-space:normal;text-align:left;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(11,20,42,.82);color:#dce9ff;padding:0 16px;font-weight:800}
+    .oc-feed-tabs{display:flex;gap:8px;overflow:auto;margin:0 0 12px;padding-bottom:4px}
+    .oc-feed-tabs button,.oc-filter{white-space:nowrap;border:1px solid rgba(148,163,184,.16);background:rgba(11,20,42,.72);color:#dce9ff;border-radius:999px;min-height:42px;padding:0 15px;font-weight:900}
+    .oc-feed-tabs button.active,.oc-filter.active{color:#04121a;border-color:rgba(125,255,213,.6);background:linear-gradient(135deg,var(--brand2),var(--brand))}
+    .oc-feed-card{border:1px solid rgba(148,163,184,.16);background:linear-gradient(180deg,rgba(10,18,38,.96),rgba(3,7,18,.98));border-radius:22px;overflow:hidden;margin-bottom:14px}
+    .oc-feed-head{display:flex;gap:10px;align-items:center;padding:13px 14px}.oc-feed-head strong{display:block}.oc-feed-head span{display:block;color:var(--muted);font-size:12px}
+    .oc-media{aspect-ratio:16/9;background:radial-gradient(circle at 30% 25%,rgba(125,255,213,.30),transparent 18%),linear-gradient(135deg,#0c3152,#061121 50%,#0b4d62);display:flex;align-items:end;justify-content:space-between;padding:14px;color:white}
+    .oc-media.vertical{aspect-ratio:9/13;max-height:520px;background:radial-gradient(circle at 50% 25%,rgba(73,231,255,.28),transparent 22%),linear-gradient(180deg,#0c3452,#020611)}
+    .oc-play{width:58px;height:58px;border-radius:999px;background:rgba(2,6,16,.55);display:grid;place-items:center;font-size:24px;border:1px solid rgba(255,255,255,.24)}
+    .oc-feed-body{padding:14px}.oc-feed-body p{margin:0 0 10px;color:#dce9ff;line-height:1.5}.oc-tag-row{display:flex;gap:8px;flex-wrap:wrap}
+    .oc-feed-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 14px 14px}.oc-feed-actions button{min-height:42px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(2,6,16,.48);color:#dce9ff;font-weight:800}
+    .oc-discovery-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-discovery-card{border:1px solid var(--border);border-radius:20px;background:rgba(7,12,24,.78);padding:13px;min-height:132px}.oc-discovery-card b{display:block;font-size:15px;margin-bottom:7px}.oc-discovery-card span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
+    .oc-create-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-create-card{text-align:left;border:1px solid rgba(73,231,255,.18);background:rgba(7,12,24,.78);border-radius:20px;padding:14px;min-height:142px;color:#eef7ff}.oc-create-card strong{display:block;font-size:17px;margin-bottom:7px}.oc-create-card span{color:var(--muted);font-size:13px;line-height:1.45}
+    .oc-profile-cover{border:1px solid rgba(73,231,255,.24);border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#082033,#07101f 58%,#123b4a);margin-bottom:14px}.oc-cover-art{height:190px;background:radial-gradient(circle at 28% 36%,rgba(73,231,255,.36),transparent 18%),linear-gradient(135deg,#073854,#061121 48%,#0e5b69)}
+    .oc-profile-main{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:end;padding:0 18px 18px;margin-top:-44px}.oc-profile-photo{width:112px;height:112px;border-radius:34px;border:3px solid #07101f;background:linear-gradient(135deg,var(--brand2),var(--brand));display:grid;place-items:center;color:#04121a;font-size:30px;font-weight:1000}
+    .oc-profile-main h2{margin:0 0 5px;font-size:30px}.oc-profile-main p{margin:0;color:var(--muted)}
+    .oc-profile-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.oc-profile-stats span{border:1px solid rgba(148,163,184,.16);background:rgba(2,6,16,.42);border-radius:999px;padding:7px 10px;font-size:12px;color:#dce9ff}
+    .oc-profile-tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}
+    .oc-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px}.oc-section-title h2{margin:0}
+    @media(max-width:880px){.oc-top-feed{grid-template-columns:minmax(0,1fr)}.oc-feed-hero h2{font-size:27px}.oc-discovery-grid,.oc-create-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.oc-feed-actions{grid-template-columns:repeat(3,1fr)}.oc-profile-main{grid-template-columns:1fr;text-align:left}.oc-profile-photo{width:96px;height:96px;border-radius:28px}.oc-cover-art{height:150px}}
+    @media(max-width:560px){.oc-hero-grid{grid-template-columns:1fr}.oc-create-grid,.oc-discovery-grid{grid-template-columns:1fr}.oc-composer{grid-template-columns:auto 1fr}.oc-composer .btn{grid-column:1/-1}.oc-feed-actions{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body class="auth-loading auth-locked">
@@ -813,15 +851,19 @@
     <aside class="nav">
       <h3>Sections</h3>
       <button class="btn block nav-btn active" data-section="home">Home</button>
+      <button class="btn block nav-btn" data-section="explore">Explore</button>
+      <button class="btn block nav-btn" data-section="create">Create</button>
+      <button class="btn block nav-btn" data-section="community">Community</button>
+      <button class="btn block nav-btn" data-section="ai">AI</button>
+      <button class="btn block nav-btn" data-section="profile">Profile</button>
+      <h3>Tools</h3>
       <button class="btn block nav-btn" data-section="catch">Catch Log</button>
-      <button class="btn block nav-btn" data-section="ai">AI Chat</button>
       <button class="btn block nav-btn" data-section="map">Map & Conditions</button>
       <button class="btn block nav-btn" data-section="boat-ai">Boat AI</button>
-      <button class="btn block nav-btn" data-section="community">Community</button>
       <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
       <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
       <button class="btn block nav-btn" data-section="rewards">Rewards</button>
-      <button class="btn block nav-btn" data-section="account">Account</button>
+      <button class="btn block nav-btn" data-section="account">Settings</button>
       <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
       <button class="btn block nav-btn" data-section="feedback">Feedback</button>
       <button class="btn block nav-btn" data-section="beta-checklist">Beta Checklist</button>
@@ -860,6 +902,49 @@
         </div>
 
         <div data-free-ad-slot class="ad-slot hidden" style="margin-bottom:14px">Ad space · Free plan</div>
+
+        <div class="oc-top-feed">
+          <div class="oc-feed-hero">
+            <div class="chip signal green">OceanCore Today</div>
+            <h2>What is biting, what the crew is catching, and what AI recommends next.</h2>
+            <p>Home is now the social-first launch screen: local reports, catch videos, boat updates, saved-area conditions, and practical AI prompts in one place.</p>
+            <div class="oc-hero-grid">
+              <button class="oc-hero-card" type="button" data-section="map"><b>Local conditions</b><span id="socialHomeConditions">Load Windy conditions for your area.</span></button>
+              <button class="oc-hero-card" type="button" data-section="community"><b>Local community</b><span id="socialHomeCommunity">Moreton Bay, Gold Coast Offshore, Trailer Boats and more.</span></button>
+              <button class="oc-hero-card" type="button" data-section="ai"><b>AI recommendation</b><span id="socialHomeAi">Ask for a trip plan, species target, fuel plan or catch analysis.</span></button>
+              <button class="oc-hero-card" type="button" data-section="rewards"><b>OceanPoints</b><span id="socialHomeRewards">Earn rewards for useful reports, catches and creator content.</span></button>
+            </div>
+          </div>
+          <div>
+            <div class="oc-section-title"><h2>Stories</h2><button class="btn ghost" type="button" data-section="create">Create</button></div>
+            <div id="socialHomeStories" class="oc-story-rail">
+              <div class="community-skeleton"></div><div class="community-skeleton"></div><div class="community-skeleton"></div>
+            </div>
+            <div class="oc-composer">
+              <div class="oc-avatar" id="socialComposerAvatar">OC</div>
+              <button class="fake-input" type="button" data-section="create">Share a catch, video, report or question</button>
+              <button class="btn primary" type="button" data-section="create">Post</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="oc-feed-tabs" aria-label="Home feed types">
+          <button class="active" type="button" data-section="home">For You</button>
+          <button type="button" data-community-open-feed="videos">Videos</button>
+          <button type="button" data-community-open-feed="local">Reports</button>
+          <button type="button" data-section="catch">Catch Logs</button>
+          <button type="button" data-community-open-feed="boats">Boats</button>
+          <button type="button" data-section="map">Conditions</button>
+        </div>
+
+        <div id="socialHomeFeed">
+          <article class="oc-feed-card">
+            <div class="oc-feed-head"><div class="oc-avatar">MB</div><div><strong>Moreton Bay report</strong><span>Local intel - spot safe</span></div></div>
+            <div class="oc-media"><div><strong>Snapper bite window</strong><br/><span>Wind easing near the afternoon tide change</span></div><div class="oc-play">AI</div></div>
+            <div class="oc-feed-body"><p>Check the wind, swell and ramp traffic before launching. Save exact marks privately, then share only the general area.</p><div class="oc-tag-row"><span class="chip">Fishing Report</span><span class="chip">Windy</span><span class="chip">Spot Safe</span></div></div>
+            <div class="oc-feed-actions"><button type="button" data-section="community">Like</button><button type="button" data-section="community">Comment</button><button type="button" data-section="create">Share</button><button type="button" data-section="areas">Save</button><button type="button" data-section="feedback">Report</button></div>
+          </article>
+        </div>
 
         <div class="grid-4">
           <div class="stat">
@@ -948,6 +1033,50 @@
       </section>
 
 
+
+      <section class="section section-jump-anchor" id="section-explore">
+        <div class="oc-feed-hero" style="min-height:auto;margin-bottom:14px">
+          <div class="chip signal green">Explore OceanCore</div>
+          <h2>Discover the best fishing, boating and adventure content.</h2>
+          <p>Search creators, catches, species, locations, boats, camping and 4WD content. Exact fishing spots remain protected.</p>
+          <div class="row" style="margin-top:14px"><div class="fld"><input id="exploreSearch" placeholder="Search OceanCore"/></div><button class="btn primary" id="btnExploreSearch" type="button">Search</button></div>
+        </div>
+        <div class="oc-feed-tabs" aria-label="Explore categories">
+          <button class="active oc-explore-filter" data-explore-filter="trending" type="button">Trending</button>
+          <button class="oc-explore-filter" data-explore-filter="videos" type="button">Videos</button>
+          <button class="oc-explore-filter" data-explore-filter="reports" type="button">Reports</button>
+          <button class="oc-explore-filter" data-explore-filter="species" type="button">Species</button>
+          <button class="oc-explore-filter" data-explore-filter="locations" type="button">Locations</button>
+          <button class="oc-explore-filter" data-explore-filter="boats" type="button">Boats</button>
+          <button class="oc-explore-filter" data-explore-filter="camping" type="button">Camping</button>
+          <button class="oc-explore-filter" data-explore-filter="4wd" type="button">4WD</button>
+        </div>
+        <div class="oc-section-title"><h2>Recommended for you</h2><button class="btn ghost" type="button" data-section="community">View Community</button></div>
+        <div id="exploreDiscoveryGrid" class="oc-discovery-grid"></div>
+        <div class="grid-2" style="margin-top:14px">
+          <div class="panel"><div class="hd"><h2>Trending creators</h2></div><div class="bd" id="exploreCreators"></div></div>
+          <div class="panel"><div class="hd"><h2>Popular local catches</h2></div><div class="bd" id="exploreCatches"></div></div>
+        </div>
+      </section>
+
+      <section class="section section-jump-anchor" id="section-create">
+        <div class="oc-feed-hero" style="min-height:auto;margin-bottom:14px">
+          <div class="chip signal green">Create</div>
+          <h2>Share something useful with the OceanCore community.</h2>
+          <p>One upload centre for catches, reports, videos, questions and boat content. Public locations default to general areas only.</p>
+        </div>
+        <div class="oc-create-grid">
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="video"><strong>Video</strong><span>Upload a short or long fishing, boating, camping or 4WD video.</span></button>
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="catch"><strong>Photo</strong><span>Share a catch photo or useful on-water update.</span></button>
+          <button class="oc-create-card" type="button" data-section="catch"><strong>Catch Log</strong><span>Save species, proof, measurements and a private or general location.</span></button>
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="fishing_report"><strong>Fishing Report</strong><span>Share conditions, bait, species and a spot-safe general area.</span></button>
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="discussion"><strong>Question</strong><span>Ask the local crew about tactics, gear, boats or trips.</span></button>
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="poll"><strong>Poll</strong><span>Let the community vote on gear, plans or conditions.</span></button>
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="fishing_report"><strong>Trip Report</strong><span>Publish a useful after-trip summary and earn OceanPoints.</span></button>
+          <button class="oc-create-card" type="button" data-section="community" data-create-type="boat"><strong>Boat Showcase</strong><span>Share your setup, electronics, modifications or build.</span></button>
+        </div>
+        <div class="panel" style="margin-top:14px"><div class="hd"><h2>Spot Safe publishing</h2></div><div class="bd"><div class="muted-box">Exact GPS marks are blocked from public community posts. Choose a general area when sharing; keep exact marks in Saved Areas or private Catch Logs.</div></div></div>
+      </section>
 
       <section class="section section-jump-anchor" id="section-community">
         <div class="crew-hero">
@@ -1492,6 +1621,39 @@
       </section>
 
 
+      <section class="section" id="section-profile">
+        <div class="oc-profile-cover">
+          <div class="oc-cover-art"></div>
+          <div class="oc-profile-main">
+            <div class="oc-profile-photo" id="socialProfileAvatar">OC</div>
+            <div>
+              <h2 id="socialProfileName">OceanCore Member</h2>
+              <p id="socialProfileHandle">@oceancore - fishing, boating and adventure</p>
+              <div class="oc-profile-stats">
+                <span id="socialProfileFollowers">0 followers</span>
+                <span id="socialProfileFollowing">0 following</span>
+                <span id="socialProfileReputation">Deckhand reputation</span>
+                <span id="socialProfilePoints">0 OceanPoints</span>
+              </div>
+            </div>
+            <div class="row"><button class="btn primary" type="button" data-section="create">Create</button><button class="btn" type="button" data-section="account">Edit profile & settings</button></div>
+          </div>
+        </div>
+        <div class="oc-profile-tabs oc-feed-tabs">
+          <button class="active" type="button">Posts</button><button type="button" data-community-open-feed="videos">Videos</button><button type="button" data-section="catch">Catches</button><button type="button" data-community-open-feed="local">Reports</button><button type="button" data-section="rewards">Achievements</button><button type="button" data-section="account">About</button>
+        </div>
+        <div class="grid-4">
+          <div class="stat"><div class="label">Views</div><div class="value" id="profileDashboardViews">0</div><div class="hint">Creator content views.</div></div>
+          <div class="stat"><div class="label">Catches</div><div class="value" id="profileDashboardCatches">0</div><div class="hint">Saved catch logs.</div></div>
+          <div class="stat"><div class="label">Community posts</div><div class="value" id="profileDashboardPosts">0</div><div class="hint">Reports, videos and discussions.</div></div>
+          <div class="stat"><div class="label">OceanPoints</div><div class="value" id="profileDashboardPoints">0</div><div class="hint">Contribution rewards.</div></div>
+        </div>
+        <div class="grid-2" style="margin-top:14px">
+          <div class="panel"><div class="hd"><h2>Creator dashboard</h2><button class="btn ghost" type="button" data-section="stats">Full insights</button></div><div class="bd"><div class="list"><div class="item"><h4>Reach and watch time</h4><p>Creator analytics will grow from real video views, engagement and follower activity.</p></div><div class="item"><h4>Rewards and earnings</h4><p>Track OceanPoints now. Creator payouts remain locked until verification and payout terms are ready.</p></div></div></div></div>
+          <div class="panel"><div class="hd"><h2>Badges and achievements</h2><button class="btn ghost" type="button" data-section="rewards">View rewards</button></div><div class="bd" id="socialProfileBadges"><div class="muted-box">Log catches and contribute useful reports to unlock badges.</div></div></div>
+        </div>
+      </section>
+
       <section class="section" id="section-account">
         <div class="app-screen-title">
           <button class="btn ghost" type="button" data-section="home" aria-label="Back to home">Back</button>
@@ -1947,16 +2109,11 @@
 
 <div class="mobile-nav" aria-label="Mobile app navigation">
   <button class="mobile-tab active" data-section="home" type="button">H<span>Home</span></button>
-  <button class="mobile-tab plus-tab" data-section="catch" type="button">+<span>Catch</span></button>
-  <button class="mobile-tab" data-section="ai" type="button">AI<span>Chat</span></button>
-  <button class="mobile-tab" data-section="map" type="button">M<span>Map</span></button>
-  <button class="mobile-tab" data-section="boat-ai" type="button">B<span>Boat</span></button>
-  <button class="mobile-tab" data-section="community" type="button">C<span>Crew</span></button>
-  <button class="mobile-tab" data-section="areas" type="button">S<span>Saved</span></button>
-  <button class="mobile-tab" data-section="stats" type="button">I<span>Stats</span></button>
-  <button class="mobile-tab" data-section="rewards" type="button">R<span>Rewards</span></button>
-  <button class="mobile-tab" data-section="account" type="button">A<span>Settings</span></button>
-  <button class="mobile-tab" data-section="billing" type="button">P<span>Plans</span></button>
+  <button class="mobile-tab" data-section="explore" type="button">E<span>Explore</span></button>
+  <button class="mobile-tab plus-tab" data-section="create" type="button">+<span>Create</span></button>
+  <button class="mobile-tab" data-section="community" type="button">C<span>Community</span></button>
+  <button class="mobile-tab" data-section="ai" type="button">AI<span>AI</span></button>
+  <button class="mobile-tab" data-section="profile" type="button">P<span>Profile</span></button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -2605,7 +2762,12 @@ function showSection(name){
     loadCommunityPosts().catch(()=>renderCommunityLiveModules());
     loadCommunityDashboard().catch(()=>renderCommunityLiveModules());
     loadRewards().catch(()=>renderCommunityLiveModules());
+    renderSocialHome();
   }
+  if(name === 'explore'){
+    loadCommunityPosts().then(()=>renderExplore()).catch(()=>renderExplore());
+  }
+  if(name === 'create') renderExplore();
   if(name === 'community'){
     applyFeatureSettings();
     renderFeatureSettings();
@@ -2615,6 +2777,11 @@ function showSection(name){
     loadRewards().catch(()=>null);
   }
   if(name === 'stats') renderStats();
+  if(name === 'profile'){
+    loadCommunityPosts().catch(()=>null);
+    loadRewards().catch(()=>null);
+    renderSocialProfile();
+  }
   if(name === 'feedback') renderNotificationCenter();
   renderBetaChecklist();
 
@@ -2639,6 +2806,27 @@ document.querySelectorAll('.mobile-tab').forEach(btn=>{
 });
 document.querySelectorAll('button[data-section]:not(.nav-btn):not(.mobile-tab)').forEach(btn=>{
   btn.addEventListener('click',()=>showSection(btn.dataset.section));
+});
+document.querySelectorAll('[data-create-type]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    selectCommunityPostType(btn.dataset.createType || 'discussion');
+    setTimeout(()=>$('communityCaption')?.focus(), 80);
+  });
+});
+document.querySelectorAll('.oc-explore-filter').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.oc-explore-filter').forEach(item=>item.classList.toggle('active', item===btn));
+    renderExplore(btn.dataset.exploreFilter || 'trending');
+  });
+});
+$('btnExploreSearch')?.addEventListener('click',()=>{
+  const query = String($('exploreSearch')?.value || '').trim();
+  if(!query) return renderExplore('trending');
+  const q = query.toLowerCase();
+  const matches = (state.communityPosts || []).filter(post=>JSON.stringify(post).toLowerCase().includes(q));
+  if($('exploreCreators')) $('exploreCreators').innerHTML = matches.length
+    ? matches.slice(0,8).map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.title || post.species || post.author_name || 'Community result')}</strong><span>${escapeHtml(post.general_area || post.post_type || 'OceanCore')}</span></div>`).join('')
+    : '<div class="muted-box">No community results yet. Try a species, location, boat or report category.</div>';
 });
 $('btnCommunityPhoto')?.addEventListener('click',()=>{
   selectCommunityPostType('catch');
@@ -4850,6 +5038,111 @@ function renderHomeDashboard(){
   }
 }
 
+function socialInitials(value){
+  const parts = String(value || 'OceanCore Member').trim().split(/\s+/).filter(Boolean);
+  return (parts.slice(0, 2).map(part=>part[0]).join('') || 'OC').toUpperCase();
+}
+
+function renderSocialHome(){
+  const profile = state.me?.profile || {};
+  const name = profile.full_name || state.authEmail || 'OceanCore Member';
+  const initials = socialInitials(name);
+  const current = getDisplayedMarineHour();
+  const posts = Array.isArray(state.communityPosts) ? state.communityPosts : [];
+  const rewards = state.rewards || {};
+  if($('socialComposerAvatar')) $('socialComposerAvatar').textContent = initials;
+  if($('socialHomeConditions')) $('socialHomeConditions').textContent = current
+    ? `Wind ${formatMarineMetric(current.wind_kts,'kt')}, wave ${formatMarineMetric(current.wave_m,'m')}, swell ${formatMarineMetric(current.swell_m,'m')}.`
+    : 'Load Windy conditions for your area.';
+  if($('socialHomeCommunity')) $('socialHomeCommunity').textContent = posts.length
+    ? `${posts.length} community updates loaded from your crew and local feed.`
+    : 'Follow local communities and share the first useful report.';
+  if($('socialHomeRewards')) $('socialHomeRewards').textContent = `${Number(rewards.balance || 0).toLocaleString()} OceanPoints - ${rewards.level?.name || 'Deckhand'}.`;
+
+  const storyNames = [...new Set(posts.map(post=>post.author_name || post.user_email || post.title || post.species).filter(Boolean))];
+  if($('socialHomeStories')) $('socialHomeStories').innerHTML = (storyNames.length ? storyNames.slice(0, 7) : ['Your story','Local reports','Boat builds','Offshore','Freshwater']).map(story=>`
+    <button class="oc-story" type="button" data-section="community"><span class="avatar"></span><strong>${escapeHtml(story)}</strong></button>
+  `).join('');
+  bindSectionButtons($('socialHomeStories'));
+
+  if($('socialHomeFeed') && posts.length){
+    $('socialHomeFeed').innerHTML = posts.slice(0, 5).map(post=>{
+      const author = post.author_name || post.user_email || 'OceanCore member';
+      const title = post.title || post.species || post.post_type || 'Community update';
+      const area = post.general_area || 'Spot Safe area';
+      const media = post.media_url || post.photo_url || '';
+      const mediaHtml = media
+        ? `<div class="oc-media" style="background-image:linear-gradient(rgba(2,6,16,.08),rgba(2,6,16,.58)),url('${escapeHtml(media)}');background-size:cover;background-position:center"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div></div>`
+        : `<div class="oc-media"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div><div class="oc-play">${post.post_type === 'video' ? 'PLAY' : 'OC'}</div></div>`;
+      return `<article class="oc-feed-card">
+        <div class="oc-feed-head"><div class="oc-avatar">${escapeHtml(socialInitials(author))}</div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div></div>
+        ${mediaHtml}
+        <div class="oc-feed-body"><p>${escapeHtml(post.caption || post.notes || 'Shared with the OceanCore community.')}</p><div class="oc-tag-row"><span class="chip">${escapeHtml(post.post_type || 'Community')}</span><span class="chip">Spot Safe</span></div></div>
+        <div class="oc-feed-actions"><button type="button" onclick="likeCommunityPost('${escapeHtml(post.id)}')">Like ${Number(post.likes_count || 0)}</button><button type="button" onclick="toggleCommunityComments('${escapeHtml(post.id)}')">Comment</button><button type="button" data-section="create">Share</button><button type="button" data-section="areas">Save</button><button type="button" onclick="reportCommunityPost('${escapeHtml(post.id)}')">Report</button></div>
+      </article>`;
+    }).join('');
+    bindSectionButtons($('socialHomeFeed'));
+  }
+}
+
+function exploreCard(title, copy, section, label){
+  return `<button class="oc-discovery-card" type="button" data-section="${escapeHtml(section)}"><b>${escapeHtml(title)}</b><span>${escapeHtml(copy)}</span><span class="chip" style="display:inline-flex;margin-top:12px">${escapeHtml(label)}</span></button>`;
+}
+
+function renderExplore(filter='trending'){
+  const posts = Array.isArray(state.communityPosts) ? state.communityPosts : [];
+  const catches = Array.isArray(state.catches) ? state.catches : [];
+  const cards = {
+    trending:[
+      ['Local bite reports','See useful reports near your selected area.','community','Reports'],
+      ['Trending catch videos','Watch fishing, boating and adventure clips.','community','Videos'],
+      ['What to target today','Ask AI using your conditions and history.','ai','AI'],
+      ['Popular launch areas','Open Windy, ramps, fuel and saved areas.','map','Map']
+    ],
+    videos:[['Fishing videos','Community clips and creator uploads.','community','Watch'],['Boat builds','Electronics, setups and modifications.','community','Boats'],['How-to library','Tactics, safety and gear education.','ai','Learn'],['Create a video','Upload your own useful clip.','create','Create']],
+    reports:[['Local reports','Conditions, bites and ramp updates.','community','Local'],['Trip reports','What worked and what changed.','community','Trips'],['Hazard reports','Useful safety notices from the crew.','community','Safety'],['Write a report','Help the next angler plan better.','create','Create']],
+    species:[['Species finder','Identify and learn about a catch.','catch','Species'],['Catch patterns','Review your most-caught species.','stats','Insights'],['Ask AI','Get practical species tactics.','ai','AI'],['Log a catch','Add a verified catch record.','catch','Log']],
+    locations:[['Windy conditions','Marine forecast and visual map.','map','Windy'],['Saved areas','Keep exact marks private.','areas','Private'],['Nearby ramps','Find launch options.','map','Ramps'],['Local communities','Join general-area groups.','community','Groups']],
+    boats:[['Boat AI','Fuel, range and safety decisions.','boat-ai','Boat AI'],['Boat showcases','See community setups and builds.','community','Community'],['Fuel planner','Plan range and reserve fuel.','boat-ai','Fuel'],['Show your boat','Share your setup.','create','Create']],
+    camping:[['Camping community','Trip setups and destination reports.','community','Camping'],['Plan a trip','Ask AI for a practical checklist.','ai','AI'],['Share a report','Help the adventure community.','create','Create'],['Saved areas','Keep useful areas together.','areas','Saved']],
+    '4wd':[['4WD community','Tracks, setups and trip reports.','community','4WD'],['Trip planner','Plan fuel, weather and safety.','ai','AI'],['Create a report','Share practical track intel.','create','Create'],['Explore areas','Search and save useful regions.','map','Map']]
+  };
+  if($('exploreDiscoveryGrid')) $('exploreDiscoveryGrid').innerHTML = (cards[filter] || cards.trending).map(row=>exploreCard(...row)).join('');
+  if($('exploreCreators')) $('exploreCreators').innerHTML = posts.length
+    ? posts.slice(0,4).map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.author_name || post.user_email || 'OceanCore creator')}</strong><span>${Number(post.likes_count || 0)} likes</span></div>`).join('')
+    : '<div class="muted-box">Creators will appear as the community grows.</div>';
+  if($('exploreCatches')) $('exploreCatches').innerHTML = catches.length
+    ? catches.slice(0,4).map(row=>`<div class="community-mini-item"><strong>${escapeHtml(displaySpecies(row.species))}</strong><span>${escapeHtml(formatCatchMeasures(row))}</span></div>`).join('')
+    : '<div class="muted-box">Log catches to build your personalised discovery feed.</div>';
+  bindSectionButtons($('exploreDiscoveryGrid'));
+}
+
+function renderSocialProfile(){
+  const profile = state.me?.profile || {};
+  const name = profile.full_name || state.authEmail || 'OceanCore Member';
+  const posts = Array.isArray(state.communityPosts) ? state.communityPosts : [];
+  const catches = Array.isArray(state.catches) ? state.catches : [];
+  const rewards = state.rewards || {};
+  const initials = socialInitials(name);
+  if($('socialProfileAvatar')) $('socialProfileAvatar').textContent = initials;
+  if($('socialProfileName')) $('socialProfileName').textContent = name;
+  if($('socialProfileHandle')) $('socialProfileHandle').textContent = `@${String(name).toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,24) || 'oceancore'} - ${profile.home_port || 'fishing, boating and adventure'}`;
+  if($('socialProfileReputation')) $('socialProfileReputation').textContent = `${rewards.level?.name || 'Deckhand'} reputation`;
+  if($('socialProfilePoints')) $('socialProfilePoints').textContent = `${Number(rewards.balance || 0).toLocaleString()} OceanPoints`;
+  if($('profileDashboardViews')) $('profileDashboardViews').textContent = posts.reduce((sum,p)=>sum+Number(p.views_count || 0),0).toLocaleString();
+  if($('profileDashboardCatches')) $('profileDashboardCatches').textContent = catches.length.toLocaleString();
+  if($('profileDashboardPosts')) $('profileDashboardPosts').textContent = posts.length.toLocaleString();
+  if($('profileDashboardPoints')) $('profileDashboardPoints').textContent = Number(rewards.balance || 0).toLocaleString();
+}
+
+function bindSectionButtons(root=document){
+  root?.querySelectorAll?.('button[data-section]').forEach(btn=>{
+    if(btn.dataset.sectionBound) return;
+    btn.dataset.sectionBound = '1';
+    btn.addEventListener('click',()=>showSection(btn.dataset.section));
+  });
+}
+
 function statsWindowDays(){
   const raw = String(getSetting('stats.timeRange') || '90');
   if(raw === 'all') return null;
@@ -6137,6 +6430,9 @@ function renderCommunityLiveModules(){
   if($('communityCreatorSpotlight')) $('communityCreatorSpotlight').innerHTML=leaders.length?communityMiniItem(leaders[0].name, `${Number(leaders[0].score||0)} community score`):communityMiniItem('Founder creator spots open','Useful clips and reports can earn the spotlight.');
   if($('communityPointsProgress')){const level=rewards.level||{name:'Deckhand',progress_percent:0,points_to_next:100};$('communityPointsProgress').innerHTML=`<div class="community-mini-item"><strong>${Number(rewards.balance||0).toLocaleString()} OceanPoints</strong><span>${escapeHtml(level.name||'Deckhand')}</span></div><div class="progressbar"><i style="width:${Math.max(0,Math.min(100,Number(level.progress_percent||0)))}%"></i></div><p class="subtle">${Number(level.points_to_next||0).toLocaleString()} points to next level.</p>`;}
   if($('homeCommunityPoints')){const level=rewards.level||{name:'Deckhand',progress_percent:0,points_to_next:100};$('homeCommunityPoints').innerHTML=`<div class="community-mini-item"><strong>${Number(rewards.balance||0).toLocaleString()} OceanPoints</strong><span>${escapeHtml(level.name||'Deckhand')}</span></div><div class="progressbar"><i style="width:${Math.max(0,Math.min(100,Number(level.progress_percent||0)))}%"></i></div><p class="subtle">${Number(level.points_to_next||0).toLocaleString()} points to next level.</p>`;}
+  renderSocialHome();
+  renderSocialProfile();
+  renderExplore(document.querySelector('.oc-explore-filter.active')?.dataset.exploreFilter || 'trending');
 }
 async function publishCommunityPost(){
   try{
