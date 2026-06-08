@@ -41,6 +41,42 @@
       "destination": "https://fishing-ai-backend.onrender.com/community/:path*"
     },
     {
+      "source": "/rewards/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/rewards/:path*"
+    },
+    {
+      "source": "/catches/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/catches/:path*"
+    },
+    {
+      "source": "/saved-areas/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/saved-areas/:path*"
+    },
+    {
+      "source": "/feedback",
+      "destination": "https://fishing-ai-backend.onrender.com/feedback"
+    },
+    {
+      "source": "/places/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/places/:path*"
+    },
+    {
+      "source": "/ramps",
+      "destination": "https://fishing-ai-backend.onrender.com/ramps"
+    },
+    {
+      "source": "/fuel",
+      "destination": "https://fishing-ai-backend.onrender.com/fuel"
+    },
+    {
+      "source": "/marine/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/marine/:path*"
+    },
+    {
+      "source": "/weather/:path*",
+      "destination": "https://fishing-ai-backend.onrender.com/weather/:path*"
+    },
+    {
       "source": "/billing/:path*",
       "destination": "https://fishing-ai-backend.onrender.com/billing/:path*"
     },
