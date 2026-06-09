@@ -755,8 +755,14 @@
     .oc-profile-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.oc-profile-stats span{border:1px solid rgba(148,163,184,.16);background:rgba(2,6,16,.42);border-radius:999px;padding:7px 10px;font-size:12px;color:#dce9ff}
     .oc-profile-tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}
     .oc-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px}.oc-section-title h2{margin:0}
+    .oc-simple-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .oc-simple-action{border:1px solid rgba(73,231,255,.22);background:rgba(7,12,24,.82);color:#eef7ff;border-radius:18px;padding:14px;text-align:left;min-height:112px}
+    .oc-simple-action strong{display:block;font-size:16px;margin-bottom:7px}.oc-simple-action span{display:block;color:var(--muted);font-size:12px;line-height:1.4}
+    .oc-help-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(125,255,213,.18);background:rgba(7,20,29,.72);border-radius:16px;padding:11px 12px;margin-bottom:14px}.oc-help-bar p{margin:0;color:#c8d9ee;font-size:13px}
+    .oc-advanced-home summary{cursor:pointer;font-weight:900;padding:13px 14px;border:1px solid rgba(148,163,184,.16);background:rgba(7,12,24,.72);border-radius:16px;list-style:none}.oc-advanced-home[open] summary{margin-bottom:14px}
+    .auth-dev-actions{display:none}
     @media(max-width:880px){.oc-top-feed{grid-template-columns:minmax(0,1fr)}.oc-feed-hero h2{font-size:27px}.oc-discovery-grid,.oc-create-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.oc-feed-actions{grid-template-columns:repeat(3,1fr)}.oc-profile-main{grid-template-columns:1fr;text-align:left}.oc-profile-photo{width:96px;height:96px;border-radius:28px}.oc-cover-art{height:150px}}
-    @media(max-width:560px){.oc-hero-grid{grid-template-columns:1fr}.oc-create-grid,.oc-discovery-grid{grid-template-columns:1fr}.oc-composer{grid-template-columns:auto 1fr}.oc-composer .btn{grid-column:1/-1}.oc-feed-actions{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:560px){.oc-legacy-home{display:none}.oc-feed-hero{min-height:auto;padding:15px}.oc-feed-hero h2{font-size:24px}.oc-feed-hero p{font-size:13px}.oc-hero-grid{grid-template-columns:1fr 1fr}.oc-hero-card{min-height:88px;padding:11px}.oc-create-grid,.oc-discovery-grid{grid-template-columns:1fr}.oc-composer{grid-template-columns:auto minmax(0,1fr)}.oc-composer .btn{grid-column:1/-1}.oc-feed-actions{grid-template-columns:repeat(2,1fr)}.oc-simple-actions{grid-template-columns:1fr 1fr}.oc-simple-action{min-height:100px;padding:12px}.mobile-nav button span{font-size:9px}.oc-help-bar{align-items:flex-start;flex-direction:column}}
   </style>
 </head>
 <body class="auth-loading auth-locked">
@@ -781,10 +787,10 @@
     <div class="auth-actions">
       <button class="btn primary" id="btnGateSignIn">Sign In</button>
       <button class="btn" id="btnGateSignUp">Create Account</button>
-      <button class="btn ghost" id="btnGateResetPassword">Reset Password</button>
-      <button class="btn ghost" id="btnGateMagicLink">Magic Link</button>
+      <button class="btn ghost" id="btnGateResetPassword">Forgot password</button>
+      <button class="btn ghost" id="btnGateMagicLink">Email sign-in link</button>
     </div>
-    <div class="auth-actions">
+    <div class="auth-actions auth-dev-actions" id="gateDeveloperActions">
       <button class="btn ghost" id="btnGateUseCloudApi" type="button">Use cloud API</button>
       <button class="btn ghost" id="btnGateUseLocalApi" type="button">Use local backend</button>
       <button class="btn ghost" id="btnGateResetDevice" type="button">Clear saved login</button>
@@ -886,7 +892,7 @@
     <main>
 
       <section class="section active" id="section-home">
-        <div class="hero">
+        <div class="hero oc-legacy-home">
           <h2>Plan better trips. Log catches. Fish smarter.</h2>
           <p>
             OceanCore brings your catch history, live map conditions, and practical AI guidance together in one clean flow.
@@ -902,6 +908,18 @@
         </div>
 
         <div data-free-ad-slot class="ad-slot hidden" style="margin-bottom:14px">Ad space · Free plan</div>
+
+        <div class="oc-help-bar">
+          <p><strong>Not sure where to start?</strong> Check conditions before a trip, or ask AI what to do.</p>
+          <button class="btn ghost" type="button" data-section="ai">Ask AI for help</button>
+        </div>
+
+        <div class="oc-simple-actions" aria-label="Main actions">
+          <button class="oc-simple-action" type="button" data-section="map"><strong>Check conditions</strong><span>Windy map, swell, ramps and nearby fuel.</span></button>
+          <button class="oc-simple-action" type="button" data-section="ai"><strong>Ask OceanCore AI</strong><span>Get help planning a trip, choosing gear or targeting fish.</span></button>
+          <button class="oc-simple-action" type="button" data-section="catch"><strong>Log a catch</strong><span>Save a photo, species, measurements and private location.</span></button>
+          <button class="oc-simple-action" type="button" data-section="community"><strong>See community</strong><span>View local reports, catches, videos and boat updates.</span></button>
+        </div>
 
         <div class="oc-top-feed">
           <div class="oc-feed-hero">
@@ -946,6 +964,8 @@
           </article>
         </div>
 
+        <details class="oc-advanced-home">
+          <summary>Account setup and advanced dashboard</summary>
         <div class="grid-4">
           <div class="stat">
             <div class="label">Account</div>
@@ -1030,6 +1050,7 @@
             </div>
           </div>
         </div>
+        </details>
       </section>
 
 
@@ -4911,11 +4932,13 @@ function applyVisualPolish(){
   const saveApiRow = $('btnSaveApi')?.closest('.row');
   const betaNotesHeading = $('betaNotesHeading');
   const betaNotesBox = betaNotesHeading?.nextElementSibling;
+  const gateDeveloperActions = $('gateDeveloperActions');
   if(connectionHeading) connectionHeading.style.display = devView ? '' : 'none';
   if(apiField) apiField.style.display = devView ? '' : 'none';
   if(saveApiRow) saveApiRow.style.display = devView ? '' : 'none';
   if(betaNotesHeading) betaNotesHeading.style.display = devView ? '' : 'none';
   if(betaNotesBox) betaNotesBox.style.display = devView ? '' : 'none';
+  if(gateDeveloperActions) gateDeveloperActions.style.display = devView ? 'flex' : 'none';
 
   if($('btnSaveApi')) $('btnSaveApi').textContent = 'Save connection';
   if($('profileRole')) $('profileRole').placeholder = 'Boat notes (optional)';
