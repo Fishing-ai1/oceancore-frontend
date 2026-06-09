@@ -1088,7 +1088,7 @@
           <p>One upload centre for catches, reports, videos, questions and boat content. Public locations default to general areas only.</p>
         </div>
         <div class="oc-create-grid">
-          <button class="oc-create-card" type="button" data-section="community" data-create-type="video"><strong>Video</strong><span>Upload a short or long fishing, boating, camping or 4WD video.</span></button>
+          <button class="oc-create-card" id="btnCreateVideoUpload" type="button"><strong>Upload Video</strong><span>Choose a fishing, boating, camping or 4WD video from your phone.</span></button>
           <button class="oc-create-card" type="button" data-section="community" data-create-type="catch"><strong>Photo</strong><span>Share a catch photo or useful on-water update.</span></button>
           <button class="oc-create-card" type="button" data-section="catch"><strong>Catch Log</strong><span>Save species, proof, measurements and a private or general location.</span></button>
           <button class="oc-create-card" type="button" data-section="community" data-create-type="fishing_report"><strong>Fishing Report</strong><span>Share conditions, bait, species and a spot-safe general area.</span></button>
@@ -1119,7 +1119,7 @@
 
         <div class="community-share-strip" aria-label="Community share actions">
           <button type="button" id="btnCommunityPhoto">Catch Photo</button>
-          <button type="button" id="btnCommunityVideo">Video Clip</button>
+          <button type="button" id="btnCommunityVideo">Upload Video</button>
           <button type="button" id="btnCommunityTripReport">Trip Report</button>
         </div>
 
@@ -1169,7 +1169,7 @@
                 <textarea id="communityCaption" placeholder="Write an update, trip report, gear note, or quick fishing clip caption..."></textarea>
                 <div class="spot-safe-lock"><strong>Spot Safe:</strong> public posts accept a general area only. Coordinates and exact marks are blocked.</div>
                 <label class="crew-media-drop" for="communityMedia">
-                  <span>Upload photo or video<small>JPG, PNG, WebP, HEIC/HEIF, MP4, MOV, WebM under 35MB</small></span>
+                  <span>Choose photo or video<small>JPG, PNG, WebP, HEIC/HEIF, MP4, MOV, WebM under 35MB</small></span>
                 </label>
                 <input class="sr-only-file" id="communityMedia" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm"/>
                 <div id="communityPreview" class="crew-preview"></div>
@@ -2851,13 +2851,29 @@ $('btnExploreSearch')?.addEventListener('click',()=>{
     ? matches.slice(0,8).map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.title || post.species || post.author_name || 'Community result')}</strong><span>${escapeHtml(post.general_area || post.post_type || 'OceanCore')}</span></div>`).join('')
     : '<div class="muted-box">No community results yet. Try a species, location, boat or report category.</div>';
 });
+function openCommunityMediaPicker(kind='all'){
+  const input = $('communityMedia');
+  if(!input) return;
+  input.accept = kind === 'video'
+    ? 'video/mp4,video/quicktime,video/webm'
+    : kind === 'image'
+      ? 'image/jpeg,image/png,image/webp,image/heic,image/heif'
+      : 'image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm';
+  input.click();
+}
 $('btnCommunityPhoto')?.addEventListener('click',()=>{
   selectCommunityPostType('catch');
-  $('communityMedia')?.click();
+  openCommunityMediaPicker('image');
 });
 $('btnCommunityVideo')?.addEventListener('click',()=>{
   selectCommunityPostType('video');
-  $('communityMedia')?.click();
+  openCommunityMediaPicker('video');
+});
+$('btnCreateVideoUpload')?.addEventListener('click',()=>{
+  selectCommunityPostType('video');
+  showSection('community');
+  setCommunityMsg('Choose a video from your phone, add a caption, then tap Post update.');
+  openCommunityMediaPicker('video');
 });
 $('btnCommunityTripReport')?.addEventListener('click',()=>{
   selectCommunityPostType('fishing_report');
