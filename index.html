@@ -6506,6 +6506,9 @@ async function publishCommunityPost(){
     };
     if(!payload.caption && !payload.media_data_url && !payload.species) throw new Error('Add a caption, species/topic, photo or video first.');
     const j = await apiFirst(['/api/community/posts','/community/posts'], {method:'POST', body:JSON.stringify(payload)});
+    if(j?.storage === 'local' && !isLocalDevApiUrl(state.apiUrl)){
+      throw new Error('This post was not saved safely. Your video is still selected; please try again after cloud storage is restored.');
+    }
     const post = j?.post;
     state.communityPosts = post ? [post, ...(state.communityPosts||[])].slice(0,50) : (state.communityPosts || []);
     ['communitySpecies','communityArea','communityCaption','communityBait','communityConditions','communityLength','communityWeight','communityTags','communityPollOptions'].forEach(id=>{ if($(id)) $(id).value=''; });
