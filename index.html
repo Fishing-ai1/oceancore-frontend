@@ -761,6 +761,11 @@
     .oc-help-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(125,255,213,.18);background:rgba(7,20,29,.72);border-radius:16px;padding:11px 12px;margin-bottom:14px}.oc-help-bar p{margin:0;color:#c8d9ee;font-size:13px}
     .oc-advanced-home summary{cursor:pointer;font-weight:900;padding:13px 14px;border:1px solid rgba(148,163,184,.16);background:rgba(7,12,24,.72);border-radius:16px;list-style:none}.oc-advanced-home[open] summary{margin-bottom:14px}
     .auth-dev-actions{display:none}
+    .auth-secondary-action{display:none}
+    .auth-signup-step{display:none;margin-top:12px}
+    .auth-signup-step.active{display:grid}
+    .auth-card .auth-actions{gap:8px}
+    .auth-card #btnGateSignIn{min-width:132px}
     @media(max-width:880px){.oc-top-feed{grid-template-columns:minmax(0,1fr)}.oc-feed-hero h2{font-size:27px}.oc-discovery-grid,.oc-create-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.oc-feed-actions{grid-template-columns:repeat(3,1fr)}.oc-profile-main{grid-template-columns:1fr;text-align:left}.oc-profile-photo{width:96px;height:96px;border-radius:28px}.oc-cover-art{height:150px}}
     @media(max-width:560px){.oc-legacy-home{display:none}.oc-feed-hero{min-height:auto;padding:15px}.oc-feed-hero h2{font-size:24px}.oc-feed-hero p{font-size:13px}.oc-hero-grid{grid-template-columns:1fr 1fr}.oc-hero-card{min-height:88px;padding:11px}.oc-create-grid,.oc-discovery-grid{grid-template-columns:1fr}.oc-composer{grid-template-columns:auto minmax(0,1fr)}.oc-composer .btn{grid-column:1/-1}.oc-feed-actions{grid-template-columns:repeat(2,1fr)}.oc-simple-actions{grid-template-columns:1fr 1fr}.oc-simple-action{min-height:100px;padding:12px}.mobile-nav button span{font-size:9px}.oc-help-bar{align-items:flex-start;flex-direction:column}}
   </style>
@@ -773,7 +778,7 @@
       <div>
         <div class="badge ok" style="display:inline-flex;margin-bottom:10px">Login</div>
         <h2>Welcome back</h2>
-        <p>Sign in once and this device stays logged in, so OceanCore opens straight into the app next time.</p>
+        <p>Sign in to check conditions, ask AI, log catches and see your community.</p>
       </div>
     </div>
 
@@ -788,7 +793,7 @@
       <button class="btn primary" id="btnGateSignIn">Sign In</button>
       <button class="btn" id="btnGateSignUp">Create Account</button>
       <button class="btn ghost" id="btnGateResetPassword">Forgot password</button>
-      <button class="btn ghost" id="btnGateMagicLink">Email sign-in link</button>
+      <button class="btn ghost auth-secondary-action" id="btnGateMagicLink">Email sign-in link</button>
     </div>
     <div class="auth-actions auth-dev-actions" id="gateDeveloperActions">
       <button class="btn ghost" id="btnGateUseCloudApi" type="button">Use cloud API</button>
@@ -796,11 +801,9 @@
       <button class="btn ghost" id="btnGateResetDevice" type="button">Clear saved login</button>
     </div>
 
-    <div class="legal-signup-box">
+    <div class="legal-signup-box auth-signup-step" id="gateSignupStep">
       <label class="chip"><input type="checkbox" id="gateSignupLegalAgree"/> I agree to the Terms, Privacy Policy, and Marine Disclaimer</label>
       <button class="btn ghost" id="btnGateReadLegal" type="button">Read legal</button>
-      <button class="btn ghost" data-legal-url="/legal/terms-of-service" type="button">Terms</button>
-      <button class="btn ghost" data-legal-url="/legal/privacy-policy" type="button">Privacy</button>
     </div>
 
     <div id="gateLegalDetails" class="muted-box gate-legal-details" hidden>
@@ -826,9 +829,7 @@
 
     <div id="gateMsg" class="subtle" style="margin-top:10px"></div>
 
-    <div class="auth-note" style="margin-top:14px">
-      Saved login stays on this device using your secure session token. Use <strong>Sign Out</strong> in My Account any time you want to clear it.
-    </div>
+    <div class="auth-note" style="margin-top:14px">Your login stays securely saved on this device.</div>
   </div>
 </div>
 
@@ -2465,7 +2466,8 @@ function setStatusMessage(id, msg){
 function setAuthFeedback(msg){
   const text = msg || '';
   setStatusMessage('authMsg', text);
-  setStatusMessage('gateMsg', text);
+  const technical = /backend|allowed_origins|cors|origin:|https?:\/\/|port 4000/i.test(text);
+  setStatusMessage('gateMsg', technical ? 'OceanCore could not connect. Check your internet connection and try again.' : text);
 }
 
 function apiReachabilityMessage(apiBase){
@@ -4932,13 +4934,11 @@ function applyVisualPolish(){
   const saveApiRow = $('btnSaveApi')?.closest('.row');
   const betaNotesHeading = $('betaNotesHeading');
   const betaNotesBox = betaNotesHeading?.nextElementSibling;
-  const gateDeveloperActions = $('gateDeveloperActions');
   if(connectionHeading) connectionHeading.style.display = devView ? '' : 'none';
   if(apiField) apiField.style.display = devView ? '' : 'none';
   if(saveApiRow) saveApiRow.style.display = devView ? '' : 'none';
   if(betaNotesHeading) betaNotesHeading.style.display = devView ? '' : 'none';
   if(betaNotesBox) betaNotesBox.style.display = devView ? '' : 'none';
-  if(gateDeveloperActions) gateDeveloperActions.style.display = devView ? 'flex' : 'none';
 
   if($('btnSaveApi')) $('btnSaveApi').textContent = 'Save connection';
   if($('profileRole')) $('profileRole').placeholder = 'Boat notes (optional)';
@@ -6196,7 +6196,16 @@ $('btnSignUp').addEventListener('click', ()=>signUp('account'));
 $('btnResetPassword').addEventListener('click', ()=>sendResetPassword('account'));
 $('btnMagicLink').addEventListener('click', ()=>sendMagicLink('account'));
 $('btnGateSignIn').addEventListener('click', ()=>signIn('gate'));
-$('btnGateSignUp').addEventListener('click', ()=>signUp('gate'));
+$('btnGateSignUp').addEventListener('click', ()=>{
+  const step = $('gateSignupStep');
+  if(step && !step.classList.contains('active')){
+    step.classList.add('active');
+    $('btnGateSignUp').textContent = 'Create my account';
+    setAuthFeedback('Review and accept the legal documents, then tap Create my account.');
+    return;
+  }
+  signUp('gate');
+});
 $('btnGateResetPassword').addEventListener('click', ()=>sendResetPassword('gate'));
 $('btnGateMagicLink').addEventListener('click', ()=>sendMagicLink('gate'));
 $('btnGateUseCloudApi')?.addEventListener('click', useCloudApiUrl);
