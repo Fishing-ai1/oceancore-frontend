@@ -1659,11 +1659,11 @@
                 <span id="socialProfilePoints">0 OceanPoints</span>
               </div>
             </div>
-            <div class="row"><button class="btn primary" type="button" data-section="create">Create</button><button class="btn" type="button" data-section="account">Edit profile & settings</button></div>
+            <div class="row"><label class="btn primary" for="createVideoFile">Upload Video</label><button class="btn" type="button" data-section="create">Create other post</button><button class="btn" type="button" data-section="account">Edit profile & settings</button></div>
           </div>
         </div>
         <div class="oc-profile-tabs oc-feed-tabs">
-          <button class="active" type="button">Posts</button><button type="button" data-community-open-feed="videos">Videos</button><button type="button" data-section="catch">Catches</button><button type="button" data-community-open-feed="local">Reports</button><button type="button" data-section="rewards">Achievements</button><button type="button" data-section="account">About</button>
+          <button class="active" type="button">Posts</button><label class="oc-filter" for="createVideoFile">Upload Video</label><button type="button" data-community-open-feed="videos">My Videos</button><button type="button" data-section="catch">Catches</button><button type="button" data-community-open-feed="local">Reports</button><button type="button" data-section="rewards">Achievements</button><button type="button" data-section="account">About</button>
         </div>
         <div class="grid-4">
           <div class="stat"><div class="label">Views</div><div class="value" id="profileDashboardViews">0</div><div class="hint">Creator content views.</div></div>
@@ -4901,10 +4901,7 @@ function formatLegalState(row){
 
 function isDevView(){
   return location.protocol === 'file:'
-    || /(^|[?&])dev=1(&|$)/i.test(location.search)
-    || /^(localhost|127\.0\.0\.1)$/i.test(location.hostname)
-    || /^192\.168\./.test(location.hostname)
-    || /^10\./.test(location.hostname);
+    || /(^|[?&])dev=1(&|$)/i.test(location.search);
 }
 
 function updateCatchPhotoPickerUi(){
