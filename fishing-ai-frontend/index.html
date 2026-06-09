@@ -1659,11 +1659,12 @@
                 <span id="socialProfilePoints">0 OceanPoints</span>
               </div>
             </div>
-            <div class="row"><label class="btn primary" for="createVideoFile">Upload Video</label><button class="btn" type="button" data-section="create">Create other post</button><button class="btn" type="button" data-section="account">Edit profile & settings</button></div>
+            <div class="row"><label class="btn primary" for="profileVideoFile">Upload Video</label><button class="btn" type="button" data-section="create">Create other post</button><button class="btn" type="button" data-section="account">Edit profile & settings</button></div>
           </div>
         </div>
+        <input class="sr-only-file" id="profileVideoFile" type="file" accept="video/mp4,video/quicktime,video/webm"/>
         <div class="oc-profile-tabs oc-feed-tabs">
-          <button class="active" type="button">Posts</button><label class="oc-filter" for="createVideoFile">Upload Video</label><button type="button" data-community-open-feed="videos">My Videos</button><button type="button" data-section="catch">Catches</button><button type="button" data-community-open-feed="local">Reports</button><button type="button" data-section="rewards">Achievements</button><button type="button" data-section="account">About</button>
+          <button class="active" type="button">Posts</button><label class="oc-filter" for="profileVideoFile">Upload Video</label><button type="button" data-community-open-feed="videos">My Videos</button><button type="button" data-section="catch">Catches</button><button type="button" data-community-open-feed="local">Reports</button><button type="button" data-section="rewards">Achievements</button><button type="button" data-section="account">About</button>
         </div>
         <div class="grid-4">
           <div class="stat"><div class="label">Views</div><div class="value" id="profileDashboardViews">0</div><div class="hint">Creator content views.</div></div>
@@ -6509,6 +6510,7 @@ async function publishCommunityPost(){
     ['communitySpecies','communityArea','communityCaption','communityBait','communityConditions','communityLength','communityWeight','communityTags','communityPollOptions'].forEach(id=>{ if($(id)) $(id).value=''; });
     if($('communityMedia')) $('communityMedia').value='';
     if($('createVideoFile')) $('createVideoFile').value='';
+    if($('profileVideoFile')) $('profileVideoFile').value='';
     state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); }
 }
@@ -6597,15 +6599,18 @@ window.followCommunityUser = followCommunityUser;
 window.voteCommunityPoll = voteCommunityPoll;
 
 $('communityMedia')?.addEventListener('change', handleCommunityMedia);
-$('createVideoFile')?.addEventListener('change', async (event)=>{
+async function handleDirectVideoUpload(event){
   const input = event.currentTarget;
   if(!input?.files?.[0]) return;
+  const fileName = input.files[0].name;
   selectCommunityPostType('video');
   showSection('community');
   setCommunityMsg('Preparing your video...');
   await handleCommunityMedia(input);
-  setCommunityMsg(`Video ready: ${input.files[0].name}. Add a caption, then tap Post update.`);
-});
+  setCommunityMsg(`Video ready: ${fileName}. Add a caption, then tap Post update.`);
+}
+$('createVideoFile')?.addEventListener('change', handleDirectVideoUpload);
+$('profileVideoFile')?.addEventListener('change', handleDirectVideoUpload);
 $('btnPublishCommunityPost')?.addEventListener('click', publishCommunityPost);
 $('btnCommunityUseLastCatch')?.addEventListener('click', useLastCatchForCommunity);
 function selectCommunityPostType(type){state.communityPostType=type||'discussion';document.querySelectorAll('[data-community-type]').forEach(x=>x.classList.toggle('active',x.dataset.communityType===state.communityPostType));}
@@ -6615,9 +6620,9 @@ document.querySelectorAll('[data-community-open-feed]').forEach(btn=>btn.addEven
 
 if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker?.register('./sw.js', { scope:'./' }).catch((error)=>{
-      console.warn('OceanCore service worker registration failed', error);
-    });
+    navigator.serviceWorker?.register('./sw.js', { scope:'./', updateViaCache:'none' })
+      .then((registration)=>registration.update())
+      .catch((error)=>console.warn('OceanCore service worker registration failed', error));
   });
 }
 
