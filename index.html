@@ -961,7 +961,7 @@
             <div class="oc-feed-head"><div class="oc-avatar">MB</div><div><strong>Moreton Bay report</strong><span>Local intel - spot safe</span></div></div>
             <div class="oc-media"><div><strong>Snapper bite window</strong><br/><span>Wind easing near the afternoon tide change</span></div><div class="oc-play">AI</div></div>
             <div class="oc-feed-body"><p>Check the wind, swell and ramp traffic before launching. Save exact marks privately, then share only the general area.</p><div class="oc-tag-row"><span class="chip">Fishing Report</span><span class="chip">Windy</span><span class="chip">Spot Safe</span></div></div>
-            <div class="oc-feed-actions"><button type="button" data-section="community">Like</button><button type="button" data-section="community">Comment</button><button type="button" data-section="create">Share</button><button type="button" data-section="areas">Save</button><button type="button" data-section="feedback">Report</button></div>
+            <div class="oc-feed-actions"><button type="button" data-section="community">Like</button><button type="button" data-section="community">Comment</button><button type="button" onclick="shareCommunityPost('')">Share</button><button type="button" data-section="areas">Save</button><button type="button" data-section="feedback">Report</button></div>
           </article>
         </div>
 
@@ -5110,7 +5110,7 @@ function renderSocialHome(){
         <div class="oc-feed-head"><div class="oc-avatar">${escapeHtml(socialInitials(author))}</div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div></div>
         ${mediaHtml}
         <div class="oc-feed-body"><p>${escapeHtml(post.caption || post.notes || 'Shared with the OceanCore community.')}</p><div class="oc-tag-row"><span class="chip">${escapeHtml(post.post_type || 'Community')}</span><span class="chip">Spot Safe</span></div></div>
-        <div class="oc-feed-actions"><button type="button" onclick="likeCommunityPost('${escapeHtml(post.id)}')">Like ${Number(post.likes_count || 0)}</button><button type="button" onclick="toggleCommunityComments('${escapeHtml(post.id)}')">Comment</button><button type="button" data-section="create">Share</button><button type="button" data-section="areas">Save</button><button type="button" onclick="reportCommunityPost('${escapeHtml(post.id)}')">Report</button></div>
+        <div class="oc-feed-actions"><button type="button" onclick="likeCommunityPost('${escapeHtml(post.id)}')">Like ${Number(post.likes_count || 0)}</button><button type="button" onclick="toggleCommunityComments('${escapeHtml(post.id)}')">Comment</button><button type="button" onclick="shareCommunityPost('${escapeHtml(post.id)}')">Share</button><button type="button" data-section="areas">Save</button><button type="button" onclick="reportCommunityPost('${escapeHtml(post.id)}')">Report</button></div>
       </article>`;
     }).join('');
     bindSectionButtons($('socialHomeFeed'));
@@ -6402,6 +6402,7 @@ function renderCommunityPost(post){
       <div class="crew-actions">
         <button class="chip" type="button" onclick="likeCommunityPost('${id}')">Like - ${Number(post.likes_count||0)}</button>
         <button class="chip" type="button" ${commentsOff ? 'disabled' : `onclick="toggleCommunityComments('${id}')"`}>${escapeHtml(commentLabel)}</button>
+        <button class="chip" type="button" onclick="shareCommunityPost('${id}')">Share</button>
         <span class="chip">Privacy - ${escapeHtml(post.privacy || 'public')}</span>
         ${post.hold_link_comments ? '<span class="chip">Links held</span>' : ''}
         <button class="chip" type="button" onclick="reportCommunityPost('${id}')">Report</button>
@@ -6587,6 +6588,29 @@ async function deleteCommunityPost(id){
     setCommunityMsg('Community post deleted.');
   }catch(e){ setCommunityMsg(e.message || String(e)); }
 }
+async function shareCommunityPost(id=''){
+  const post = (state.communityPosts || []).find(row=>String(row.id) === String(id)) || null;
+  const title = post?.title || post?.species || (post?.post_type === 'video' ? 'OceanCore video' : 'OceanCore community post');
+  const author = post?.author_name || post?.user_email || 'OceanCore community';
+  const area = post?.general_area || 'Spot Safe area';
+  const caption = post?.caption || post?.notes || '';
+  const baseUrl = /^https?:$/i.test(location.protocol) ? `${location.origin}${location.pathname}` : '';
+  const url = post?.share_url || post?.media_url || post?.photo_url || (baseUrl ? `${baseUrl}#community-post=${encodeURIComponent(id || 'featured')}` : '');
+  const text = [caption, `Shared by ${author}`, area].filter(Boolean).join('\n');
+  try{
+    if(navigator.share){
+      await navigator.share({ title, text, ...(url ? { url } : {}) });
+      setCommunityMsg('Post shared.');
+      return;
+    }
+    const shareText = [title, text, url].filter(Boolean).join('\n');
+    await navigator.clipboard.writeText(shareText);
+    setCommunityMsg('Post link copied. Paste it into a message or social app.');
+  }catch(error){
+    if(error?.name === 'AbortError') return;
+    setCommunityMsg('Could not open sharing on this device. Try again or copy the post details.');
+  }
+}
 async function followCommunityUser(id){try{const j=await apiFirst([`/api/community/profile/${encodeURIComponent(id)}/follow`,`/community/profile/${encodeURIComponent(id)}/follow`],{method:'POST',body:'{}'});setCommunityMsg(j.following?'Added to your crew.':'Removed from your crew.');if(state.communityTab==='following')await loadCommunityPosts();}catch(e){setCommunityMsg(e.message||String(e));}}
 async function voteCommunityPoll(id,optionId){try{const j=await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/vote`,`/community/posts/${encodeURIComponent(id)}/vote`],{method:'POST',body:JSON.stringify({option_id:optionId})});const post=(state.communityPosts||[]).find(x=>String(x.id)===String(id));if(post)post.poll_options=j.poll_options;renderCommunityFeed();}catch(e){setCommunityMsg(e.message||String(e));}}
 
@@ -6595,6 +6619,7 @@ window.toggleCommunityComments = toggleCommunityComments;
 window.submitCommunityComment = submitCommunityComment;
 window.reportCommunityPost = reportCommunityPost;
 window.deleteCommunityPost = deleteCommunityPost;
+window.shareCommunityPost = shareCommunityPost;
 window.followCommunityUser = followCommunityUser;
 window.voteCommunityPoll = voteCommunityPoll;
 
