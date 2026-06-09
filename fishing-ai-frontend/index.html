@@ -748,7 +748,7 @@
     .oc-feed-body{padding:14px}.oc-feed-body p{margin:0 0 10px;color:#dce9ff;line-height:1.5}.oc-tag-row{display:flex;gap:8px;flex-wrap:wrap}
     .oc-feed-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 14px 14px}.oc-feed-actions button{min-height:42px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(2,6,16,.48);color:#dce9ff;font-weight:800}
     .oc-discovery-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-discovery-card{border:1px solid var(--border);border-radius:20px;background:rgba(7,12,24,.78);padding:13px;min-height:132px}.oc-discovery-card b{display:block;font-size:15px;margin-bottom:7px}.oc-discovery-card span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
-    .oc-create-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-create-card{text-align:left;border:1px solid rgba(73,231,255,.18);background:rgba(7,12,24,.78);border-radius:20px;padding:14px;min-height:142px;color:#eef7ff}.oc-create-card strong{display:block;font-size:17px;margin-bottom:7px}.oc-create-card span{color:var(--muted);font-size:13px;line-height:1.45}
+    .oc-create-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-create-card{display:block;cursor:pointer;text-align:left;border:1px solid rgba(73,231,255,.18);background:rgba(7,12,24,.78);border-radius:20px;padding:14px;min-height:142px;color:#eef7ff}.oc-create-card strong{display:block;font-size:17px;margin-bottom:7px}.oc-create-card span{color:var(--muted);font-size:13px;line-height:1.45}
     .oc-profile-cover{border:1px solid rgba(73,231,255,.24);border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#082033,#07101f 58%,#123b4a);margin-bottom:14px}.oc-cover-art{height:190px;background:radial-gradient(circle at 28% 36%,rgba(73,231,255,.36),transparent 18%),linear-gradient(135deg,#073854,#061121 48%,#0e5b69)}
     .oc-profile-main{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:end;padding:0 18px 18px;margin-top:-44px}.oc-profile-photo{width:112px;height:112px;border-radius:34px;border:3px solid #07101f;background:linear-gradient(135deg,var(--brand2),var(--brand));display:grid;place-items:center;color:#04121a;font-size:30px;font-weight:1000}
     .oc-profile-main h2{margin:0 0 5px;font-size:30px}.oc-profile-main p{margin:0;color:var(--muted)}
@@ -1088,7 +1088,8 @@
           <p>One upload centre for catches, reports, videos, questions and boat content. Public locations default to general areas only.</p>
         </div>
         <div class="oc-create-grid">
-          <button class="oc-create-card" id="btnCreateVideoUpload" type="button"><strong>Upload Video</strong><span>Choose a fishing, boating, camping or 4WD video from your phone.</span></button>
+          <label class="oc-create-card" for="createVideoFile"><strong>Upload Video</strong><span>Choose a fishing, boating, camping or 4WD video from your phone.</span></label>
+          <input class="sr-only-file" id="createVideoFile" type="file" accept="video/mp4,video/quicktime,video/webm"/>
           <button class="oc-create-card" type="button" data-section="community" data-create-type="catch"><strong>Photo</strong><span>Share a catch photo or useful on-water update.</span></button>
           <button class="oc-create-card" type="button" data-section="catch"><strong>Catch Log</strong><span>Save species, proof, measurements and a private or general location.</span></button>
           <button class="oc-create-card" type="button" data-section="community" data-create-type="fishing_report"><strong>Fishing Report</strong><span>Share conditions, bait, species and a spot-safe general area.</span></button>
@@ -2867,12 +2868,6 @@ $('btnCommunityPhoto')?.addEventListener('click',()=>{
 });
 $('btnCommunityVideo')?.addEventListener('click',()=>{
   selectCommunityPostType('video');
-  openCommunityMediaPicker('video');
-});
-$('btnCreateVideoUpload')?.addEventListener('click',()=>{
-  selectCommunityPostType('video');
-  showSection('community');
-  setCommunityMsg('Choose a video from your phone, add a caption, then tap Post update.');
   openCommunityMediaPicker('video');
 });
 $('btnCommunityTripReport')?.addEventListener('click',()=>{
@@ -6358,11 +6353,12 @@ function renderCommunityPreview(){
     ? `<video src="${data}" controls playsinline></video>`
     : `<img src="${data}" alt="Community upload preview"/>`;
 }
-async function handleCommunityMedia(){
-  const file=$('communityMedia')?.files?.[0];
+async function handleCommunityMedia(sourceInput=$('communityMedia')){
+  const input = sourceInput?.target || sourceInput;
+  const file=input?.files?.[0];
   if(!file){ state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); return; }
   try{ ensureUploadFile(file, COMMUNITY_MEDIA_MIMES, COMMUNITY_MEDIA_MAX_BYTES, 'Community media'); }
-  catch(e){ setCommunityMsg(e.message || String(e)); $('communityMedia').value=''; return; }
+  catch(e){ setCommunityMsg(e.message || String(e)); if(input) input.value=''; return; }
   state.communityMediaMime=file.type || '';
   state.communityMediaDataUrl = await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=reject; r.readAsDataURL(file); });
   renderCommunityPreview(); setCommunityMsg(`Ready: ${file.name}`);
@@ -6514,7 +6510,9 @@ async function publishCommunityPost(){
     const post = j?.post;
     state.communityPosts = post ? [post, ...(state.communityPosts||[])].slice(0,50) : (state.communityPosts || []);
     ['communitySpecies','communityArea','communityCaption','communityBait','communityConditions','communityLength','communityWeight','communityTags','communityPollOptions'].forEach(id=>{ if($(id)) $(id).value=''; });
-    if($('communityMedia')) $('communityMedia').value=''; state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
+    if($('communityMedia')) $('communityMedia').value='';
+    if($('createVideoFile')) $('createVideoFile').value='';
+    state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); }
 }
 
@@ -6602,6 +6600,15 @@ window.followCommunityUser = followCommunityUser;
 window.voteCommunityPoll = voteCommunityPoll;
 
 $('communityMedia')?.addEventListener('change', handleCommunityMedia);
+$('createVideoFile')?.addEventListener('change', async (event)=>{
+  const input = event.currentTarget;
+  if(!input?.files?.[0]) return;
+  selectCommunityPostType('video');
+  showSection('community');
+  setCommunityMsg('Preparing your video...');
+  await handleCommunityMedia(input);
+  setCommunityMsg(`Video ready: ${input.files[0].name}. Add a caption, then tap Post update.`);
+});
 $('btnPublishCommunityPost')?.addEventListener('click', publishCommunityPost);
 $('btnCommunityUseLastCatch')?.addEventListener('click', useLastCatchForCommunity);
 function selectCommunityPostType(type){state.communityPostType=type||'discussion';document.querySelectorAll('[data-community-type]').forEach(x=>x.classList.toggle('active',x.dataset.communityType===state.communityPostType));}
