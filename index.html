@@ -1179,7 +1179,7 @@
                 <textarea id="communityCaption" placeholder="Write an update, trip report, gear note, or quick fishing clip caption..."></textarea>
                 <div class="spot-safe-lock"><strong>Spot Safe:</strong> public posts accept a general area only. Coordinates and exact marks are blocked.</div>
                 <label class="crew-media-drop" for="communityMedia">
-                  <span>Choose photo or video<small>JPG, PNG, WebP, HEIC/HEIF, MP4, MOV, WebM under 35MB</small></span>
+                  <span>Choose photo or video<small>MP4, MOV and WebM use resumable upload. Hour-long uploads require large-video storage to be enabled.</small></span>
                 </label>
                 <input class="sr-only-file" id="communityMedia" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm"/>
                 <div id="communityPreview" class="crew-preview"></div>
@@ -2153,6 +2153,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js" crossorigin="anonymous"></script>
 <script>
 const $ = (id)=>document.getElementById(id);
 const escapeHtml = (v='') => String(v)
@@ -2333,6 +2334,7 @@ const COMMUNITY_MEDIA_MIMES = [...IMAGE_UPLOAD_MIMES, 'video/mp4', 'video/quickt
 const AVATAR_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const CATCH_PHOTO_MAX_BYTES = 12 * 1024 * 1024;
 const COMMUNITY_MEDIA_MAX_BYTES = 35 * 1024 * 1024;
+const COMMUNITY_VIDEO_MAX_BYTES = 5 * 1024 * 1024 * 1024;
 
 function formatMb(bytes){
   return Math.round(bytes / 1024 / 1024);
@@ -2447,6 +2449,8 @@ const state = {
   communityPosts: [],
   communityMediaDataUrl: "",
   communityMediaMime: "",
+  communityMediaUrl: "",
+  communityMediaUpload: null,
   communityTab: "local",
   communityPostType: "fishing_report",
   communityDashboard: null,
@@ -6389,32 +6393,68 @@ function setCommunityUploadStatus(message='', tone='pending'){
   el.dataset.tone=tone;
   el.innerHTML=message ? `<strong>${tone === 'published' ? 'Published' : 'Ready to publish'}</strong><br>${escapeHtml(message)}` : '';
   const publishButton=$('btnPublishCommunityPost');
-  if(publishButton && state.communityMediaDataUrl) publishButton.textContent=state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Publish post';
+  if(publishButton && (state.communityMediaDataUrl || state.communityMediaUrl)) publishButton.textContent=state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Publish post';
 }
 function renderCommunityPreview(){
   const root=$('communityPreview'); if(!root) return;
-  const data=state.communityMediaDataUrl || '';
+  const data=state.communityMediaDataUrl || state.communityMediaUrl || '';
   if(!data){ root.innerHTML=''; return; }
   const mime=state.communityMediaMime || '';
   root.innerHTML = mime.startsWith('video/')
     ? `<video src="${data}" controls playsinline></video>`
     : `<img src="${data}" alt="Community upload preview"/>`;
 }
+async function uploadCommunityVideoResumable(file){
+  if(!window.tus?.Upload) throw new Error('Large-video uploader did not load. Refresh and try again.');
+  const ticket=await apiFirst(['/api/community/media/upload-ticket','/community/media/upload-ticket'],{method:'POST',body:JSON.stringify({name:file.name,mime:file.type,size:file.size})});
+  if(!ticket?.upload_token || !ticket?.resumable_endpoint || !ticket?.public_url) throw new Error('OceanCore could not prepare permanent video storage.');
+  return new Promise((resolve,reject)=>{
+    const upload=new window.tus.Upload(file,{
+      endpoint:ticket.resumable_endpoint,
+      retryDelays:[0,3000,5000,10000,20000],
+      headers:{'x-signature':ticket.upload_token},
+      uploadDataDuringCreation:true,
+      removeFingerprintOnSuccess:true,
+      chunkSize:Number(ticket.chunk_size||6*1024*1024),
+      metadata:{bucketName:ticket.bucket,objectName:ticket.object_path,contentType:file.type,cacheControl:'31536000'},
+      onError:error=>{state.communityMediaUpload=null;reject(new Error(`Video upload stopped: ${error?.message||error}`));},
+      onProgress:(uploaded,total)=>{
+        const percent=Math.max(0,Math.min(100,Math.round((uploaded/Math.max(1,total))*100)));
+        setCommunityMsg(`Uploading ${file.name}: ${percent}%`);
+        setCommunityUploadStatus(`${percent}% uploaded. Keep OceanCore open; interrupted uploads can resume.`);
+      },
+      onSuccess:()=>{state.communityMediaUpload=null;state.communityMediaUrl=ticket.public_url;resolve(ticket.public_url);}
+    });
+    state.communityMediaUpload=upload;
+    upload.findPreviousUploads().then(previous=>{if(previous.length) upload.resumeFromPreviousUpload(previous[0]);upload.start();}).catch(reject);
+  });
+}
 async function handleCommunityMedia(sourceInput=$('communityMedia')){
   const input = sourceInput?.target || sourceInput;
   const file=input?.files?.[0];
-  if(!file){ state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus(); return false; }
-  try{ ensureUploadFile(file, COMMUNITY_MEDIA_MIMES, COMMUNITY_MEDIA_MAX_BYTES, 'Community media'); }
+  if(!file){ state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus(); return false; }
+  const isVideo=String(file.type||'').startsWith('video/');
+  try{ ensureUploadFile(file, COMMUNITY_MEDIA_MIMES, isVideo?COMMUNITY_VIDEO_MAX_BYTES:COMMUNITY_MEDIA_MAX_BYTES, isVideo?'Community video':'Community media'); }
   catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(); if(input) input.value=''; return false; }
   try{
     state.communityMediaMime=file.type || '';
-    state.communityMediaDataUrl = await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=()=>reject(new Error('This video could not be read. Try a smaller MP4 or WebM file.')); r.readAsDataURL(file); });
+    state.communityMediaUrl='';
+    if(isVideo){
+      state.communityMediaDataUrl=URL.createObjectURL(file);
+      renderCommunityPreview();
+      setCommunityUploadStatus(`${file.name} is uploading directly to permanent storage.`);
+      await uploadCommunityVideoResumable(file);
+      URL.revokeObjectURL(state.communityMediaDataUrl);
+      state.communityMediaDataUrl='';
+    }else{
+      state.communityMediaDataUrl = await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=()=>reject(new Error('This media could not be read.')); r.readAsDataURL(file); });
+    }
     renderCommunityPreview();
     setCommunityMsg(`Ready: ${file.name}`);
-    setCommunityUploadStatus(`${file.name} is selected but has not been uploaded yet. Tap Publish video below to save it permanently.`);
+    setCommunityUploadStatus(isVideo?`${file.name} is fully uploaded. Add a caption, then tap Publish video.`:`${file.name} is selected but has not been published yet.`);
     return true;
   }catch(e){
-    state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus();
+    state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus();
     setCommunityMsg(e.message || String(e));
     return false;
   }
@@ -6562,9 +6602,11 @@ async function publishCommunityPost(){
       blocked_words: getSetting('community.blockedWords') || '',
       upload_quality: getSetting('community.uploadQuality') || 'hd',
       media_data_url: state.communityMediaDataUrl || '',
+      media_url: state.communityMediaUrl || '',
       media_mime: state.communityMediaMime || ''
     };
-    if(!payload.caption && !payload.media_data_url && !payload.species) throw new Error('Add a caption, species/topic, photo or video first.');
+    if(state.communityMediaUpload) throw new Error('Wait for the video upload to reach 100% before publishing.');
+    if(!payload.caption && !payload.media_data_url && !payload.media_url && !payload.species) throw new Error('Add a caption, species/topic, photo or video first.');
     const j = await apiFirst(['/api/community/posts','/community/posts'], {method:'POST', body:JSON.stringify(payload)});
     if(j?.storage === 'local' && !isLocalDevApiUrl(state.apiUrl)){
       throw new Error('This post was not saved safely. Your video is still selected; please try again after cloud storage is restored.');
@@ -6575,9 +6617,9 @@ async function publishCommunityPost(){
     if($('communityMedia')) $('communityMedia').value='';
     if($('createVideoFile')) $('createVideoFile').value='';
     if($('profileVideoFile')) $('profileVideoFile').value='';
-    state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
+    state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(`Upload failed: ${e.message || String(e)}. Your selected video has been kept so you can try again.`); }
-  finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=state.communityMediaDataUrl && state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Post update'; } }
+  finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=(state.communityMediaDataUrl || state.communityMediaUrl) && state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Post update'; } }
 }
 
 async function likeCommunityPost(id){
@@ -6694,11 +6736,11 @@ async function handleDirectVideoUpload(event){
   const fileName = input.files[0].name;
   selectCommunityPostType('video');
   showSection('community');
+  requestAnimationFrame(()=>setTimeout(()=>$('communityComposer')?.scrollIntoView({behavior:'smooth', block:'start'}), 50));
   setCommunityMsg('Preparing your video...');
   const ready=await handleCommunityMedia(input);
   if(!ready) return;
   setCommunityMsg(`Video ready: ${fileName}. Tap Publish video to save it permanently.`);
-  requestAnimationFrame(()=>setTimeout(()=>$('communityComposer')?.scrollIntoView({behavior:'smooth', block:'start'}), 50));
 }
 $('createVideoFile')?.addEventListener('change', handleDirectVideoUpload);
 $('profileVideoFile')?.addEventListener('change', handleDirectVideoUpload);
