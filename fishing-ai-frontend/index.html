@@ -1147,7 +1147,7 @@
         <div class="crew-shell">
           <div>
             <div class="crew-panel">
-              <div class="crew-compose">
+              <div class="crew-compose" id="communityComposer">
                 <div class="crew-compose-title">Create for the crew</div>
                 <div class="crew-type-grid" aria-label="Post type">
                   <button class="active" data-community-type="fishing_report" type="button">Fishing Report</button>
@@ -1174,6 +1174,7 @@
                 </label>
                 <input class="sr-only-file" id="communityMedia" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm"/>
                 <div id="communityPreview" class="crew-preview"></div>
+                <div id="communityUploadStatus" class="muted-box hidden"></div>
                 <div class="row">
                   <div class="fld"><select id="communityPrivacy"><option value="public">Public to community</option><option value="area_only">General area only</option><option value="private">Private draft</option></select></div>
                   <button class="btn ghost" id="btnCommunityUseLastCatch" type="button">Use last catch</button>
@@ -6342,6 +6343,15 @@ $('btnRunBetaChecklist')?.addEventListener('click', runBetaChecklist);
 
 
 function setCommunityMsg(msg){ const el=$('communityMsg'); if(el) el.textContent = msg || ''; }
+function setCommunityUploadStatus(message='', tone='pending'){
+  const el=$('communityUploadStatus');
+  if(!el) return;
+  el.classList.toggle('hidden', !message);
+  el.dataset.tone=tone;
+  el.innerHTML=message ? `<strong>${tone === 'published' ? 'Published' : 'Ready to publish'}</strong><br>${escapeHtml(message)}` : '';
+  const publishButton=$('btnPublishCommunityPost');
+  if(publishButton && state.communityMediaDataUrl) publishButton.textContent=state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Publish post';
+}
 function renderCommunityPreview(){
   const root=$('communityPreview'); if(!root) return;
   const data=state.communityMediaDataUrl || '';
@@ -6354,12 +6364,21 @@ function renderCommunityPreview(){
 async function handleCommunityMedia(sourceInput=$('communityMedia')){
   const input = sourceInput?.target || sourceInput;
   const file=input?.files?.[0];
-  if(!file){ state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); return; }
+  if(!file){ state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus(); return false; }
   try{ ensureUploadFile(file, COMMUNITY_MEDIA_MIMES, COMMUNITY_MEDIA_MAX_BYTES, 'Community media'); }
-  catch(e){ setCommunityMsg(e.message || String(e)); if(input) input.value=''; return; }
-  state.communityMediaMime=file.type || '';
-  state.communityMediaDataUrl = await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=reject; r.readAsDataURL(file); });
-  renderCommunityPreview(); setCommunityMsg(`Ready: ${file.name}`);
+  catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(); if(input) input.value=''; return false; }
+  try{
+    state.communityMediaMime=file.type || '';
+    state.communityMediaDataUrl = await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=()=>reject(new Error('This video could not be read. Try a smaller MP4 or WebM file.')); r.readAsDataURL(file); });
+    renderCommunityPreview();
+    setCommunityMsg(`Ready: ${file.name}`);
+    setCommunityUploadStatus(`${file.name} is selected but has not been uploaded yet. Tap Publish video below to save it permanently.`);
+    return true;
+  }catch(e){
+    state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus();
+    setCommunityMsg(e.message || String(e));
+    return false;
+  }
 }
 function useLastCatchForCommunity(){
   const c = state.catches?.[0];
@@ -6478,8 +6497,10 @@ function renderCommunityLiveModules(){
   renderExplore(document.querySelector('.oc-explore-filter.active')?.dataset.exploreFilter || 'trending');
 }
 async function publishCommunityPost(){
+  const publishButton=$('btnPublishCommunityPost');
   try{
     setCommunityMsg('Posting...');
+    if(publishButton){ publishButton.disabled=true; publishButton.textContent='Publishing...'; }
     const commentPermission = getSetting('community.commentPermission') || (getSetting('community.allowComments') === false ? 'off' : 'everyone');
     const allowComments = commentPermission !== 'off';
     const payload = {
@@ -6515,8 +6536,9 @@ async function publishCommunityPost(){
     if($('communityMedia')) $('communityMedia').value='';
     if($('createVideoFile')) $('createVideoFile').value='';
     if($('profileVideoFile')) $('profileVideoFile').value='';
-    state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
-  }catch(e){ setCommunityMsg(e.message || String(e)); }
+    state.communityMediaDataUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
+  }catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(`Upload failed: ${e.message || String(e)}. Your selected video has been kept so you can try again.`); }
+  finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=state.communityMediaDataUrl && state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Post update'; } }
 }
 
 async function likeCommunityPost(id){
@@ -6634,8 +6656,10 @@ async function handleDirectVideoUpload(event){
   selectCommunityPostType('video');
   showSection('community');
   setCommunityMsg('Preparing your video...');
-  await handleCommunityMedia(input);
-  setCommunityMsg(`Video ready: ${fileName}. Add a caption, then tap Post update.`);
+  const ready=await handleCommunityMedia(input);
+  if(!ready) return;
+  setCommunityMsg(`Video ready: ${fileName}. Tap Publish video to save it permanently.`);
+  requestAnimationFrame(()=>setTimeout(()=>$('communityComposer')?.scrollIntoView({behavior:'smooth', block:'start'}), 50));
 }
 $('createVideoFile')?.addEventListener('change', handleDirectVideoUpload);
 $('profileVideoFile')?.addEventListener('change', handleDirectVideoUpload);
