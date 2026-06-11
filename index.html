@@ -2209,7 +2209,7 @@ function localBackendUrl(){
 
 function configuredApiUrl(){
   const meta = document.querySelector('meta[name="oceancore-api-url"]')?.content || '';
-  return normalizeApiUrl(window.OCEANCORE_API_URL || meta || sameOriginProxyApiUrl() || 'https://fishing-ai-backend.onrender.com');
+  return normalizeApiUrl(window.OCEANCORE_API_URL || meta || 'https://fishing-ai-backend.onrender.com');
 }
 
 function sameOriginProxyApiUrl(){
@@ -2224,13 +2224,12 @@ function isRenderCloudApiUrl(value){
 function defaultApiUrl(){
   const saved = normalizeApiUrl(localStorage.getItem('oceancore_api_url') || '');
   const origin = normalizeApiUrl(currentHttpOrigin());
-  const proxyApi = sameOriginProxyApiUrl();
   const servedByBackend = origin && window.location.pathname.startsWith('/app');
   if(servedByBackend) return origin;
   if(window.location.protocol === 'file:'){
     return saved && isLocalDevApiUrl(saved) ? saved : localBackendUrl();
   }
-  if(proxyApi && (!saved || isRenderCloudApiUrl(saved))) return proxyApi;
+  if(sameOriginProxyApiUrl() && (!saved || saved === origin || isRenderCloudApiUrl(saved))) return configuredApiUrl();
   if(saved && !saved.includes('vercel.app:4000')) return saved;
   return configuredApiUrl();
 }
@@ -2952,10 +2951,16 @@ async function apiFirst(paths, opts = {}, allowRefresh = true){
 }
 
 async function refreshHealth(){
+  const cloudWake = isRenderCloudApiUrl(state.apiUrl);
+  if(cloudWake){
+    setBadge('apiBadge', 'API WAKING', 'warn');
+    setStatusMessage('gateHint', 'Connecting to OceanCore. The first connection can take about 30 seconds...');
+  }
   try{
     const j = await api('/health');
     setBadge('apiBadge', j?.auth_api_configured ? 'API OK' : 'API PART', j?.auth_api_configured ? 'ok' : 'warn');
     state.lastHealth = j || null;
+    setStatusMessage('gateHint', state.token ? 'Restoring saved login on this device...' : 'Sign in to open OceanCore.');
     if(!j?.auth_api_configured){
       setAuthFeedback('Backend is up, but auth is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY in backend .env, then restart.');
     }
