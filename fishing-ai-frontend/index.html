@@ -2894,6 +2894,33 @@ $('btnCommunityTripReport')?.addEventListener('click',()=>{
   caption?.focus();
 });
 
+function canRetryCloudRequest(path, opts = {}){
+  const method = String(opts.method || 'GET').toUpperCase();
+  if(method === 'GET' || method === 'HEAD') return true;
+  return /^\/auth\/(login|refresh|logout|reset-password|magic-link)/i.test(String(path || ''));
+}
+
+function cloudApiCandidates(apiBase, path, opts = {}){
+  const primary = normalizeApiUrl(apiBase);
+  const proxy = sameOriginProxyApiUrl();
+  if(!proxy || !canRetryCloudRequest(path, opts)) return [primary];
+  if(primary === proxy) return [proxy, configuredApiUrl()].filter((value, index, list)=>value && list.indexOf(value) === index);
+  if(isRenderCloudApiUrl(primary)) return [primary, proxy];
+  return [primary];
+}
+
+async function fetchApiCandidate(apiBase, path, opts, headers){
+  const isCloud = isRenderCloudApiUrl(apiBase) || apiBase === sameOriginProxyApiUrl();
+  if(!isCloud || opts.signal) return fetch(`${apiBase}${path}`, {...opts, headers});
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 55000);
+  try{
+    return await fetch(`${apiBase}${path}`, {...opts, headers, signal:controller.signal});
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 async function api(path, opts = {}, allowRefresh = true, apiBaseOverride = ''){
   const apiBase = normalizeApiUrl(apiBaseOverride || state.apiUrl);
   if(!apiBase){
@@ -2905,13 +2932,28 @@ async function api(path, opts = {}, allowRefresh = true, apiBaseOverride = ''){
   }
   if(state.token) headers.set('Authorization', `Bearer ${state.token}`);
   let res;
-  try{
-    res = await fetch(`${apiBase}${path}`, {...opts, headers});
-  }catch(_e){
+  let reachedApiBase = apiBase;
+  let networkError = null;
+  for(const candidate of cloudApiCandidates(apiBase, path, opts)){
+    try{
+      res = await fetchApiCandidate(candidate, path, opts, headers);
+      reachedApiBase = candidate;
+      break;
+    }catch(e){
+      networkError = e;
+    }
+  }
+  if(!res){
     const err = new Error(apiReachabilityMessage(apiBase));
     err.network = true;
     err.apiBase = apiBase;
+    err.cause = networkError;
     throw err;
+  }
+  if(reachedApiBase !== apiBase && !apiBaseOverride){
+    state.apiUrl = reachedApiBase;
+    localStorage.setItem('oceancore_api_url', reachedApiBase);
+    if($('apiUrl')) $('apiUrl').value = reachedApiBase;
   }
   const text = await res.text();
   let json = null;
