@@ -2934,10 +2934,17 @@ async function api(path, opts = {}, allowRefresh = true, apiBaseOverride = ''){
   let res;
   let reachedApiBase = apiBase;
   let networkError = null;
-  for(const candidate of cloudApiCandidates(apiBase, path, opts)){
+  const candidates = cloudApiCandidates(apiBase, path, opts);
+  for(let index = 0; index < candidates.length; index += 1){
+    const candidate = candidates[index];
     try{
       res = await fetchApiCandidate(candidate, path, opts, headers);
       reachedApiBase = candidate;
+      if([502,503,504].includes(res.status) && index < candidates.length - 1){
+        networkError = new Error(`Temporary cloud response (${res.status})`);
+        res = null;
+        continue;
+      }
       break;
     }catch(e){
       networkError = e;
