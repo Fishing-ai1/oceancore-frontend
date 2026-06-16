@@ -1,6 +1,6 @@
 # Google Play Data Safety Draft
 
-Use this as the first-pass Play Console data safety form source. Replace `YOUR-PRODUCTION-BACKEND` with the production domain before submission.
+Use this as the Play Console data safety form source for https://fishing-ai-backend.onrender.com.
 
 ## Data Collection
 
@@ -25,7 +25,7 @@ Not collected:
 
 - Data is sent over HTTPS.
 - Account data can be exported in Account & Settings.
-- Account deletion is available in Account & Settings and at `https://YOUR-PRODUCTION-BACKEND/legal/account-deletion`.
+- Account deletion is available in Account & Settings and at `https://fishing-ai-backend.onrender.com/legal/account-deletion`.
 - Community sharing should use general areas, not exact private marks.
 - Photos and community media are checked for type and size before storage.
 - JPG, PNG, and WebP image uploads are stripped of common EXIF/XMP/IPTC/text metadata before storage.

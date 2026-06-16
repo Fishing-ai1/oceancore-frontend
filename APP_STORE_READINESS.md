@@ -40,7 +40,7 @@ Wrapper commands:
 ```powershell
 cd C:\Users\morat\oceancoreAI\mobile-wrapper
 npm install
-$env:OCEANCORE_API_URL="https://your-production-backend.example.com"
+$env:OCEANCORE_API_URL="https://fishing-ai-backend.onrender.com"
 npm run prepare:web
 npm run cap:add:android
 npm run cap:sync
@@ -57,7 +57,7 @@ Run the same flow on macOS for `cap:add:ios` and `open:ios`.
 - Primary category: Sports
 - Secondary category: Weather or Navigation
 - Keywords: fishing, boating, marine, catch log, weather, Windy, tides, boat, Moreton Bay, trip planning
-- Privacy policy URL: `https://YOUR-PRODUCTION-BACKEND/legal/privacy-policy`
+- Privacy policy URL: `https://fishing-ai-backend.onrender.com/legal/privacy-policy`
 
 Public legal URLs:
 
@@ -164,7 +164,9 @@ Backend upload validation is intentionally strict for launch:
 - Run the one-command launch preflight:
 
   ```powershell
-  $env:API_URL="https://YOUR-PRODUCTION-BACKEND"
+  $env:API_URL="https://fishing-ai-backend.onrender.com"
+  $env:FRONTEND_URL="https://oceancore-frontend.vercel.app"
+  $env:FRONTEND_APP_PATH=""
   $env:REVIEWER_EMAIL="app-review-account@example.com"
   $env:REVIEWER_PASSWORD="review-account-password"
   npm run launch:preflight
@@ -174,7 +176,9 @@ Backend upload validation is intentionally strict for launch:
 - If the launch preflight fails, debug with the individual commands:
 
   ```powershell
-  $env:API_URL="https://YOUR-PRODUCTION-BACKEND"
+  $env:API_URL="https://fishing-ai-backend.onrender.com"
+  $env:FRONTEND_URL="https://oceancore-frontend.vercel.app"
+  $env:FRONTEND_APP_PATH=""
   npm run store:metadata
   npm run reviewer:prepare
   npm run smoke
@@ -189,4 +193,4 @@ Backend upload validation is intentionally strict for launch:
 - Verify account delete removes profile, catches, saved areas, community data, AI chats, and settings.
 - Test on iPhone Safari, Android Chrome, and the native wrapper.
 - Capture store screenshots for Home, Catch Log, Map & Conditions, AI Chat, Boat AI, and Account Settings.
-- Replace all `YOUR-PRODUCTION-BACKEND` placeholders in store metadata before submission.
+- Confirm the production legal URLs and support email before submission.

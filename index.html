@@ -71,6 +71,9 @@
     .brand h1{margin:0;font-size:18px;letter-spacing:.14em;text-transform:uppercase}
     .status{margin-left:0;display:flex;gap:8px;flex-wrap:wrap}
     .app-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+    .top-search{display:flex;align-items:center;gap:8px;flex:1;max-width:520px;margin-left:auto}
+    .top-search input{min-width:0;width:100%;height:44px;border-radius:8px}
+    .top-search .btn{height:44px;border-radius:8px}
     .top-icon,.pro-pill{
       appearance:none;border:1px solid rgba(73,231,255,.32);background:rgba(4,10,22,.66);
       color:var(--text);cursor:pointer;min-width:44px;height:44px;border-radius:999px;
@@ -116,6 +119,11 @@
     .btn.block{display:flex;width:100%;margin:5px 0}
     .btn.active{border-color:rgba(73,231,255,.6);box-shadow:0 0 0 1px rgba(73,231,255,.2) inset}
     .nav .nav-btn.active{background:linear-gradient(135deg,var(--brand2),var(--brand));color:#04121a;border-color:rgba(125,255,213,.65);box-shadow:0 10px 28px rgba(73,231,255,.2)}
+    .nav-group{border-top:1px solid rgba(148,163,184,.12);margin-top:10px;padding-top:8px}
+    .nav-group summary{cursor:pointer;color:#bfd0ee;font-weight:900;padding:10px 6px;list-style:none}
+    .nav-group summary::after{content:"+";float:right;color:var(--brand)}
+    .nav-group[open] summary::after{content:"-"}
+    .nav-developer{display:none}
     .btn.ghost{background:transparent}
     .btn.danger{border-color:rgba(255,142,168,.35);color:#ffd3df;background:rgba(52,12,28,.7)}
     .panel{
@@ -769,14 +777,30 @@
     .oc-simple-action strong{display:block;font-size:16px;margin-bottom:7px}.oc-simple-action span{display:block;color:var(--muted);font-size:12px;line-height:1.4}
     .oc-help-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(125,255,213,.18);background:rgba(7,20,29,.72);border-radius:16px;padding:11px 12px;margin-bottom:14px}.oc-help-bar p{margin:0;color:#c8d9ee;font-size:13px}
     .oc-advanced-home summary{cursor:pointer;font-weight:900;padding:13px 14px;border:1px solid rgba(148,163,184,.16);background:rgba(7,12,24,.72);border-radius:16px;list-style:none}.oc-advanced-home[open] summary{margin-bottom:14px}
+    .oc-home-intro{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 14px}
+    .oc-home-intro h2{margin:0;font-size:28px}.oc-home-intro p{margin:3px 0 0;color:var(--muted)}
+    #section-home>.oc-legacy-home,#section-home>.oc-help-bar,#section-home>.oc-simple-actions,#section-home>.oc-top-feed{display:none}
+    #socialHomeFeed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    #socialHomeFeed .oc-feed-card{margin:0}
+    .oc-media-button{width:100%;border:0;cursor:pointer;text-align:left;color:inherit;padding:0;background:transparent}
+    .oc-watch-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px}
+    .oc-watch-player{display:block;width:100%;aspect-ratio:16/9;background:#000;border:1px solid var(--border);border-radius:8px}
+    .oc-watch-placeholder{aspect-ratio:16/9;display:grid;place-items:center;border:1px solid var(--border);border-radius:8px;background:linear-gradient(135deg,#0c3152,#061121 50%,#0b4d62);font-size:18px;font-weight:900}
+    .oc-watch-title{font-size:24px;line-height:1.2;margin:14px 0 10px}
+    .oc-watch-creator{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .oc-watch-creator .oc-avatar{flex:0 0 auto}.oc-watch-creator div:nth-child(2){flex:1}.oc-watch-creator span{display:block;color:var(--muted);font-size:12px}
+    .oc-watch-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.oc-watch-actions .btn{border-radius:8px}
+    .oc-watch-description{padding:13px;border:1px solid var(--border);border-radius:8px;background:rgba(7,12,24,.72);color:#dce9ff}
+    .oc-watch-side{display:grid;gap:10px;align-content:start}.oc-watch-recommendation{display:grid;grid-template-columns:145px minmax(0,1fr);gap:9px;text-align:left;border:0;background:transparent;color:var(--text);cursor:pointer;padding:0}
+    .oc-watch-thumb{aspect-ratio:16/9;border-radius:7px;background:linear-gradient(135deg,#0c3152,#061121 50%,#0b4d62);background-size:cover;background-position:center}.oc-watch-recommendation strong{display:block;line-height:1.3}.oc-watch-recommendation span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
     .auth-dev-actions{display:none}
     .auth-secondary-action{display:none}
     .auth-signup-step{display:none;margin-top:12px}
     .auth-signup-step.active{display:grid}
     .auth-card .auth-actions{gap:8px}
     .auth-card #btnGateSignIn{min-width:132px}
-    @media(max-width:880px){.oc-top-feed{grid-template-columns:minmax(0,1fr)}.oc-feed-hero h2{font-size:27px}.oc-discovery-grid,.oc-create-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.oc-feed-actions{grid-template-columns:repeat(3,1fr)}.oc-profile-main{grid-template-columns:1fr;text-align:left}.oc-profile-photo{width:96px;height:96px;border-radius:28px}.oc-cover-art{height:150px}}
-    @media(max-width:560px){.oc-legacy-home{display:none}.oc-feed-hero{min-height:auto;padding:15px}.oc-feed-hero h2{font-size:24px}.oc-feed-hero p{font-size:13px}.oc-hero-grid{grid-template-columns:1fr 1fr}.oc-hero-card{min-height:88px;padding:11px}.oc-create-grid,.oc-discovery-grid{grid-template-columns:1fr}.oc-composer{grid-template-columns:auto minmax(0,1fr)}.oc-composer .btn{grid-column:1/-1}.oc-feed-actions{grid-template-columns:repeat(2,1fr)}.oc-simple-actions{grid-template-columns:1fr 1fr}.oc-simple-action{min-height:100px;padding:12px}.mobile-nav button span{font-size:9px}.oc-help-bar{align-items:flex-start;flex-direction:column}}
+    @media(max-width:880px){.oc-top-feed{grid-template-columns:minmax(0,1fr)}.oc-feed-hero h2{font-size:27px}.oc-discovery-grid,.oc-create-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.oc-feed-actions{grid-template-columns:repeat(3,1fr)}.oc-profile-main{grid-template-columns:1fr;text-align:left}.oc-profile-photo{width:96px;height:96px;border-radius:28px}.oc-cover-art{height:150px}.top-search{order:3;flex-basis:100%;max-width:none;margin-left:0}.oc-watch-layout{grid-template-columns:1fr}.oc-watch-side{grid-template-columns:repeat(2,minmax(0,1fr))}#socialHomeFeed{grid-template-columns:1fr}}
+    @media(max-width:560px){.oc-legacy-home{display:none}.oc-feed-hero{min-height:auto;padding:15px}.oc-feed-hero h2{font-size:24px}.oc-feed-hero p{font-size:13px}.oc-hero-grid{grid-template-columns:1fr 1fr}.oc-hero-card{min-height:88px;padding:11px}.oc-create-grid,.oc-discovery-grid{grid-template-columns:1fr}.oc-composer{grid-template-columns:auto minmax(0,1fr)}.oc-composer .btn{grid-column:1/-1}.oc-feed-actions{grid-template-columns:repeat(2,1fr)}.oc-simple-actions{grid-template-columns:1fr 1fr}.oc-simple-action{min-height:100px;padding:12px}.mobile-nav button span{font-size:9px}.oc-help-bar{align-items:flex-start;flex-direction:column}.oc-home-intro{align-items:start;flex-direction:column}.oc-home-intro h2{font-size:24px}.oc-watch-side{grid-template-columns:1fr}.oc-watch-recommendation{grid-template-columns:130px minmax(0,1fr)}}
   </style>
 </head>
 <body class="auth-loading auth-locked">
@@ -851,9 +875,12 @@
         <div class="subtle" style="font-size:12px">Trip planning, catch logging, and AI support built around your own fishing data.</div>
       </div>
     </div>
+    <div class="top-search" role="search">
+      <input id="globalSearch" placeholder="Search videos, reports, species or places" aria-label="Search OceanCore"/>
+      <button class="btn" id="btnGlobalSearch" type="button">Search</button>
+    </div>
     <div class="app-actions" aria-label="Quick actions">
-      <button class="top-icon" id="btnTopSearch" data-section="map" type="button" title="Search map">S</button>
-      <button class="top-icon has-dot" id="btnTopNotifications" data-section="feedback" type="button" title="Feedback and alerts">!</button>
+      <button class="top-icon has-dot" id="btnTopNotifications" data-section="feedback" type="button" title="Notifications">!</button>
       <button class="pro-pill" id="btnTopPro" data-section="billing" type="button"><span>*</span> PRO</button>
     </div>
     <div class="status">
@@ -872,36 +899,41 @@
       <button class="btn block nav-btn" data-section="community">Community</button>
       <button class="btn block nav-btn" data-section="ai">AI</button>
       <button class="btn block nav-btn" data-section="profile">Profile</button>
-      <h3>Tools</h3>
-      <button class="btn block nav-btn" data-section="catch">Catch Log</button>
-      <button class="btn block nav-btn" data-section="map">Map & Conditions</button>
-      <button class="btn block nav-btn" data-section="boat-ai">Boat AI</button>
-      <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
-      <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
-      <button class="btn block nav-btn" data-section="rewards">Rewards</button>
-      <button class="btn block nav-btn" data-section="account">Settings</button>
-      <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
-      <button class="btn block nav-btn" data-section="feedback">Feedback</button>
-      <button class="btn block nav-btn" data-section="beta-checklist">Beta Checklist</button>
-      <button class="btn block nav-btn" data-section="billing">Plans</button>
-      <button class="btn block nav-btn admin-nav-btn" data-section="admin">Admin</button>
-
-      <h3 id="connectionHeading">Connection</h3>
-      <div class="fld"><input id="apiUrl" placeholder="http://YOUR-PC-IP:4000"/></div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn block" id="btnSaveApi">Save API</button>
-        <button class="btn block" id="btnUseLocalApi" type="button">Use local backend</button>
-      </div>
-
-      <h3 id="betaNotesHeading">Notes</h3>
-      <div class="muted-box" style="font-size:12px">
-        Beta build — use Feedback if anything breaks.
-      </div>
+      <details class="nav-group">
+        <summary>Fishing tools</summary>
+        <button class="btn block nav-btn" data-section="catch">Catch Log</button>
+        <button class="btn block nav-btn" data-section="map">Map & Conditions</button>
+        <button class="btn block nav-btn" data-section="boat-ai">Boat AI</button>
+        <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
+        <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
+        <button class="btn block nav-btn" data-section="rewards">Rewards</button>
+      </details>
+      <details class="nav-group">
+        <summary>More</summary>
+        <button class="btn block nav-btn" data-section="account">Settings</button>
+        <button class="btn block nav-btn" data-section="billing">Plans</button>
+        <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
+        <button class="btn block nav-btn" data-section="feedback">Help & Feedback</button>
+        <button class="btn block nav-btn" data-section="beta-checklist">Beta Checklist</button>
+        <button class="btn block nav-btn admin-nav-btn" data-section="admin">Admin</button>
+      </details>
+      <details class="nav-group nav-developer">
+        <summary>Developer connection</summary>
+        <div class="fld"><input id="apiUrl" placeholder="http://YOUR-PC-IP:4000"/></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn block" id="btnSaveApi">Save API</button>
+          <button class="btn block" id="btnUseLocalApi" type="button">Use local backend</button>
+        </div>
+      </details>
     </aside>
 
     <main>
 
       <section class="section active" id="section-home">
+        <div class="oc-home-intro">
+          <div><h2>Your OceanCore feed</h2><p>Useful fishing videos, local reports and conditions chosen for you.</p></div>
+          <button class="btn primary" type="button" data-section="create">Create</button>
+        </div>
         <div class="hero oc-legacy-home">
           <h2>Plan better trips. Log catches. Fish smarter.</h2>
           <p>
@@ -1064,6 +1096,29 @@
       </section>
 
 
+
+      <section class="section section-jump-anchor" id="section-watch">
+        <div class="oc-watch-layout">
+          <div>
+            <div id="watchMedia"></div>
+            <h2 class="oc-watch-title" id="watchTitle">OceanCore video</h2>
+            <div class="oc-watch-creator">
+              <div class="oc-avatar" id="watchAvatar">OC</div>
+              <div><strong id="watchAuthor">OceanCore creator</strong><span id="watchMeta">Spot Safe community video</span></div>
+              <button class="btn" id="btnWatchFollow" type="button">Follow</button>
+            </div>
+            <div class="oc-watch-actions">
+              <button class="btn" id="btnWatchLike" type="button">Like</button>
+              <button class="btn" id="btnWatchShare" type="button">Share</button>
+              <button class="btn" id="btnWatchSave" type="button">Save</button>
+              <button class="btn ghost" id="btnWatchReport" type="button">Report</button>
+            </div>
+            <div class="oc-watch-description" id="watchDescription">Choose a community video to watch it here.</div>
+            <div class="panel" style="margin-top:14px"><div class="hd"><h2>Comments</h2></div><div class="bd" id="watchComments"><div class="muted-box">Open a video to view its comments.</div></div></div>
+          </div>
+          <aside><div class="oc-section-title"><h2>Up next</h2></div><div class="oc-watch-side" id="watchRecommendations"></div></aside>
+        </div>
+      </section>
 
       <section class="section section-jump-anchor" id="section-explore">
         <div class="oc-feed-hero" style="min-height:auto;margin-bottom:14px">
@@ -2144,12 +2199,12 @@
 </div>
 
 <div class="mobile-nav" aria-label="Mobile app navigation">
-  <button class="mobile-tab active" data-section="home" type="button">H<span>Home</span></button>
-  <button class="mobile-tab" data-section="explore" type="button">E<span>Explore</span></button>
-  <button class="mobile-tab plus-tab" data-section="create" type="button">+<span>Create</span></button>
-  <button class="mobile-tab" data-section="community" type="button">C<span>Community</span></button>
-  <button class="mobile-tab" data-section="ai" type="button">AI<span>AI</span></button>
-  <button class="mobile-tab" data-section="profile" type="button">P<span>Profile</span></button>
+  <button class="mobile-tab active" data-section="home" type="button" aria-label="Home">H<span>Home</span></button>
+  <button class="mobile-tab" data-section="explore" type="button" aria-label="Explore">E<span>Explore</span></button>
+  <button class="mobile-tab plus-tab" data-section="create" type="button" aria-label="Create">+<span>Create</span></button>
+  <button class="mobile-tab" data-section="community" type="button" aria-label="Community">C<span>Community</span></button>
+  <button class="mobile-tab" data-section="ai" type="button" aria-label="OceanCore AI">AI<span>AI</span></button>
+  <button class="mobile-tab" data-section="profile" type="button" aria-label="Profile">P<span>Profile</span></button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -2453,6 +2508,7 @@ const state = {
   communityTab: "local",
   communityPostType: "fishing_report",
   communityDashboard: null,
+  watchPostId: "",
 };
 if(Math.abs(Number(state.selectedLat || 0)) < 0.000001 && Math.abs(Number(state.selectedLng || 0)) < 0.000001){
   state.selectedLat = -27.5426;
@@ -2807,6 +2863,7 @@ function showSection(name){
   if(name === 'explore'){
     loadCommunityPosts().then(()=>renderExplore()).catch(()=>renderExplore());
   }
+  if(name === 'watch') renderVideoWatch();
   if(name === 'create') renderExplore();
   if(name === 'community'){
     applyFeatureSettings();
@@ -2867,6 +2924,20 @@ $('btnExploreSearch')?.addEventListener('click',()=>{
   if($('exploreCreators')) $('exploreCreators').innerHTML = matches.length
     ? matches.slice(0,8).map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.title || post.species || post.author_name || 'Community result')}</strong><span>${escapeHtml(post.general_area || post.post_type || 'OceanCore')}</span></div>`).join('')
     : '<div class="muted-box">No community results yet. Try a species, location, boat or report category.</div>';
+});
+$('btnGlobalSearch')?.addEventListener('click',()=>{
+  if($('exploreSearch')) $('exploreSearch').value = String($('globalSearch')?.value || '').trim();
+  showSection('explore');
+  $('btnExploreSearch')?.click();
+});
+$('globalSearch')?.addEventListener('keydown',event=>{ if(event.key === 'Enter') $('btnGlobalSearch')?.click(); });
+$('btnWatchLike')?.addEventListener('click',()=>state.watchPostId && likeCommunityPost(state.watchPostId).then(renderVideoWatch));
+$('btnWatchShare')?.addEventListener('click',()=>state.watchPostId && shareCommunityPost(state.watchPostId));
+$('btnWatchSave')?.addEventListener('click',()=>state.watchPostId && toggleSavedCommunityPost(state.watchPostId));
+$('btnWatchReport')?.addEventListener('click',()=>state.watchPostId && reportCommunityPost(state.watchPostId));
+$('btnWatchFollow')?.addEventListener('click',()=>{
+  const post=(state.communityPosts || []).find(row=>String(row.id) === String(state.watchPostId));
+  if(post?.user_id) followCommunityUser(post.user_id);
 });
 function openCommunityMediaPicker(kind='all'){
   const input = $('communityMedia');
@@ -5165,6 +5236,86 @@ function socialInitials(value){
   return (parts.slice(0, 2).map(part=>part[0]).join('') || 'OC').toUpperCase();
 }
 
+function isCommunityVideo(post){
+  return post?.post_type === 'video' || post?.media_type === 'video' || String(post?.media_mime || '').startsWith('video/');
+}
+
+function videoRecommendationHtml(post){
+  const id = escapeHtml(String(post?.id || ''));
+  const media = post?.media_url || post?.photo_url || '';
+  const title = post?.title || post?.species || 'OceanCore video';
+  const author = post?.author_name || post?.user_email || 'OceanCore creator';
+  const thumbStyle = media && !isCommunityVideo(post) ? ` style="background-image:url('${escapeHtml(media)}')"` : '';
+  return `<button class="oc-watch-recommendation" type="button" onclick="openVideoWatch('${id}')"><span class="oc-watch-thumb"${thumbStyle}></span><span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(author)}</span><span>${Number(post?.likes_count || 0)} likes - ${escapeHtml(formatFriendlyDate(post?.created_at))}</span></span></button>`;
+}
+
+function savedCommunityPostIds(){
+  return safeJsonParse(localStorage.getItem('oceancore_saved_community_posts'), []);
+}
+
+function toggleSavedCommunityPost(id){
+  const key = String(id || '');
+  const saved = savedCommunityPostIds().map(String);
+  const next = saved.includes(key) ? saved.filter(value=>value !== key) : [...saved, key];
+  localStorage.setItem('oceancore_saved_community_posts', JSON.stringify(next));
+  renderVideoWatch();
+}
+
+async function loadWatchComments(id){
+  const root = $('watchComments');
+  if(!root) return;
+  try{
+    const j = await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`]);
+    const comments = Array.isArray(j.comments) ? j.comments : [];
+    root.innerHTML = `<div>${comments.length ? comments.map(comment=>`<div class="crew-comment"><strong>${escapeHtml(comment.author_name || comment.user_email || 'OceanCore fisher')}</strong><br/>${escapeHtml(comment.body || '')}</div>`).join('') : '<div class="subtle">No comments yet.</div>'}</div><div class="crew-comment-form" style="margin-top:10px"><input id="watchCommentInput" placeholder="Write a comment..."/><button class="btn" type="button" onclick="submitWatchComment('${escapeHtml(String(id))}')">Send</button></div>`;
+  }catch(error){
+    root.innerHTML = `<div class="muted-box">${escapeHtml(error.message || String(error))}</div>`;
+  }
+}
+
+async function submitWatchComment(id){
+  try{
+    if(!isSignedIn()) throw new Error('Sign in first.');
+    const body = String($('watchCommentInput')?.value || '').trim();
+    if(!body) throw new Error('Write a comment first.');
+    await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`], {method:'POST', body:JSON.stringify({body})});
+    await loadWatchComments(id);
+  }catch(error){
+    setCommunityMsg(error.message || String(error));
+  }
+}
+
+function renderVideoWatch(){
+  const posts = Array.isArray(state.communityPosts) ? state.communityPosts : [];
+  const post = posts.find(row=>String(row.id) === String(state.watchPostId)) || posts.find(isCommunityVideo) || null;
+  if(!post){
+    if($('watchMedia')) $('watchMedia').innerHTML = '<div class="oc-watch-placeholder">No community videos yet</div>';
+    if($('watchRecommendations')) $('watchRecommendations').innerHTML = '<div class="muted-box">Uploaded videos will appear here.</div>';
+    return;
+  }
+  state.watchPostId = String(post.id || '');
+  const media = post.media_url || post.photo_url || '';
+  const title = post.title || post.species || 'OceanCore video';
+  const author = post.author_name || post.user_email || 'OceanCore creator';
+  if($('watchMedia')) $('watchMedia').innerHTML = media && isCommunityVideo(post)
+    ? `<video class="oc-watch-player" src="${escapeHtml(media)}" controls playsinline autoplay></video>`
+    : `<div class="oc-watch-placeholder">${escapeHtml(title)}</div>`;
+  if($('watchTitle')) $('watchTitle').textContent = title;
+  if($('watchAuthor')) $('watchAuthor').textContent = author;
+  if($('watchAvatar')) $('watchAvatar').textContent = socialInitials(author);
+  if($('watchMeta')) $('watchMeta').textContent = `${post.general_area || 'Spot Safe area'} - ${formatFriendlyDate(post.created_at)}`;
+  if($('watchDescription')) $('watchDescription').textContent = post.caption || post.notes || 'Shared with the OceanCore community.';
+  if($('btnWatchLike')) $('btnWatchLike').textContent = `Like ${Number(post.likes_count || 0)}`;
+  if($('btnWatchSave')) $('btnWatchSave').textContent = savedCommunityPostIds().map(String).includes(String(post.id)) ? 'Saved' : 'Save';
+  if($('watchComments')) $('watchComments').innerHTML = `<button class="btn" type="button" onclick="loadWatchComments('${escapeHtml(String(post.id || ''))}')">View ${Number(post.comments_count || 0)} comments</button>`;
+  if($('watchRecommendations')) $('watchRecommendations').innerHTML = posts.filter(row=>String(row.id) !== String(post.id) && isCommunityVideo(row)).slice(0,12).map(videoRecommendationHtml).join('') || '<div class="muted-box">More videos will appear as creators upload them.</div>';
+}
+
+function openVideoWatch(id){
+  state.watchPostId = String(id || '');
+  showSection('watch');
+}
+
 function renderSocialHome(){
   const profile = state.me?.profile || {};
   const name = profile.full_name || state.authEmail || 'OceanCore Member';
@@ -5193,9 +5344,10 @@ function renderSocialHome(){
       const title = post.title || post.species || post.post_type || 'Community update';
       const area = post.general_area || 'Spot Safe area';
       const media = post.media_url || post.photo_url || '';
-      const mediaHtml = media
-        ? `<div class="oc-media" style="background-image:linear-gradient(rgba(2,6,16,.08),rgba(2,6,16,.58)),url('${escapeHtml(media)}');background-size:cover;background-position:center"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div></div>`
-        : `<div class="oc-media"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div><div class="oc-play">${post.post_type === 'video' ? 'PLAY' : 'OC'}</div></div>`;
+      const mediaInner = media
+        ? `<div class="oc-media" style="background-image:linear-gradient(rgba(2,6,16,.08),rgba(2,6,16,.58)),url('${escapeHtml(media)}');background-size:cover;background-position:center"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div>${isCommunityVideo(post) ? '<div class="oc-play">PLAY</div>' : ''}</div>`
+        : `<div class="oc-media"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div><div class="oc-play">${isCommunityVideo(post) ? 'PLAY' : 'OC'}</div></div>`;
+      const mediaHtml = isCommunityVideo(post) ? `<button class="oc-media-button" type="button" onclick="openVideoWatch('${escapeHtml(String(post.id || ''))}')">${mediaInner}</button>` : mediaInner;
       return `<article class="oc-feed-card">
         <div class="oc-feed-head"><div class="oc-avatar">${escapeHtml(socialInitials(author))}</div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div></div>
         ${mediaHtml}
@@ -6528,7 +6680,7 @@ function communityMediaHtml(post){
   const mime = post.media_mime || post.mediaMime || '';
   const type = post.media_type || (mime.startsWith('video/') ? 'video' : 'image');
   const autoplay = getSetting('community.autoplayVideos') ? ' autoplay muted loop' : '';
-  if(type === 'video' || mime.startsWith('video/')) return `<div class="crew-media"><video src="${escapeHtml(url)}" controls playsinline${autoplay}></video></div>`;
+  if(type === 'video' || mime.startsWith('video/')) return `<button class="oc-media-button" type="button" onclick="openVideoWatch('${escapeHtml(String(post.id || ''))}')"><div class="crew-media"><video src="${escapeHtml(url)}" muted playsinline${autoplay}></video></div></button>`;
   return `<div class="crew-media"><img src="${escapeHtml(url)}" alt="Community post media"/></div>`;
 }
 function renderCommunityPost(post){
@@ -6782,6 +6934,9 @@ window.deleteCommunityPost = deleteCommunityPost;
 window.shareCommunityPost = shareCommunityPost;
 window.followCommunityUser = followCommunityUser;
 window.voteCommunityPoll = voteCommunityPoll;
+window.openVideoWatch = openVideoWatch;
+window.loadWatchComments = loadWatchComments;
+window.submitWatchComment = submitWatchComment;
 
 $('communityMedia')?.addEventListener('change', handleCommunityMedia);
 async function handleDirectVideoUpload(event){

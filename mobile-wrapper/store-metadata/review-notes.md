@@ -17,10 +17,10 @@ Use the dedicated reviewer credentials entered in App Store Connect or Play Cons
 
 ## Public Legal Links
 
-- Terms of Service: `/legal/terms-of-service`
-- Privacy Policy: `/legal/privacy-policy`
-- Account Deletion and Data Rights: `/legal/account-deletion`
-- Marine Disclaimer: `/legal/marine-disclaimer`
+- Terms of Service: `https://fishing-ai-backend.onrender.com/legal/terms-of-service`
+- Privacy Policy: `https://fishing-ai-backend.onrender.com/legal/privacy-policy`
+- Account Deletion and Data Rights: `https://fishing-ai-backend.onrender.com/legal/account-deletion`
+- Marine Disclaimer: `https://fishing-ai-backend.onrender.com/legal/marine-disclaimer`
 
 ## Permissions
 
