@@ -267,7 +267,7 @@
     .catch-progress-step.active b{border-color:var(--brand);box-shadow:0 0 22px rgba(73,231,255,.35);background:rgba(73,231,255,.12)}
     .catch-photo-primary{border-color:rgba(73,231,255,.34);background:rgba(73,231,255,.05)}
     .community-share-strip{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:14px 0;padding:14px;border-radius:22px;
+      display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin:14px 0;padding:14px;border-radius:22px;
       border:1px solid rgba(73,231,255,.55);background:rgba(2,14,28,.72)
     }
     .community-share-strip button{
@@ -275,6 +275,12 @@
       font:inherit;font-weight:900;padding:10px;cursor:pointer
     }
     .community-share-strip button:last-child{border-right:0}
+    #section-community .feature-grid{display:none}
+    #section-community .crew-shell{display:block}
+    #section-community .crew-side{display:none}
+    #section-community .community-live-grid{grid-template-columns:1.2fr 1fr 1fr}
+    #section-community .community-extra-card{display:none}
+    #section-community .crew-panel.hidden{display:none}
     .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
     .feature-tile{
       display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px;border-radius:20px;
@@ -1185,20 +1191,22 @@
         <div class="community-share-strip" aria-label="Community share actions">
           <button type="button" id="btnCommunityPhoto">Catch Photo</button>
           <button type="button" id="btnCommunityVideo">Upload Video</button>
+          <button type="button" data-community-compose="discussion">Ask Question</button>
+          <button type="button" data-community-compose="poll">Poll</button>
           <button type="button" id="btnCommunityTripReport">Trip Report</button>
         </div>
 
         <div class="community-live-grid">
           <section class="community-live-card community-live-wide"><div class="community-live-head"><h3>Stories</h3><span>Today</span></div><div id="communityStories" class="community-stories"><div class="community-skeleton"></div><div class="community-skeleton"></div><div class="community-skeleton"></div></div></section>
-          <section class="community-live-card"><div class="community-live-head"><h3>OceanPoints progress</h3><button type="button" data-section="rewards">Rewards</button></div><div id="communityPointsProgress" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
-          <section class="community-live-card giveaway-card"><div class="community-live-head"><h3>Monthly giveaway</h3><span>OceanCore+</span></div><div id="communityGiveaway" class="community-module-body"><strong>Fuel and tackle giveaway</strong><p>Giveaway entry and partner prizes are being prepared. Build your level and keep contributing.</p></div></section>
+          <section class="community-live-card community-extra-card"><div class="community-live-head"><h3>OceanPoints progress</h3><button type="button" data-section="rewards">Rewards</button></div><div id="communityPointsProgress" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
+          <section class="community-live-card giveaway-card community-extra-card"><div class="community-live-head"><h3>Monthly giveaway</h3><span>OceanCore+</span></div><div id="communityGiveaway" class="community-module-body"><strong>Fuel and tackle giveaway</strong><p>Giveaway entry and partner prizes are being prepared. Build your level and keep contributing.</p></div></section>
           <section class="community-live-card community-live-wide"><div class="community-live-head"><h3>Trending videos</h3><button type="button" data-community-open-feed="videos">View feed</button></div><div id="communityTrendingVideos" class="community-tile-strip"><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div></div></section>
           <section class="community-live-card"><div class="community-live-head"><h3>Local reports</h3><button type="button" data-community-open-feed="local">View all</button></div><div id="communityLocalReports" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
-          <section class="community-live-card"><div class="community-live-head"><h3>Active members</h3><span>Top crew</span></div><div id="communityActiveMembers" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
-          <section class="community-live-card"><div class="community-live-head"><h3>Daily leaderboard</h3><span>Today</span></div><div id="communityDailyLeaderboard" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
-          <section class="community-live-card"><div class="community-live-head"><h3>Creator spotlight</h3><span>Community</span></div><div id="communityCreatorSpotlight" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
-          <section class="community-live-card community-live-wide"><div class="community-live-head"><h3>Recent catches</h3><button type="button" data-section="catch">Log catch</button></div><div id="communityRecentCatches" class="community-tile-strip"><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div></div></section>
-          <section class="community-live-card community-live-wide"><div class="community-live-head"><h3>Boats of the week</h3><button type="button" data-community-open-feed="boats">View boats</button></div><div id="communityBoatsWeek" class="community-tile-strip"><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div></div></section>
+          <section class="community-live-card community-extra-card"><div class="community-live-head"><h3>Active members</h3><span>Top crew</span></div><div id="communityActiveMembers" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
+          <section class="community-live-card community-extra-card"><div class="community-live-head"><h3>Daily leaderboard</h3><span>Today</span></div><div id="communityDailyLeaderboard" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
+          <section class="community-live-card community-extra-card"><div class="community-live-head"><h3>Creator spotlight</h3><span>Community</span></div><div id="communityCreatorSpotlight" class="community-module-body"><div class="community-skeleton tall"></div></div></section>
+          <section class="community-live-card community-live-wide community-extra-card"><div class="community-live-head"><h3>Recent catches</h3><button type="button" data-section="catch">Log catch</button></div><div id="communityRecentCatches" class="community-tile-strip"><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div></div></section>
+          <section class="community-live-card community-live-wide community-extra-card"><div class="community-live-head"><h3>Boats of the week</h3><button type="button" data-community-open-feed="boats">View boats</button></div><div id="communityBoatsWeek" class="community-tile-strip"><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div><div class="community-skeleton tile"></div></div></section>
         </div>
 
         <div class="feature-grid" aria-label="OceanCore shortcuts">
@@ -1210,7 +1218,7 @@
 
         <div class="crew-shell">
           <div>
-            <div class="crew-panel">
+            <div class="crew-panel hidden" id="communityComposerPanel">
               <div class="crew-compose" id="communityComposer">
                 <div class="crew-compose-title">Create for the crew</div>
                 <div class="crew-type-grid" aria-label="Post type">
@@ -2923,9 +2931,11 @@ document.querySelectorAll('button[data-section]:not(.nav-btn):not(.mobile-tab)')
 });
 document.querySelectorAll('[data-create-type]').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    selectCommunityPostType(btn.dataset.createType || 'discussion');
-    setTimeout(()=>$('communityCaption')?.focus(), 80);
+    openCommunityComposer(btn.dataset.createType || 'discussion');
   });
+});
+document.querySelectorAll('[data-community-compose]').forEach(btn=>{
+  btn.addEventListener('click',()=>openCommunityComposer(btn.dataset.communityCompose || 'discussion'));
 });
 document.querySelectorAll('.oc-explore-filter').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -2967,15 +2977,15 @@ function openCommunityMediaPicker(kind='all'){
   input.click();
 }
 $('btnCommunityPhoto')?.addEventListener('click',()=>{
-  selectCommunityPostType('catch');
+  openCommunityComposer('catch', false);
   openCommunityMediaPicker('image');
 });
 $('btnCommunityVideo')?.addEventListener('click',()=>{
-  selectCommunityPostType('video');
+  openCommunityComposer('video', false);
   openCommunityMediaPicker('video');
 });
 $('btnCommunityTripReport')?.addEventListener('click',()=>{
-  selectCommunityPostType('fishing_report');
+  openCommunityComposer('trip_report');
   const topic = $('communitySpecies');
   const caption = $('communityCaption');
   if(topic && !topic.value.trim()) topic.value = 'Trip report';
@@ -6892,7 +6902,7 @@ async function publishCommunityPost(){
     if($('communityMedia')) $('communityMedia').value='';
     if($('createVideoFile')) $('createVideoFile').value='';
     if($('profileVideoFile')) $('profileVideoFile').value='';
-    state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
+    state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); $('communityComposerPanel')?.classList.add('hidden'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(`Upload failed: ${e.message || String(e)}. Your selected video has been kept so you can try again.`); }
   finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=(state.communityMediaDataUrl || state.communityMediaUrl) && state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Post update'; } }
 }
@@ -7012,9 +7022,7 @@ async function handleDirectVideoUpload(event){
   const input = event.currentTarget;
   if(!input?.files?.[0]) return;
   const fileName = input.files[0].name;
-  selectCommunityPostType('video');
-  showSection('community');
-  requestAnimationFrame(()=>setTimeout(()=>$('communityComposer')?.scrollIntoView({behavior:'smooth', block:'start'}), 50));
+  openCommunityComposer('video', false);
   setCommunityMsg('Preparing your video...');
   const ready=await handleCommunityMedia(input);
   if(!ready) return;
@@ -7146,8 +7154,17 @@ function configureCommunityComposer(type){
   setCommunityMsg(next.message);
 }
 function selectCommunityPostType(type){configureCommunityComposer(type);}
+function openCommunityComposer(type='discussion', focus=true){
+  showSection('community');
+  $('communityComposerPanel')?.classList.remove('hidden');
+  selectCommunityPostType(type);
+  requestAnimationFrame(()=>setTimeout(()=>{
+    $('communityComposer')?.scrollIntoView({behavior:'smooth', block:'start'});
+    if(focus) $('communityCaption')?.focus();
+  }, 50));
+}
 document.querySelectorAll('[data-crew-tab]').forEach(btn=>btn.addEventListener('click',()=>{ state.communityTab=btn.dataset.crewTab||'local'; document.querySelectorAll('[data-crew-tab]').forEach(x=>x.classList.toggle('active', x===btn)); setCommunityMsg(state.communityTab==='following'?'Your crew feed only shows anglers you follow.':''); loadCommunityPosts().catch(()=>renderCommunityFeed()); }));
-document.querySelectorAll('[data-community-type]').forEach(btn=>btn.addEventListener('click',()=>selectCommunityPostType(btn.dataset.communityType||'discussion')));
+document.querySelectorAll('[data-community-type]').forEach(btn=>btn.addEventListener('click',()=>openCommunityComposer(btn.dataset.communityType||'discussion')));
 selectCommunityPostType(state.communityPostType || 'fishing_report');
 document.querySelectorAll('[data-community-open-feed]').forEach(btn=>btn.addEventListener('click',()=>{state.communityTab=btn.dataset.communityOpenFeed||'local';document.querySelectorAll('[data-crew-tab]').forEach(x=>x.classList.toggle('active',x.dataset.crewTab===state.communityTab));if(!document.getElementById('section-community')?.classList.contains('active')) showSection('community'); else loadCommunityPosts().catch(()=>renderCommunityFeed());}));
 

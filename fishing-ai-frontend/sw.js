@@ -1,4 +1,4 @@
-const CACHE_NAME = "oceancore-app-v2026-06-17-create-composer-modes";
+﻿const CACHE_NAME = "oceancore-app-v2026-06-17-community-simplified";
 const NATIVE_APP_OFFLINE_PATH = "/app/offline.html";
 const NATIVE_APP_CONFIG_PATH = "/app/assets/native-config.js";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
@@ -23,7 +23,6 @@ self.addEventListener("install", (event) => {
       .then(() => self.skipWaiting())
   );
 });
-
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
@@ -31,7 +30,6 @@ self.addEventListener("activate", (event) => {
       .then(() => self.clients.claim())
   );
 });
-
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
