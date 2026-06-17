@@ -717,6 +717,8 @@
     .crew-tabs button.active{background:linear-gradient(135deg,var(--brand2),var(--brand));color:#04121a;border-color:rgba(125,255,213,.6)}
     .crew-compose{padding:14px;display:grid;gap:10px}
     .crew-compose-title{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#bdf8ff;font-weight:950}
+    .crew-compose-help{margin:-2px 0 10px;color:#9eb6da;font-size:13px;line-height:1.45}
+    .crew-field{display:flex;flex-direction:column;gap:5px}.crew-field label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7fa8d7;font-weight:900}.crew-field small{color:#7f93b8;font-size:11px}
     .crew-media-drop{min-height:130px;border-radius:18px;border:1px dashed rgba(73,231,255,.32);background:rgba(73,231,255,.06);display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;cursor:pointer;color:#bdf8ff;font-weight:900}
     .crew-media-drop small{display:block;color:#9fb2d5;font-weight:700;margin-top:4px}
     .crew-preview img,.crew-preview video{display:block;width:100%;max-height:320px;object-fit:cover;border-radius:16px;border:1px solid var(--border);background:#02060f}
@@ -1225,6 +1227,7 @@
             <div class="crew-panel hidden" id="communityComposerPanel">
               <div class="crew-compose" id="communityComposer">
                 <div class="crew-compose-title">Create for the crew</div>
+                <div class="crew-compose-help" id="communityTypeHelp">Pick what you are sharing. OceanCore will only show the fields needed for that post type.</div>
                 <div class="crew-type-grid" aria-label="Post type">
                   <button class="active" data-community-type="fishing_report" type="button">Fishing Report</button>
                   <button data-community-type="catch" type="button">Catch</button>
@@ -1234,14 +1237,14 @@
                   <button data-community-type="poll" type="button">Poll</button>
                 </div>
                 <div class="crew-detail-grid">
-                  <div class="fld"><input id="communitySpecies" placeholder="Species or topic, e.g. Snapper, weather report, ramp update"/></div>
-                  <div class="fld"><input id="communityArea" placeholder="General area only, e.g. Moreton Bay"/></div>
-                  <div class="fld"><input id="communityBait" placeholder="Bait / lure / technique"/></div>
-                  <div class="fld"><input id="communityConditions" placeholder="Conditions, tide, water clarity"/></div>
-                  <div class="fld"><input id="communityLength" type="number" min="0" step="0.1" placeholder="Length cm"/></div>
-                  <div class="fld"><input id="communityWeight" type="number" min="0" step="0.01" placeholder="Weight kg"/></div>
-                  <div class="fld"><input id="communityTags" placeholder="Tags, comma separated"/></div>
-                  <div class="fld"><input id="communityPollOptions" placeholder="Poll choices, comma separated"/></div>
+                  <div class="fld crew-field"><label for="communitySpecies" id="communitySpeciesLabel">Species or topic</label><input id="communitySpecies" placeholder="Species or topic, e.g. Snapper, weather report, ramp update"/><small id="communitySpeciesHelp"></small></div>
+                  <div class="fld crew-field"><label for="communityArea" id="communityAreaLabel">General area</label><input id="communityArea" placeholder="General area only, e.g. Moreton Bay"/><small id="communityAreaHelp">Never post exact marks publicly.</small></div>
+                  <div class="fld crew-field"><label for="communityBait" id="communityBaitLabel">Bait / technique</label><input id="communityBait" placeholder="Bait / lure / technique"/><small id="communityBaitHelp"></small></div>
+                  <div class="fld crew-field"><label for="communityConditions" id="communityConditionsLabel">Conditions</label><input id="communityConditions" placeholder="Conditions, tide, water clarity"/><small id="communityConditionsHelp"></small></div>
+                  <div class="fld crew-field"><label for="communityLength" id="communityLengthLabel">Length</label><input id="communityLength" type="number" min="0" step="0.1" placeholder="Length cm"/><small id="communityLengthHelp">Optional.</small></div>
+                  <div class="fld crew-field"><label for="communityWeight" id="communityWeightLabel">Weight</label><input id="communityWeight" type="number" min="0" step="0.01" placeholder="Weight kg"/><small id="communityWeightHelp">Optional.</small></div>
+                  <div class="fld crew-field"><label for="communityTags" id="communityTagsLabel">Tags</label><input id="communityTags" placeholder="Tags, comma separated"/><small id="communityTagsHelp">Example: offshore, plastics, ramp.</small></div>
+                  <div class="fld crew-field"><label for="communityPollOptions" id="communityPollOptionsLabel">Poll choices</label><input id="communityPollOptions" placeholder="Poll choices, comma separated"/><small id="communityPollOptionsHelp">Separate each answer with a comma.</small></div>
                 </div>
                 <textarea id="communityCaption" placeholder="Write an update, trip report, gear note, or quick fishing clip caption..."></textarea>
                 <div class="spot-safe-lock"><strong>Spot Safe:</strong> public posts accept a general area only. Coordinates and exact marks are blocked.</div>
@@ -2861,6 +2864,7 @@ function stopBackgroundMedia(options={}){
     if(keepWatch && media.closest('#section-watch')) return;
     try{ media.pause(); }catch(_e){}
     media.removeAttribute('autoplay');
+    media.muted = true;
     if(media.closest('#watchMedia')){
       media.removeAttribute('src');
       try{ media.load(); }catch(_e){}
@@ -6976,7 +6980,7 @@ async function publishCommunityPost(){
     if($('profileVideoFile')) $('profileVideoFile').value='';
     state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); $('communityComposerPanel')?.classList.add('hidden'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
   }catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(`Upload failed: ${e.message || String(e)}. Your selected video has been kept so you can try again.`); }
-  finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=(state.communityMediaDataUrl || state.communityMediaUrl) && state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Post update'; } }
+  finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=communityPublishButtonLabel(); } }
 }
 
 async function likeCommunityPost(id){
@@ -7113,77 +7117,106 @@ function setCommunityPlaceholder(id, text){
   const field = $(id);
   if(field) field.placeholder = text;
 }
+function setCommunityFieldCopy(id, label='', help=''){
+  const labelEl = $(`${id}Label`);
+  const helpEl = $(`${id}Help`);
+  if(labelEl && label) labelEl.textContent = label;
+  if(helpEl) helpEl.textContent = help || '';
+}
+function communityPublishButtonLabel(){
+  if(state.communityPostType === 'video') return 'Publish video';
+  if(state.communityPostType === 'poll') return 'Publish poll';
+  if(state.communityPostType === 'boat') return 'Publish boat post';
+  if(state.communityPostType === 'catch') return 'Publish catch';
+  if(state.communityPostType === 'fishing_report' && state.communityCreateMode === 'trip_report') return 'Publish trip report';
+  if(state.communityPostType === 'fishing_report') return 'Publish fishing report';
+  return 'Post discussion';
+}
 function configureCommunityComposer(type){
   const config = {
     fishing_report: {
       type:'fishing_report',
       message:'Fishing Report selected. Share species, conditions, bait and a spot-safe general area.',
+      help:'Best for local intel: species, bite time, bait, conditions and a general area.',
       species:'Species or topic, e.g. Snapper, tuna, tailor',
       area:'General area only, e.g. Moreton Bay',
       caption:'What happened? Include bite time, depth, bait/lure and what changed...',
       media:'Add optional photo or video',
       accept:'image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm',
-      show:['communitySpecies','communityArea','communityBait','communityConditions','communityLength','communityWeight','communityTags']
+      show:['communitySpecies','communityArea','communityBait','communityConditions','communityLength','communityWeight','communityTags'],
+      labels:{communitySpecies:['Species / report title','Example: Snapper report or ramp update'],communityArea:['General area','Example: Moreton Bay, not an exact GPS mark'],communityBait:['Bait / lure / technique','Optional but useful for other anglers'],communityConditions:['Conditions','Wind, tide, water clarity, current, weed, bait schools'],communityTags:['Tags','Example: offshore, dawn, plastics']}
     },
     catch: {
       type:'catch',
       message:'Catch selected. Add proof, species, measurements and a general area.',
+      help:'Best for one catch. Keep the exact mark private; share only a general area.',
       species:'Species, e.g. Snapper',
       area:'General area only, exact marks stay private',
       caption:'Short catch notes, tackle, bait or release details...',
       media:'Add catch photo or short clip',
       accept:'image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm',
-      show:['communitySpecies','communityArea','communityBait','communityConditions','communityLength','communityWeight','communityTags']
+      show:['communitySpecies','communityArea','communityBait','communityConditions','communityLength','communityWeight','communityTags'],
+      labels:{communitySpecies:['Species','What did you catch?'],communityArea:['General area','Exact GPS stays private'],communityBait:['Bait / lure','Optional'],communityConditions:['Conditions','Optional'],communityLength:['Length cm','Optional'],communityWeight:['Weight kg','Optional'],communityTags:['Tags','Example: released, keeper, plastics']}
     },
     video: {
       type:'video',
       message:'Video selected. Choose a fishing, boating, camping or 4WD clip, then add a title and caption.',
+      help:'Best for creator content. Upload the video first, then add title, general area and caption.',
       species:'Video title or topic',
       area:'General area only, e.g. Gold Coast offshore',
       caption:'Video caption, trip context or what viewers will learn...',
       media:'Choose video file',
       accept:'video/mp4,video/quicktime,video/webm',
-      show:['communitySpecies','communityArea','communityTags']
+      show:['communitySpecies','communityArea','communityTags'],
+      labels:{communitySpecies:['Video title','Example: Morning snapper session'],communityArea:['General area','Optional but helps local discovery'],communityTags:['Video tags','Example: snapper, offshore, tutorial']}
     },
     boat: {
       type:'boat',
       message:'Boat Showcase selected. Share setup, electronics, modifications or a build update.',
+      help:'Best for boat setups, electronics, trailer fixes, mods and build progress.',
       species:'Boat/setup title, e.g. Haines 565 sounder upgrade',
       area:'Home water or general area',
       caption:'Describe the setup, mods, electronics, motor, trailer or lessons learned...',
       media:'Add boat photo or walkthrough video',
       accept:'image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm',
-      show:['communitySpecies','communityArea','communityTags']
+      show:['communitySpecies','communityArea','communityTags'],
+      labels:{communitySpecies:['Boat post title','Example: Sounder upgrade or trailer fix'],communityArea:['Home water','Optional'],communityTags:['Boat tags','Example: electronics, trailer, outboard']}
     },
     discussion: {
       type:'discussion',
       message:'Discussion selected. Ask the crew a question or start a useful thread.',
+      help:'Best for simple questions. No catch measurements, bait or conditions needed.',
       species:'Question topic, e.g. Best snapper plastics?',
       area:'Optional general area',
       caption:'Ask your question or start the discussion...',
       media:'Add optional photo',
       accept:'image/jpeg,image/png,image/webp,image/heic,image/heif',
-      show:['communitySpecies','communityArea','communityTags']
+      show:['communitySpecies','communityArea','communityTags'],
+      labels:{communitySpecies:['Discussion topic','Example: Best snapper plastics?'],communityArea:['General area','Optional'],communityTags:['Tags','Example: question, gear, tactics']}
     },
     poll: {
       type:'poll',
       message:'Poll selected. Put the question in the caption and choices in Poll choices.',
+      help:'Best for voting. Add a clear question and at least two comma-separated choices.',
       species:'Poll topic, e.g. Tomorrow morning plan',
       area:'Optional general area',
       caption:'Poll question, e.g. Which area would you fish tomorrow?',
       media:'Add optional poll image',
       accept:'image/jpeg,image/png,image/webp,image/heic,image/heif',
-      show:['communitySpecies','communityArea','communityPollOptions','communityTags']
+      show:['communitySpecies','communityArea','communityPollOptions','communityTags'],
+      labels:{communitySpecies:['Poll topic','Short title for the poll'],communityArea:['General area','Optional'],communityPollOptions:['Poll choices','Example: Offshore, Bay, River'],communityTags:['Tags','Example: poll, weather, plan']}
     },
     trip_report: {
       type:'fishing_report',
       message:'Trip Report selected. Summarise where you went, conditions, results and lessons.',
+      help:'Best for after-trip summaries: route, ramp, conditions, results and what you learnt.',
       species:'Trip title, e.g. Moreton Bay morning trip',
       area:'General trip area only',
       caption:'Trip summary: route, conditions, fish seen/caught, ramp notes and what you would change...',
       media:'Add trip photos or recap video',
       accept:'image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm',
-      show:['communitySpecies','communityArea','communityBait','communityConditions','communityTags']
+      show:['communitySpecies','communityArea','communityBait','communityConditions','communityTags'],
+      labels:{communitySpecies:['Trip title','Example: Moreton Bay morning trip'],communityArea:['General trip area','Exact spots stay private'],communityBait:['Bait / method','Optional'],communityConditions:['Trip conditions','Wind, tide, water clarity, ramp notes'],communityTags:['Tags','Example: trip, ramp, family']}
     }
   }[type || 'discussion'] || null;
   const next = config || {
@@ -7198,11 +7231,14 @@ function configureCommunityComposer(type){
   };
   state.communityPostType = next.type;
   state.communityCreateMode = type || next.type;
-  document.querySelectorAll('[data-community-type]').forEach(x=>x.classList.toggle('active',x.dataset.communityType===next.type));
+  document.querySelectorAll('[data-community-type]').forEach(x=>x.classList.toggle('active',(x.dataset.communityType || '') === (type || next.type)));
+  if($('communityTypeHelp')) $('communityTypeHelp').textContent = next.help || next.message || '';
   setCommunityPlaceholder('communitySpecies', next.species);
   setCommunityPlaceholder('communityArea', next.area);
   setCommunityPlaceholder('communityCaption', next.caption);
   setCommunityPlaceholder('communityPollOptions', 'Poll choices, comma separated, e.g. Offshore, Bay, River');
+  ['communitySpecies','communityArea','communityBait','communityConditions','communityLength','communityWeight','communityTags','communityPollOptions'].forEach(id=>setCommunityFieldCopy(id, '', ''));
+  Object.entries(next.labels || {}).forEach(([id, copy])=>setCommunityFieldCopy(id, copy?.[0] || '', copy?.[1] || ''));
   const mediaDrop = document.querySelector('.crew-media-drop span');
   if(mediaDrop) mediaDrop.innerHTML = `${escapeHtml(next.media)}<small>${next.type === 'video' ? 'MP4, MOV or WebM. Long uploads use resumable storage.' : 'Images are best; videos are supported where useful.'}</small>`;
   const mediaInput = $('communityMedia');
@@ -7222,7 +7258,7 @@ function configureCommunityComposer(type){
   const useLastCatch = $('btnCommunityUseLastCatch');
   if(useLastCatch) useLastCatch.style.display = next.type === 'catch' || next.type === 'fishing_report' ? '' : 'none';
   const publish = $('btnPublishCommunityPost');
-  if(publish) publish.textContent = next.type === 'video' ? 'Publish video' : next.type === 'poll' ? 'Publish poll' : next.type === 'boat' ? 'Publish boat post' : next.type === 'catch' ? 'Publish catch' : 'Post update';
+  if(publish) publish.textContent = communityPublishButtonLabel();
   setCommunityMsg(next.message);
 }
 function selectCommunityPostType(type){configureCommunityComposer(type);}
