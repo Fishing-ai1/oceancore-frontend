@@ -430,6 +430,10 @@
     .plan-price{font-size:30px;font-weight:900;line-height:1.05;margin:8px 0;color:#eaffff}
     .plan-card ul{margin:10px 0 0;padding-left:18px;color:#bfd0ee;font-size:13px;line-height:1.7}
     .plan-current{display:inline-flex;padding:5px 9px;border-radius:999px;border:1px solid rgba(124,249,189,.35);color:var(--good);font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+    .plan-badge{display:inline-flex;margin-bottom:8px;padding:5px 9px;border-radius:999px;border:1px solid rgba(73,231,255,.35);color:var(--brand);font-size:11px;font-weight:950;letter-spacing:.09em;text-transform:uppercase}
+    .plan-cycle-toggle{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--border);border-radius:999px;background:rgba(2,6,16,.34)}
+    .plan-cycle-toggle button{border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-weight:900;padding:8px 12px;cursor:pointer}
+    .plan-cycle-toggle button.active{background:linear-gradient(135deg,var(--brand2),var(--brand));color:#03131a}
     .ad-slot{padding:12px;border-radius:14px;border:1px dashed rgba(73,231,255,.32);background:rgba(73,231,255,.06);color:#bdf8ff;font-size:12px;text-align:center;letter-spacing:.08em;text-transform:uppercase}
     .reward-hero{padding:18px;border:1px solid rgba(73,231,255,.34);background:linear-gradient(135deg,rgba(73,231,255,.12),rgba(124,249,189,.05));margin-bottom:14px}
     .reward-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -887,7 +891,7 @@
     </div>
     <div class="app-actions" aria-label="Quick actions">
       <button class="top-icon has-dot" id="btnTopNotifications" data-section="feedback" type="button" title="Notifications">!</button>
-      <button class="pro-pill" id="btnTopPro" data-section="billing" type="button"><span>*</span> PRO</button>
+      <button class="pro-pill" id="btnTopPro" data-section="billing" type="button"><span>*</span> PREMIUM</button>
     </div>
     <div class="status">
       <span class="badge" id="apiBadge">API</span>
@@ -1914,7 +1918,7 @@
 
             <div class="settings-panel" data-settings-panel-root="billing"><div class="panel"><div class="hd"><h2>Plans Settings</h2><button class="btn" id="btnRefreshBillingFromSettings" type="button">Refresh Billing</button></div><div class="bd settings-grid">
               <div class="muted-box">Current plan and checkout live in Plans. These settings control how plan limits show around the app.</div>
-              <label class="setting-row"><span><strong>Show plan badge</strong><small>Displays Free/Pro in the header and account card.</small></span><input type="checkbox" data-setting="billing.showPlanBadge"/></label>
+              <label class="setting-row"><span><strong>Show plan badge</strong><small>Displays Free, Lite, Premium or Crew in the header and account card.</small></span><input type="checkbox" data-setting="billing.showPlanBadge"/></label>
               <label class="setting-row"><span><strong>Show AI usage warnings</strong><small>Warn before you run out of daily AI questions.</small></span><input type="checkbox" data-setting="billing.showUsageWarnings"/></label>
               <label class="setting-row"><span><strong>Upgrade reminders</strong><small>Show plan upgrade prompts when limits block a feature.</small></span><input type="checkbox" data-setting="billing.upgradeReminders"/></label>
               <div class="row"><button class="btn primary" type="button" data-section="billing">Open Plans</button></div>
@@ -2006,8 +2010,8 @@
         </div>
 
         <div class="grid-2">
-          <div class="panel"><div class="hd"><h2>OceanCore+</h2></div><div class="bd"><div class="list">
-            <div class="item"><h4>Premium fishing intelligence</h4><p>Unlimited AI assistant access, advanced forecasts, premium maps, analytics, and historical patterns are the planned OceanCore+ core.</p><div class="actions"><button class="btn primary" data-jump="billing" type="button">View Plans</button></div></div>
+          <div class="panel"><div class="hd"><h2>OceanCore Plans</h2></div><div class="bd"><div class="list">
+            <div class="item"><h4>Premium fishing intelligence</h4><p>Lite removes banner ads and unlocks basic AI. Premium unlocks live zones, full AI memory, advanced predictions and better rewards. Crew adds shared boat, catch and trip tools for mates and families.</p><div class="actions"><button class="btn primary" data-jump="billing" type="button">View Plans</button></div></div>
             <div class="item"><h4>Future partner benefits</h4><p>Fuel, tackle, boating, camping, insurance, and marine electronics benefits require active partner agreements before launch.</p></div>
           </div></div></div>
           <div class="panel"><div class="hd"><h2>Creator & Data Programs</h2></div><div class="bd"><div class="list">
@@ -2028,14 +2032,10 @@
               <div class="stat"><div class="label">AI Limit</div><div class="value" id="billingAiLimit">—</div><div class="hint">Daily assistant questions.</div></div>
               <div class="stat"><div class="label">Used Today</div><div class="value" id="billingAiUsed">—</div><div class="hint" id="billingAiRemain">AI usage resets daily.</div></div>
             </div>
-            <div class="pricing-grid">
-              <div class="plan-card" id="planCardFree"><div class="plan-current hidden" id="planFreeCurrent">Current</div><h3>Free</h3><div class="plan-price">A$0</div><p class="subtle">For trying OceanCore with ads.</p><ul><li>Catch log</li><li>5 AI questions/day</li><li>3 saved areas</li><li>Basic catch cards with branding</li><li>Ads shown</li></ul></div>
-              <div class="plan-card" id="planCardStarter"><div class="plan-current hidden" id="planStarterCurrent">Current</div><h3>Starter</h3><div class="plan-price">A$3.99/mo</div><p class="subtle">No ads, reduced from Basic for casual fishos.</p><ul><li>No ads</li><li>20 AI questions/day</li><li>8 saved areas</li><li>Standard catch cards</li><li>Basic trip planning</li></ul><div class="row" style="margin-top:12px"><button class="btn primary" id="btnUpgradeStarterMonthly" type="button">Beta Activate</button><button class="btn ghost" id="btnUpgradeStarterYearly" type="button">Yearly Soon</button></div></div>
-              <div class="plan-card featured" id="planCardBasic"><div class="plan-current hidden" id="planBasicCurrent">Current</div><h3>Basic</h3><div class="plan-price">A$7.99/mo</div><p class="subtle">Best value for regular fishos who want better tools.</p><ul><li>No ads</li><li>50 AI questions/day</li><li>20 saved areas</li><li>Full catch cards</li><li>Trip history</li></ul><div class="row" style="margin-top:12px"><button class="btn primary" id="btnUpgradeBasicMonthly" type="button">Beta Activate</button><button class="btn ghost" id="btnUpgradeBasicYearly" type="button">Yearly Soon</button></div></div>
-              <div class="plan-card" id="planCardPro"><div class="plan-current hidden" id="planProCurrent">Current</div><h3>Pro</h3><div class="plan-price">A$15.99/mo</div><p class="subtle">For serious fishos who want the full OceanCore edge.</p><ul><li>No ads</li><li>200 AI questions/day</li><li>Unlimited saved areas</li><li>Advanced catch insights</li><li>Early Boat AI/sensor access</li></ul><div class="row" style="margin-top:12px"><button class="btn primary" id="btnUpgradeProMonthly" type="button">Beta Activate</button><button class="btn ghost" id="btnUpgradeProYearly" type="button">Yearly Soon</button></div></div>
-            </div>
+            <div class="row" style="justify-content:space-between;margin-bottom:12px"><div class="subtle">AUD pricing. Premium is the main plan for serious fishos.</div><div class="plan-cycle-toggle" aria-label="Billing interval"><button class="active" id="btnBillingMonthly" type="button">Monthly</button><button id="btnBillingYearly" type="button">Yearly</button></div></div>
+            <div class="pricing-grid" id="billingPlanGrid"></div>
             <div class="row" style="margin-top:14px"><button class="btn" id="btnManageBilling" type="button">Manage Billing / Cancel</button></div>
-            <div class="muted-box" style="margin-top:12px"><strong>Beta note:</strong> Stripe is off for now. Use Admin to manually set Free, Starter, Basic, Pro, or Founder while testing.</div>
+            <div class="muted-box" style="margin-top:12px"><strong>Beta note:</strong> Stripe is off for now unless price IDs are configured. Use Admin to manually set Free, Lite, Premium, Crew, or Founder while testing.</div>
           </div>
         </div>
       </section>
@@ -2478,7 +2478,7 @@ const state = {
   catches: [],
   stats: null,
   admin: { isAdmin:false, overview:null, users:[], catches:[], feedback:[], audit:[], community:[], communityReports:[], supportCenter:null, health:null, selectedUser:null, selectedCatches:[], search:'', userFilter:'all', loading:false, message:'' },
-  billing: { profile:null, entitlements:null, plans:null, loading:false, message:'' },
+  billing: { profile:null, entitlements:null, plans:null, plan_order:null, interval: localStorage.getItem('oceancore_billing_interval') || 'monthly', loading:false, message:'' },
   rewards: { balance:0, lifetime_points:0, month_points:0, level:null, activity:[], rules:[], catalog:[], creator:null, storage:'', loading:false, message:'' },
   featureSettings: loadFeatureSettings(),
   featureSettingsSync: { storage:'device', warning:'', updated_at:null },
@@ -2521,6 +2521,21 @@ const state = {
   communityDashboard: null,
   watchPostId: "",
 };
+
+const BILLING_PLAN_ORDER = ['free','lite','premium','crew'];
+const BILLING_PLANS = {
+  free:{key:'free',name:'Free',tagline:'Start logging and join the community',prices:{monthly:0,yearly:0},productIds:{free:'oceancore_free'},features:['Community feed access','Upload catches','Basic catch log','Basic weather/tide preview','Limited AI questions','Demo OceanCore Offshore access','Ads enabled','Basic rewards points'],excluded:['No live fishing zones','No advanced AI pattern memory','No premium game events','No crew sharing','No premium rewards']},
+  lite:{key:'lite',name:'OceanCore Lite',badge:'Low-cost starter',tagline:'Go ad-light and unlock basic AI',prices:{monthly:4.99,yearly:39.99},productIds:{monthly:'oceancore_lite_monthly',yearly:'oceancore_lite_yearly'},features:['No banner ads','Unlimited catch log','Basic AI assistant','Limited AI predictions','Basic weather/tide tools','Basic size/legal info','Basic OceanCore Offshore game access','Delayed fishing zones','Basic rewards points','Community Lite badge','Private catch history']},
+  premium:{key:'premium',name:'OceanCore Premium',badge:'Most Popular',tagline:'Unlock the full OceanCore fishing brain',prices:{monthly:12.99,yearly:99.99},productIds:{monthly:'oceancore_premium_monthly',yearly:'oceancore_premium_yearly'},features:['Everything in Lite','Full AI fishing assistant','Full personal catch memory','Live OceanCore fishing zones','Best time/species predictions','Advanced tide/wind/moon pattern analysis','AI trip planner','Full OceanCore Offshore access','Premium game events','Better rewards rate','Voucher/giveaway access','Saved private marks','Advanced catch stats']},
+  crew:{key:'crew',name:'OceanCore Crew',tagline:'For boats, families and fishing mates',prices:{monthly:24.99,yearly:219.99},productIds:{monthly:'oceancore_crew_monthly',yearly:'oceancore_crew_yearly'},features:['Everything in Premium','3 to 5 users included','Shared boat profile','Shared catch log','Shared trip history','Shared private marks','Crew leaderboard','Shared OceanCore Offshore rewards','Shared trip planning','Crew badge']}
+};
+
+function normalizePlanKeyClient(plan){
+  const p = String(plan || 'free').toLowerCase();
+  if(p === 'starter') return 'lite';
+  if(p === 'basic' || p === 'pro') return 'premium';
+  return ['free','lite','premium','crew','founder'].includes(p) ? p : 'free';
+}
 if(Math.abs(Number(state.selectedLat || 0)) < 0.000001 && Math.abs(Number(state.selectedLng || 0)) < 0.000001){
   state.selectedLat = -27.5426;
   state.selectedLng = 153.0908;
@@ -4615,17 +4630,70 @@ async function syncRewards(){
 
 
 function planLabel(plan){
-  const p = String(plan || 'free').toLowerCase();
-  if(p === 'starter') return 'Starter';
-  if(p === 'basic') return 'Basic';
-  if(p === 'pro') return 'Pro';
+  const p = normalizePlanKeyClient(plan);
+  if(p === 'lite') return 'OceanCore Lite';
+  if(p === 'premium') return 'OceanCore Premium';
+  if(p === 'crew') return 'OceanCore Crew';
   if(p === 'founder') return 'Founder';
   return 'Free';
 }
+
+function formatAudPrice(value, interval){
+  const amount = Number(value || 0);
+  if(!amount) return 'A$0';
+  return `A$${amount.toFixed(2)}/${interval === 'yearly' ? 'yr' : 'mo'}`;
+}
+
+function planPrice(plan, interval){
+  if(plan?.prices) return plan.prices[interval] ?? plan.prices.monthly ?? 0;
+  return interval === 'yearly' ? (plan?.yearly_price_aud ?? 0) : (plan?.monthly_price_aud ?? 0);
+}
+
+function planProductId(plan, interval){
+  return plan?.productIds?.[interval] || plan?.product_ids?.[interval] || plan?.product_id || '';
+}
+
+function billingPlansForRender(){
+  const serverPlans = state.billing?.plans || {};
+  const order = Array.isArray(state.billing?.plan_order) && state.billing.plan_order.length ? state.billing.plan_order : BILLING_PLAN_ORDER;
+  return order.map(key=>({...(BILLING_PLANS[key] || {}), ...(serverPlans[key] || {})})).filter(plan=>plan?.key);
+}
+
+function renderBillingPlans(effective){
+  const root = $('billingPlanGrid');
+  if(!root) return;
+  const interval = state.billing?.interval === 'yearly' ? 'yearly' : 'monthly';
+  $('btnBillingMonthly')?.classList.toggle('active', interval === 'monthly');
+  $('btnBillingYearly')?.classList.toggle('active', interval === 'yearly');
+  root.innerHTML = billingPlansForRender().map(plan=>{
+    const key = normalizePlanKeyClient(plan.key);
+    const isCurrent = normalizePlanKeyClient(effective) === key;
+    const featured = key === 'premium';
+    const price = formatAudPrice(planPrice(plan, interval), interval);
+    const productId = planProductId(plan, interval);
+    const features = Array.isArray(plan.features) ? plan.features : [];
+    const excluded = Array.isArray(plan.excluded || plan.excluded_features) ? (plan.excluded || plan.excluded_features) : [];
+    const button = key === 'free'
+      ? `<button class="btn ghost" type="button" disabled>${isCurrent ? 'Current plan' : 'Included'}</button>`
+      : `<button class="btn primary" type="button" data-plan-checkout="${escapeHtml(key)}" data-plan-interval="${escapeHtml(interval)}">${isCurrent ? 'Current plan' : `Choose ${escapeHtml(planLabel(key))}`}</button>`;
+    return `<div class="plan-card ${featured ? 'featured' : ''}" id="planCard${escapeHtml(key)}">
+      ${isCurrent ? '<div class="plan-current">Current</div>' : ''}
+      ${plan.badge ? `<div class="plan-badge">${escapeHtml(plan.badge)}</div>` : ''}
+      <h3>${escapeHtml(plan.name || planLabel(key))}</h3>
+      <div class="plan-price">${escapeHtml(price)}</div>
+      <p class="subtle">${escapeHtml(plan.tagline || '')}</p>
+      <ul>${features.slice(0,8).map(item=>`<li>${escapeHtml(item)}</li>`).join('')}${excluded.slice(0,3).map(item=>`<li>${escapeHtml(item)}</li>`).join('')}</ul>
+      <div class="row" style="margin-top:12px">${button}</div>
+      ${productId ? `<div class="subtle" style="font-size:11px;margin-top:8px">${escapeHtml(productId)}</div>` : ''}
+    </div>`;
+  }).join('');
+  root.querySelectorAll('[data-plan-checkout]').forEach(btn=>btn.addEventListener('click',()=>startCheckout(btn.dataset.planCheckout, btn.dataset.planInterval || interval)));
+}
+
 function renderBilling(){
   const profile = state.billing?.profile || state.me?.profile || {};
   const ent = state.billing?.entitlements || {};
-  const effective = ent.effective_plan || profile.plan || 'free';
+  const effective = normalizePlanKeyClient(ent.effective_plan || profile.plan || 'free');
   const status = profile.subscription_status || 'none';
   const ads = ent.ads_enabled ?? (effective === 'free');
   const showPlanBadge = getSetting('billing.showPlanBadge') !== false;
@@ -4638,7 +4706,7 @@ function renderBilling(){
   const showUsageWarnings = getSetting('billing.showUsageWarnings') !== false;
   if($('billingAiUsed')) $('billingAiUsed').textContent = showUsageWarnings && usage.used != null && usage.limit != null ? `${usage.used}/${usage.limit}` : (showUsageWarnings ? '—' : 'Hidden');
   if($('billingAiRemain')) $('billingAiRemain').textContent = showUsageWarnings && usage.remaining != null ? `${usage.remaining} AI questions left today.` : (showUsageWarnings ? 'AI usage resets daily.' : 'Usage warnings hidden in settings.');
-  ['Free','Starter','Basic','Pro'].forEach(name=>{ const el = $('plan' + name + 'Current'); if(el) el.classList.toggle('hidden', String(effective).toLowerCase() !== name.toLowerCase()); });
+  renderBillingPlans(effective);
   let message = state.billing.message || `Current plan: ${planLabel(effective)}. ${ads ? 'Ads are enabled on this plan.' : 'Ads are off on this plan.'}`;
   if(showUsageWarnings && usage.remaining != null && Number(usage.limit || 0) > 0 && Number(usage.remaining) <= Math.max(2, Number(usage.limit) * 0.15)){
     message += ` AI usage is running low today (${usage.remaining} left).`;
@@ -4725,7 +4793,7 @@ function renderNotificationCenter(){
 async function loadBilling(){
   try{
     if(!state.token || !isSignedIn()){
-      state.billing = { profile:null, entitlements:null, plans:null, loading:false, message:'Sign in to view billing.' };
+      state.billing = { profile:null, entitlements:null, plans:null, plan_order:null, interval:state.billing?.interval || localStorage.getItem('oceancore_billing_interval') || 'monthly', loading:false, message:'Sign in to view billing.' };
       renderBilling();
       return;
     }
@@ -4740,6 +4808,7 @@ async function loadBilling(){
     state.billing.prices_configured = j.prices_configured || null;
     state.billing.beta_manual_plan_access = j.beta_manual_plan_access;
     state.billing.plans = j.plans || null;
+    state.billing.plan_order = j.plan_order || null;
     state.billing.message = j.beta_manual_plan_access ? 'Billing loaded. Beta manual plan mode is on.' : 'Billing loaded.';
   }catch(e){
     state.billing.message = e.message || String(e);
@@ -4752,6 +4821,7 @@ async function loadBilling(){
 async function startCheckout(plan, interval='monthly'){
   try{
     if(!isSignedIn()) throw new Error('Sign in first, then choose a plan.');
+    plan = normalizePlanKeyClient(plan);
     // If Stripe/prices are not configured yet, keep beta users on manual plan activation.
     const priceKey = `${String(plan || '').toLowerCase()}_${String(interval || 'monthly').toLowerCase()}`;
     const priceReady = !!state.billing?.prices_configured?.[priceKey];
@@ -4770,6 +4840,11 @@ async function startCheckout(plan, interval='monthly'){
     else setStatusMessage('billingMsg', msg);
   }
 }
+function setBillingInterval(interval){
+  state.billing.interval = interval === 'yearly' ? 'yearly' : 'monthly';
+  localStorage.setItem('oceancore_billing_interval', state.billing.interval);
+  renderBilling();
+}
 async function openBillingPortal(){
   try{
     if(!isSignedIn()) throw new Error('Sign in first.');
@@ -4781,7 +4856,8 @@ async function openBillingPortal(){
 }
 function renderFreeAdSlot(){
   const ent = state.billing?.entitlements || {};
-  const showAds = ent.ads_enabled === true || (!ent.effective_plan && String(state.me?.profile?.plan || 'free') === 'free');
+  const fallbackPlan = normalizePlanKeyClient(state.me?.profile?.plan || 'free');
+  const showAds = ent.ads_enabled === true || (!ent.effective_plan && fallbackPlan === 'free');
   document.querySelectorAll('[data-free-ad-slot]').forEach(el=>{ el.classList.toggle('hidden', !showAds); });
 }
 
@@ -4835,7 +4911,7 @@ function adminFilteredUsers(){
     const profile=user.profile||{}, status=profile.account_status||user.account_status||'active', plan=String(profile.plan||user.plan||'free').toLowerCase();
     const filter=state.admin.userFilter||'all';
     if(filter==='active') return status==='active' && Date.parse(user.last_sign_in_at||0)>=cutoff;
-    if(filter==='paid') return ['starter','basic','pro','founder','premium'].includes(plan);
+    if(filter==='paid') return ['lite','premium','crew','founder'].includes(normalizePlanKeyClient(plan));
     if(filter==='suspended') return status==='suspended';
     if(filter==='inactive') return !user.last_sign_in_at || Date.parse(user.last_sign_in_at)<cutoff;
     return true;
@@ -4862,14 +4938,14 @@ function renderAdminUserDetail(){
   const profile = detail.profile || {};
   const id = user.id || profile.id || '';
   const email = user.email || profile.email || '';
-  const plan = profile.plan || user.plan || 'free';
+  const plan = normalizePlanKeyClient(profile.plan || user.plan || 'free');
   const sub = profile.subscription_status || user.subscription_status || 'none';
   const status = profile.account_status || user.account_status || 'active';
   const appRole = profile.app_role || user.app_role || '';
   const rewards = detail.rewards || {};
   root.innerHTML = `
-    <div class="item"><h4>${escapeHtml(email || id || 'Selected user')}</h4><p>${escapeHtml(profile.full_name || profile.username || 'No profile name')} · ${escapeHtml(profile.boat_name || 'No boat saved')} · ${escapeHtml(profile.home_port || 'No home port')}</p><div class="meta"><span>ID ${escapeHtml(id)}</span><span>Joined ${escapeHtml(adminSafeDate(user.created_at || profile.created_at))}</span><span>Last sign in ${escapeHtml(adminSafeDate(user.last_sign_in_at))}</span></div><div class="admin-status-row"><span class="admin-pill ${status === 'suspended' ? 'bad' : 'good'}">${escapeHtml(status.toUpperCase())}</span><span class="admin-pill ${plan === 'pro' || plan === 'founder' ? 'good' : ''}">${escapeHtml(String(plan).toUpperCase())}</span><span class="admin-pill">${escapeHtml(String(sub).toUpperCase())}</span><span class="admin-pill">${escapeHtml(appRole || 'USER')}</span></div></div>
-    <div class="item"><h4>Account controls</h4><div class="admin-detail-grid"><div class="fld"><select id="adminEditRole"><option value="">User</option><option value="tester" ${appRole==='tester'?'selected':''}>Tester</option><option value="admin" ${appRole==='admin'?'selected':''}>Admin</option><option value="founder" ${appRole==='founder'?'selected':''}>Founder</option></select></div><div class="fld"><select id="adminEditPlan"><option value="free" ${plan==='free'?'selected':''}>Free</option><option value="starter" ${plan==='starter'?'selected':''}>Starter</option><option value="basic" ${plan==='basic'?'selected':''}>Basic</option><option value="pro" ${plan==='pro'?'selected':''}>Pro</option><option value="founder" ${plan==='founder'?'selected':''}>Founder</option></select></div><div class="fld"><select id="adminEditSub"><option value="none" ${sub==='none'?'selected':''}>No subscription</option><option value="trial" ${sub==='trial'?'selected':''}>Trial</option><option value="active" ${sub==='active'?'selected':''}>Active</option><option value="past_due" ${sub==='past_due'?'selected':''}>Past due</option><option value="cancelled" ${sub==='cancelled'?'selected':''}>Cancelled</option></select></div><div class="fld"><select id="adminEditStatus"><option value="active" ${status==='active'?'selected':''}>Active</option><option value="suspended" ${status==='suspended'?'selected':''}>Suspended</option></select></div></div><div class="row" style="margin-top:10px"><div class="fld" style="flex:1 1 100%"><textarea id="adminEditNotes" placeholder="Admin notes...">${escapeHtml(profile.admin_notes || '')}</textarea></div></div><div class="admin-detail-actions"><button class="btn primary" onclick="adminSaveSelectedProfile()">Save Account/Profile</button><button class="btn danger" onclick="adminSuspendSelectedUser()">Suspend</button><button class="btn" onclick="adminUnsuspendSelectedUser()">Unsuspend</button><button class="btn" onclick="adminSelectUser('${String(id).replaceAll("'", "\'")}')">Reload User</button></div><div id="adminDetailMsg" class="subtle" style="margin-top:8px"></div></div>
+    <div class="item"><h4>${escapeHtml(email || id || 'Selected user')}</h4><p>${escapeHtml(profile.full_name || profile.username || 'No profile name')} · ${escapeHtml(profile.boat_name || 'No boat saved')} · ${escapeHtml(profile.home_port || 'No home port')}</p><div class="meta"><span>ID ${escapeHtml(id)}</span><span>Joined ${escapeHtml(adminSafeDate(user.created_at || profile.created_at))}</span><span>Last sign in ${escapeHtml(adminSafeDate(user.last_sign_in_at))}</span></div><div class="admin-status-row"><span class="admin-pill ${status === 'suspended' ? 'bad' : 'good'}">${escapeHtml(status.toUpperCase())}</span><span class="admin-pill ${['premium','crew','founder'].includes(plan) ? 'good' : ''}">${escapeHtml(planLabel(plan))}</span><span class="admin-pill">${escapeHtml(String(sub).toUpperCase())}</span><span class="admin-pill">${escapeHtml(appRole || 'USER')}</span></div></div>
+    <div class="item"><h4>Account controls</h4><div class="admin-detail-grid"><div class="fld"><select id="adminEditRole"><option value="">User</option><option value="tester" ${appRole==='tester'?'selected':''}>Tester</option><option value="admin" ${appRole==='admin'?'selected':''}>Admin</option><option value="founder" ${appRole==='founder'?'selected':''}>Founder</option></select></div><div class="fld"><select id="adminEditPlan"><option value="free" ${plan==='free'?'selected':''}>Free</option><option value="lite" ${plan==='lite'?'selected':''}>OceanCore Lite</option><option value="premium" ${plan==='premium'?'selected':''}>OceanCore Premium</option><option value="crew" ${plan==='crew'?'selected':''}>OceanCore Crew</option><option value="founder" ${plan==='founder'?'selected':''}>Founder</option></select></div><div class="fld"><select id="adminEditSub"><option value="none" ${sub==='none'?'selected':''}>No subscription</option><option value="trial" ${sub==='trial'?'selected':''}>Trial</option><option value="active" ${sub==='active'?'selected':''}>Active</option><option value="past_due" ${sub==='past_due'?'selected':''}>Past due</option><option value="cancelled" ${sub==='cancelled'?'selected':''}>Cancelled</option></select></div><div class="fld"><select id="adminEditStatus"><option value="active" ${status==='active'?'selected':''}>Active</option><option value="suspended" ${status==='suspended'?'selected':''}>Suspended</option></select></div></div><div class="row" style="margin-top:10px"><div class="fld" style="flex:1 1 100%"><textarea id="adminEditNotes" placeholder="Admin notes...">${escapeHtml(profile.admin_notes || '')}</textarea></div></div><div class="admin-detail-actions"><button class="btn primary" onclick="adminSaveSelectedProfile()">Save Account/Profile</button><button class="btn danger" onclick="adminSuspendSelectedUser()">Suspend</button><button class="btn" onclick="adminUnsuspendSelectedUser()">Unsuspend</button><button class="btn" onclick="adminSelectUser('${String(id).replaceAll("'", "\'")}')">Reload User</button></div><div id="adminDetailMsg" class="subtle" style="margin-top:8px"></div></div>
     <div class="item"><h4>OceanPoints support</h4><p><strong>${Number(rewards.balance||0).toLocaleString()} points</strong> · ${escapeHtml(rewards.level?.name||'Deckhand')} · ${Number(rewards.month_points||0).toLocaleString()} this month</p><div class="admin-detail-grid"><div class="fld"><input id="adminRewardPoints" type="number" step="1" placeholder="Points, e.g. 100 or -50"/></div><div class="fld"><input id="adminRewardReason" placeholder="Reason for adjustment"/></div></div><div class="admin-detail-actions"><button class="btn primary" onclick="adminAdjustSelectedRewards()">Apply points adjustment</button></div><div class="subtle">Every adjustment is written to the audit log.</div></div>
     <div class="item"><h4>Edit profile basics</h4><div class="admin-detail-grid"><div class="fld"><input id="adminEditFullName" placeholder="Full name" value="${escapeHtml(profile.full_name || '')}"/></div><div class="fld"><input id="adminEditUsername" placeholder="Username" value="${escapeHtml(profile.username || '')}"/></div><div class="fld"><input id="adminEditBoat" placeholder="Boat name" value="${escapeHtml(profile.boat_name || '')}"/></div><div class="fld"><input id="adminEditPort" placeholder="Home port" value="${escapeHtml(profile.home_port || '')}"/></div><div class="fld"><input id="adminEditSpecies" placeholder="Favourite species" value="${escapeHtml(profile.favourite_species || '')}"/></div><div class="fld"><input id="adminEditRolePlan" placeholder="Role / plan notes" value="${escapeHtml(profile.role_plan || '')}"/></div></div></div>`;
   const selectedCatchRoot = $('adminSelectedCatchList');
@@ -4955,7 +5031,7 @@ function renderAdminDashboard(){
   document.querySelectorAll('[data-admin-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.adminFilter===(state.admin.userFilter||'all')));
   const msg = $('adminMsg'); if(msg){ const q=getAdminSearch(); const filteredUsers=adminFilteredUsers().length; const filteredCatches=adminFilteredCatches().length; msg.textContent = state.admin.message || (state.admin.isAdmin ? `Admin enabled for ${overview.admin?.email || state.authEmail || 'this account'}. ${q ? `Search shows ${filteredUsers} users and ${filteredCatches} catches.` : `Storage: ${overview.storage || 'unknown'}.`}` : 'Admin access not available for this account.'); }
   const healthRoot = $('adminSystemHealth'); if(healthRoot){ const h=state.admin.health || {}; const items=[['API Build',h.build_id||'—',''],['Supabase',h.supabase?'Connected':'Off',h.supabase?'good':'bad'],['Auth API',h.auth_api_configured?'Configured':'Missing',h.auth_api_configured?'good':'bad'],['OpenAI',h.openai?'Connected':'Off',h.openai?'good':'warn'],['Windy',h.windy_point_forecast_configured?'Configured':'Missing',h.windy_point_forecast_configured?'good':'warn'],['Admin',h.admin_enabled?'Enabled':'Missing',h.admin_enabled?'good':'bad']]; healthRoot.innerHTML=items.map(([name,val,mode])=>`<div class="item"><h4>${escapeHtml(name)}</h4><p><span class="admin-pill ${mode}">${escapeHtml(val)}</span></p></div>`).join(''); }
-  const usersRoot = $('adminUsersList'); if(usersRoot){ const users=adminFilteredUsers(); const selectedId=state.admin.selectedUser?.user?.id || state.admin.selectedUser?.profile?.id || ''; usersRoot.innerHTML = users.length ? users.slice(0,80).map(user=>{ const profile=user.profile||{}; const name=profile.full_name||profile.username||'No profile name'; const boat=profile.boat_name||'No boat saved'; const port=profile.home_port||'No home port'; const id=String(user.id||profile.id||''); const status=profile.account_status||user.account_status||'active'; const plan=profile.plan||user.plan||'free'; const safeId=id.replaceAll("'","\'"); return `<div class="item admin-user-card ${id && id === selectedId ? 'active' : ''}" onclick="adminSelectUser('${safeId}')"><h4>${escapeHtml(user.email || profile.email || 'Unknown user')}</h4><p>${escapeHtml(name)} · ${escapeHtml(boat)} · ${escapeHtml(port)}</p><div class="meta"><span>${Number(user.catch_count || 0)} catches</span><span>${escapeHtml(plan)}</span><span>${escapeHtml(status)}</span><span>Last sign in ${escapeHtml(adminSafeDate(user.last_sign_in_at))}</span></div></div>`; }).join('') : `<div class="muted-box">No users match this search.</div>`; }
+  const usersRoot = $('adminUsersList'); if(usersRoot){ const users=adminFilteredUsers(); const selectedId=state.admin.selectedUser?.user?.id || state.admin.selectedUser?.profile?.id || ''; usersRoot.innerHTML = users.length ? users.slice(0,80).map(user=>{ const profile=user.profile||{}; const name=profile.full_name||profile.username||'No profile name'; const boat=profile.boat_name||'No boat saved'; const port=profile.home_port||'No home port'; const id=String(user.id||profile.id||''); const status=profile.account_status||user.account_status||'active'; const plan=normalizePlanKeyClient(profile.plan||user.plan||'free'); const safeId=id.replaceAll("'","\'"); return `<div class="item admin-user-card ${id && id === selectedId ? 'active' : ''}" onclick="adminSelectUser('${safeId}')"><h4>${escapeHtml(user.email || profile.email || 'Unknown user')}</h4><p>${escapeHtml(name)} · ${escapeHtml(boat)} · ${escapeHtml(port)}</p><div class="meta"><span>${Number(user.catch_count || 0)} catches</span><span>${escapeHtml(planLabel(plan))}</span><span>${escapeHtml(status)}</span><span>Last sign in ${escapeHtml(adminSafeDate(user.last_sign_in_at))}</span></div></div>`; }).join('') : `<div class="muted-box">No users match this search.</div>`; }
   const catchesRoot = $('adminCatchList'); if(catchesRoot){ const rows=adminFilteredCatches(); catchesRoot.innerHTML = rows.length ? rows.slice(0,80).map(row=>adminCatchCardHtml(row)).join('') : `<div class="muted-box">No catches match this search.</div>`; }
   const feedbackRoot = $('adminFeedbackList'); if(feedbackRoot){ const q=getAdminSearch(); const rows=(state.admin.feedback||[]).filter(row=>adminMatchesSearch(row,q)); feedbackRoot.innerHTML = rows.length ? rows.slice(0,80).map(row=>adminFeedbackCardHtml(row)).join('') : `<div class="muted-box">No feedback reports yet.</div>`; }
   const supportRoot = $('adminSupportList'); if(supportRoot){ const q=getAdminSearch(); const rows=(support.support_cases||[]).filter(row=>adminMatchesSearch(row,q)); supportRoot.innerHTML = rows.length ? rows.slice(0,80).map(row=>adminSupportCaseHtml(row)).join('') : `<div class="muted-box">No open support cases. Feedback and bug reports will appear here.</div>`; }
@@ -6581,12 +6657,8 @@ $('btnRefreshSavedAreas')?.addEventListener('click', loadSavedAreas);
 $('btnSaveCurrentArea')?.addEventListener('click', saveCurrentArea);
 $('btnSavedAreaUseGps')?.addEventListener('click', useGpsForSavedArea);
 $('btnCopyMapToArea')?.addEventListener('click', ()=>{ if($('savedAreaRadius')) $('savedAreaRadius').value = $('mapRadius')?.value || 35; state.savedAreasMsg = `Using map location ${formatCoordsText(state.selectedLat, state.selectedLng)}. Add a spot name, then tap Save Spot.`; renderSavedAreas(); });
-$('btnUpgradeStarterMonthly')?.addEventListener('click', ()=>startCheckout('starter','monthly'));
-$('btnUpgradeStarterYearly')?.addEventListener('click', ()=>startCheckout('starter','yearly'));
-$('btnUpgradeBasicMonthly')?.addEventListener('click', ()=>startCheckout('basic','monthly'));
-$('btnUpgradeBasicYearly')?.addEventListener('click', ()=>startCheckout('basic','yearly'));
-$('btnUpgradeProMonthly')?.addEventListener('click', ()=>startCheckout('pro','monthly'));
-$('btnUpgradeProYearly')?.addEventListener('click', ()=>startCheckout('pro','yearly'));
+$('btnBillingMonthly')?.addEventListener('click', ()=>setBillingInterval('monthly'));
+$('btnBillingYearly')?.addEventListener('click', ()=>setBillingInterval('yearly'));
 $('btnManageBilling')?.addEventListener('click', openBillingPortal);
 $('adminSearch')?.addEventListener('input', ()=>{ state.admin.search = $('adminSearch').value; renderAdminDashboard(); });
 
