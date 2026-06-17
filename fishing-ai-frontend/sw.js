@@ -1,4 +1,4 @@
-const CACHE_NAME = "oceancore-app-v2026-06-17-admin-portal-v2";
+const CACHE_NAME = "oceancore-app-v2026-06-17-create-composer-modes";
 const NATIVE_APP_OFFLINE_PATH = "/app/offline.html";
 const NATIVE_APP_CONFIG_PATH = "/app/assets/native-config.js";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
