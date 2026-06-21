@@ -701,6 +701,10 @@
     .boat-ai-settings-card label{display:block;margin-bottom:4px;color:#9fb2d5;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
     .boat-ai-settings-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .boat-ai-summary{margin-top:10px;font-size:13px;line-height:1.45}
+    .boat-ai-emergency{margin-top:10px;padding:14px;border-radius:18px;border:1px solid rgba(255,142,168,.45);background:linear-gradient(135deg,rgba(84,19,37,.5),rgba(7,12,24,.82))}
+    .boat-ai-emergency h4{margin:0 0 8px;font-size:14px;color:#ffe4ec}.boat-ai-emergency p{margin:6px 0;color:#ffdbe6;font-size:13px;line-height:1.45}
+    .boat-ai-emergency-card{margin-top:10px;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(2,6,16,.62);color:#eaf4ff;font-size:13px;line-height:1.5}
+    .boat-ai-emergency-card pre{white-space:pre-wrap;margin:8px 0 0;font:inherit;color:#fff}.boat-ai-emergency .btn{min-height:42px}
     @media(max-width:980px){.boat-ai-wrap,.boat-ai-metrics,.boat-ai-scenarios,.boat-ai-settings-grid{grid-template-columns:1fr}.boat-ai-decision strong{font-size:24px}}
 
 
@@ -1630,6 +1634,16 @@
                     <div class="fld"><label>Prop / notes</label><input id="boatAiPropNotes" placeholder="e.g. 17p stainless, tabs fitted"/></div>
                   </div>
                 </div>
+                <div class="boat-ai-settings-card">
+                  <h4>Emergency details</h4>
+                  <div class="row">
+                    <div class="fld"><label>Vessel callsign / rego</label><input id="boatAiCallsign" placeholder="e.g. boat rego / callsign"/></div>
+                    <div class="fld"><label>EPIRB / PLB Hex ID</label><input id="boatAiEpirbHex" placeholder="15 character Hex ID"/></div>
+                    <div class="fld"><label>Emergency contact</label><input id="boatAiEmergencyContact" placeholder="Name"/></div>
+                    <div class="fld"><label>Contact phone</label><input id="boatAiEmergencyPhone" placeholder="Phone number"/></div>
+                    <div class="fld"><label>Launch / float plan</label><input id="boatAiFloatPlan" placeholder="Ramp, destination, ETA back"/></div>
+                  </div>
+                </div>
               </div>
               <div class="boat-ai-settings-actions">
                 <button class="btn" id="boatAiUseMapConditions" type="button">Use map conditions</button>
@@ -1674,6 +1688,13 @@
               <div class="row"><div class="fld"><label>Actual fuel used after trip L</label><input id="boatAiActualFuel" type="number" placeholder="e.g. 88"/></div><button class="btn" id="boatAiSaveTrip" type="button">Save trip log</button></div>
               <div id="boatAiLogMsg" class="subtle" style="margin-top:8px"></div>
               <div class="boat-ai-history" id="boatAiHistory"></div>
+              <div class="boat-ai-title" style="margin-top:14px">Emergency Mode</div>
+              <div class="boat-ai-emergency">
+                <h4>Emergency support, not an EPIRB replacement</h4>
+                <p>OceanCore cannot alert satellites or authorities by itself. In grave and imminent danger, activate your EPIRB/PLB, use VHF Channel 16 if available, and call 000 if you have reception.</p>
+                <div class="row"><a class="btn danger" href="tel:000">Call 000</a><button class="btn" id="boatAiRefreshEmergency" type="button">Refresh card</button><button class="btn" id="boatAiCopyMayday" type="button">Copy Mayday</button></div>
+                <div id="boatAiEmergencyCard" class="boat-ai-emergency-card"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -2565,11 +2586,29 @@ function setStatusMessage(id, msg){
   if(el) el.textContent = msg || '';
 }
 
+function loginGateFeedback(text){
+  const msg = String(text || '').trim();
+  const lower = msg.toLowerCase();
+  if(!msg) return '';
+  if(window.location.protocol === 'file:' || lower.includes('origin: null') || lower.includes('local file')){
+    return 'This local HTML file cannot reliably sign in. Open OceanCore from http://127.0.0.1:4000/app/ with the backend running, or use the hosted/mobile build.';
+  }
+  if(/localhost:4000|127\.0\.0\.1:4000/i.test(msg) && /could not reach|failed to fetch|networkerror|unable to connect/i.test(msg)){
+    return 'The local backend is not running on port 4000. Start the backend, then open http://127.0.0.1:4000/app/.';
+  }
+  if(/allowed_origins|cors|origin/i.test(lower)){
+    return 'The backend is blocking this app address. Add this frontend URL to ALLOWED_ORIGINS, restart or redeploy the backend, then try again.';
+  }
+  if(/failed to fetch|networkerror|load failed|could not reach|unable to connect/i.test(lower)){
+    return 'OceanCore could not reach the backend. Check the backend is awake, then try again.';
+  }
+  return msg;
+}
+
 function setAuthFeedback(msg){
   const text = msg || '';
   setStatusMessage('authMsg', text);
-  const technical = /backend|allowed_origins|cors|origin:|https?:\/\/|port 4000/i.test(text);
-  setStatusMessage('gateMsg', technical ? 'OceanCore could not connect. Check your internet connection and try again.' : text);
+  setStatusMessage('gateMsg', loginGateFeedback(text));
 }
 
 function apiReachabilityMessage(apiBase){
@@ -7348,7 +7387,12 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
     boatAiWind:'0-10',
     boatAiSwell:'below-1',
     boatAiWindAngle:'unknown',
-    boatAiTripType:'offshore'
+    boatAiTripType:'offshore',
+    boatAiCallsign:'',
+    boatAiEpirbHex:'',
+    boatAiEmergencyContact:'',
+    boatAiEmergencyPhone:'',
+    boatAiFloatPlan:''
   };
   const ids=Object.keys(defaults);
   const n=(id,fb=0)=>{const v=Number($(id)?.value);return Number.isFinite(v)?v:fb};
@@ -7530,7 +7574,12 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
       wind:s('boatAiWind','0-10'),
       swell:s('boatAiSwell','below-1'),
       windAngle:s('boatAiWindAngle','unknown'),
-      tripType:s('boatAiTripType','offshore')
+      tripType:s('boatAiTripType','offshore'),
+      callsign:s('boatAiCallsign',''),
+      epirbHex:s('boatAiEpirbHex',''),
+      emergencyContact:s('boatAiEmergencyContact',''),
+      emergencyPhone:s('boatAiEmergencyPhone',''),
+      floatPlan:s('boatAiFloatPlan','')
     };
   }
 
@@ -7606,6 +7655,37 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 
   function metric(label,value,hint){return `<div class="stat"><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div><div class="hint">${escapeHtml(hint||'')}</div></div>`;}
 
+  function boatAiPosition(){
+    const lat=Number(state.selectedLat ?? state.lastLat ?? state.mapLat);
+    const lng=Number(state.selectedLng ?? state.lastLng ?? state.mapLng);
+    if(Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180)return {lat,lng,text:`${lat.toFixed(5)}, ${lng.toFixed(5)}`};
+    return {lat:null,lng:null,text:'Position unavailable - use GPS/map first'};
+  }
+
+  function boatAiMaydayText(r=calc()){
+    const pos=boatAiPosition();
+    const persons=Math.max(1,Math.round(Number(r.crew||0)||1));
+    return [
+      'MAYDAY MAYDAY MAYDAY',
+      `This is ${r.boatName || 'vessel'}${r.callsign ? ` (${r.callsign})` : ''}.`,
+      `Position ${pos.text}.`,
+      `We are a ${fmt(r.loa,1)} metre ${r.hullType || 'vessel'} with ${persons} person${persons===1?'':'s'} on board.`,
+      'Nature of distress: describe the emergency clearly.',
+      `Fuel onboard about ${fmt(r.fuel,0)} litres. Trip plan: ${r.floatPlan || 'not entered'}.`,
+      `EPIRB/PLB: ${r.epirbHex ? `Hex ID ${r.epirbHex}` : 'not entered - activate beacon if required'}.`,
+      `Emergency contact: ${r.emergencyContact || 'not entered'} ${r.emergencyPhone || ''}.`,
+      'We require immediate assistance. Over.'
+    ].join('\n');
+  }
+
+  function renderEmergencyCard(r=calc()){
+    const root=$('boatAiEmergencyCard'); if(!root)return;
+    const pos=boatAiPosition();
+    const persons=Math.max(1,Math.round(Number(r.crew||0)||1));
+    const script=boatAiMaydayText(r);
+    root.innerHTML=`<b>Current emergency card</b><p><b>Position:</b> ${escapeHtml(pos.text)}<br><b>Vessel:</b> ${escapeHtml(r.boatName || 'Not set')} ${r.callsign?`/ ${escapeHtml(r.callsign)}`:''}<br><b>People onboard:</b> ${escapeHtml(String(persons))}<br><b>EPIRB/PLB:</b> ${escapeHtml(r.epirbHex || 'Not entered')}<br><b>Float plan:</b> ${escapeHtml(r.floatPlan || 'Not entered')}</p><p><b>Immediate actions:</b> activate EPIRB/PLB if in grave danger, call 000 if you have phone reception, broadcast Mayday on VHF Channel 16, put on life jackets, and prepare flares/signalling gear.</p><pre>${escapeHtml(script)}</pre>`;
+  }
+
   function renderSettingsSummary(r){
     const el=$('boatAiSettingsSummary');
     if(!el) return;
@@ -7640,6 +7720,7 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
     $('boatAiBrief').innerHTML=`<h4>Fuel equation</h4><p><b>${fmt(r.usableFuel,0)}L usable fuel</b> - <b>${fmt(r.tripFuel,0)}L trip</b> - <b>${fmt(r.reserveL,0)}L reserve</b> = <b>${fmt(r.spare,0)}L spare</b>.</p><h4>Captain briefing</h4><p><b>${escapeHtml(r.boatName)}</b>: ${fmt(r.loa,1)}m ${escapeHtml(r.hullType)}, ${escapeHtml(r.engine)}, ${fmt(r.hp,0)}hp. Planning weight ${fmt(r.planningWeight,0)}kg with ${fmt(r.crew,0)} crew and ${fmt(r.payload,0)}kg extra payload.</p><p>Flat-water model is ${fmt(r.flat,1)}L/h at ${fmt(r.speed,1)}kn after ${fmt(r.burnCalibration,0)}% burn calibration. Conditions factor is x${fmt(r.cond,2)}. Return leg has ${Math.round(r.rb*100)}% bias.</p>${boatWarnings.length?`<p class="signal amber">${escapeHtml(boatWarnings.join(' '))}</p>`:''}<ul><li>Protect the reserve; do not count it as normal usable fuel.</li><li>Use actual trip fuel logs to calibrate this boat.</li><li>Check official weather, bar and local conditions before launch.</li></ul>`;
     $('boatAiScenarios').innerHTML=[['Slow 3kn',{speed:Math.max(5,r.speed-3)}],['Add 20L fuel',{fuel:r.fuel+20}],['Wind worsens',{wind:r.wind==='0-10'?'10-20':'20-25'}]].map(([t,patch])=>{const x=calc({...r,...patch});return `<div class="boat-ai-scenario"><b>${escapeHtml(t)}</b><strong>${escapeHtml(x.decision)}</strong><small>fuel ${fmt(x.tripFuel,0)}L · spare ${fmt(x.spare,0)}L</small></div>`}).join('');
     renderSettingsSummary(r);
+    renderEmergencyCard(r);
     return r;
   }
 
@@ -7724,6 +7805,8 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
   $('boatAiAskAi')?.addEventListener('click',askAi);
   $('boatAiResetSettings')?.addEventListener('click',resetSettings);
   $('boatAiUseMapConditions')?.addEventListener('click',useMapConditions);
+  $('boatAiRefreshEmergency')?.addEventListener('click',()=>{renderEmergencyCard(render());setStatusMessage('boatAiLogMsg','Emergency card refreshed.');});
+  $('boatAiCopyMayday')?.addEventListener('click',async()=>{try{const text=boatAiMaydayText(render());await navigator.clipboard.writeText(text);setStatusMessage('boatAiLogMsg','Mayday script copied.');}catch(e){setStatusMessage('boatAiLogMsg','Copy failed. Select the emergency script and copy manually.');}});
   ids.forEach(id=>$(id)?.addEventListener('input',()=>render()));
   ids.forEach(id=>$(id)?.addEventListener('change',()=>render()));
   loadProfile();
