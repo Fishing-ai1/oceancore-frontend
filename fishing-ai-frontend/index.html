@@ -310,10 +310,23 @@
     .map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
     .map-toolbar .map-source-bar{margin-top:0}
     .conditions-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+    .intel-card{margin-top:12px;border:1px solid rgba(51,239,231,.28);border-radius:18px;background:linear-gradient(135deg,rgba(8,38,55,.72),rgba(7,12,24,.92));overflow:hidden}
+    .intel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--border)}
+    .intel-head h3{margin:0;font-size:20px}.intel-head p{margin:4px 0 0;color:#a9bddf}
+    .intel-pill{border:1px solid rgba(125,255,213,.45);color:#7dffd5;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;white-space:nowrap}
+    .intel-body{padding:16px;display:grid;grid-template-columns:280px 1fr;gap:14px}
+    .intel-controls{display:grid;gap:10px}.intel-controls label{display:block;color:#9fb2d5;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+    .intel-score{border:1px solid var(--border);border-radius:16px;background:rgba(2,6,16,.55);padding:14px}
+    .intel-score-main{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px}
+    .intel-score-main strong{font-size:42px;line-height:1;color:#7dffd5}.intel-score-main span{display:block;color:#bfd0ee;font-weight:900}
+    .intel-list{display:grid;gap:8px;margin-top:10px}.intel-list div{border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:10px;background:rgba(9,18,37,.72)}
+    .intel-list b{display:block;margin-bottom:3px}.intel-list p{margin:0;color:#bfd0ee;font-size:13px;line-height:1.45}
+    .intel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .map-side-panel{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     @media (max-width:900px){
       .core-dashboard,.map-side-panel{grid-template-columns:1fr}
       .map-control-grid,.conditions-strip{grid-template-columns:1fr}
+      .intel-body{grid-template-columns:1fr}.intel-head{display:block}.intel-pill{display:inline-block;margin-top:10px}
     }
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     .section{display:none}
@@ -1508,6 +1521,7 @@
               <button data-map-view="local" type="button">Ramps & fuel map</button>
               <button data-windy-overlay="wind" type="button">Wind</button>
               <button data-windy-overlay="waves" type="button">Waves</button>
+              <button id="btnJumpFishingIntel" type="button">Fishing Intel</button>
             </div>
             <div class="row" style="margin-top:10px">
               <div class="fld">
@@ -1546,6 +1560,79 @@
                 <div class="label">Swell</div>
                 <div class="value" id="swellText">—</div>
                 <div class="hint">Current estimated swell.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="intel-card" id="fishingIntelCard">
+          <div class="intel-head">
+            <div>
+              <h3>OceanCore Fishing Intel</h3>
+              <p>Habitat score using Windy conditions, structure, depth, water clarity and bite signs. Exact marks stay private.</p>
+            </div>
+            <span class="intel-pill" id="intelSource">Load map data first</span>
+          </div>
+          <div class="intel-body">
+            <div class="intel-controls">
+              <div class="fld"><label for="intelSpecies">Target species</label><select id="intelSpecies">
+                <option value="snapper">Snapper</option>
+                <option value="tuna">Tuna</option>
+                <option value="mackerel">Mackerel</option>
+                <option value="marlin">Marlin</option>
+                <option value="flathead">Flathead</option>
+                <option value="whiting">Whiting</option>
+                <option value="bream">Bream</option>
+                <option value="reef">Reef fish</option>
+              </select></div>
+              <div class="fld"><label for="intelDepth">Depth band</label><select id="intelDepth">
+                <option value="shallow">Shallow 0-8m</option>
+                <option value="inshore">Inshore 8-20m</option>
+                <option value="mid" selected>Reef edge 20-45m</option>
+                <option value="deep">Deep 45m+</option>
+              </select></div>
+              <div class="fld"><label for="intelStructure">Structure</label><select id="intelStructure">
+                <option value="reef" selected>Reef / rubble</option>
+                <option value="dropoff">Drop-off / ledge</option>
+                <option value="weed">Weed / sand edge</option>
+                <option value="channel">Channel / current line</option>
+                <option value="beach">Beach gutter</option>
+                <option value="open">Open water</option>
+              </select></div>
+              <div class="fld"><label for="intelWater">Water clarity</label><select id="intelWater">
+                <option value="clean" selected>Clean</option>
+                <option value="green">Green but fishable</option>
+                <option value="dirty">Dirty</option>
+              </select></div>
+              <div class="fld"><label for="intelBait">Bait signs</label><select id="intelBait">
+                <option value="none">No clear bait</option>
+                <option value="some" selected>Some bait / birds</option>
+                <option value="strong">Strong bait schools</option>
+              </select></div>
+              <div class="fld"><label for="intelTide">Tide stage</label><select id="intelTide">
+                <option value="unknown">Unknown</option>
+                <option value="runin">Run-in</option>
+                <option value="runout">Run-out</option>
+                <option value="change" selected>Tide change</option>
+                <option value="slack">Slack</option>
+              </select></div>
+              <div class="fld"><label for="intelMoon">Moon</label><select id="intelMoon">
+                <option value="unknown">Unknown</option>
+                <option value="new">New moon</option>
+                <option value="quarter" selected>Quarter moon</option>
+                <option value="full">Full moon</option>
+              </select></div>
+              <button class="btn primary" id="btnRunFishingIntel" type="button">Run Intel</button>
+            </div>
+            <div class="intel-score">
+              <div class="intel-score-main">
+                <div><span id="intelLabel">Habitat score</span><strong id="intelScore">--</strong></div>
+                <div><span>Confidence</span><strong id="intelConfidence">--</strong></div>
+              </div>
+              <div class="intel-list" id="intelReasons"><div><b>Ready when you are</b><p>Load Windy conditions or choose your species and tap Run Intel.</p></div></div>
+              <div class="intel-actions">
+                <button class="btn" id="btnIntelAskAi" type="button">Ask AI with this intel</button>
+                <button class="btn ghost" id="btnIntelSavePrivate" type="button">Save private intel note</button>
               </div>
             </div>
           </div>
@@ -2032,7 +2119,6 @@
             <div class="muted-box" style="margin-top:12px"><strong>Important:</strong> OceanPoints currently track contribution and level progress. They have no cash value. Vouchers, giveaways, creator payouts, and redemptions remain unavailable until OceanCore publishes the relevant terms and confirms fulfilment partners.</div>
           </div>
         </div>
-
         <div class="grid-2">
           <div class="panel"><div class="hd"><h2>OceanCore Plans</h2></div><div class="bd"><div class="list">
             <div class="item"><h4>Premium fishing intelligence</h4><p>Lite removes banner ads and unlocks basic AI. Premium unlocks live zones, full AI memory, advanced predictions and better rewards. Crew adds shared boat, catch and trip tools for mates and families.</p><div class="actions"><button class="btn primary" data-jump="billing" type="button">View Plans</button></div></div>
@@ -2509,6 +2595,7 @@ const state = {
   aiBrain: { cloudReady:false, memory:[], loading:false },
   feedbackDraft: { type:'bug', message:'' },
   marine: null,
+  fishingIntel: null,
   ramps: [],
   fuel: [],
   mapSearchResults: [],
@@ -5786,8 +5873,142 @@ function renderMarine(){
   $('waveText').textContent = current?.wave_m != null ? `${current.wave_m} m` : 'Unavailable';
   $('swellText').textContent = current?.swell_m != null ? `${current.swell_m} m` : 'Unavailable';
   syncSelectedMarineHour(state.selectedMarineHourIndex ?? state.marine?.current_index ?? 0);
+  renderFishingIntel(false);
   renderHomeDashboard();
   renderStats();
+}
+
+const INTEL_SPECIES = {
+  snapper: { name:'Snapper', depths:['inshore','mid','deep'], structures:['reef','dropoff','channel'], tide:['change','runout'], moon:['new','full'], windMax:18, waveMax:1.6, tactic:'Fish reef edges, rubble and pressure points. Start with lightly weighted baits or soft plastics near the tide change.' },
+  tuna: { name:'Tuna', depths:['mid','deep'], structures:['open','channel','dropoff'], tide:['runin','runout','change'], moon:['new','quarter','full'], windMax:16, waveMax:1.8, tactic:'Watch birds, bait schools and current lines. Keep lures ready and avoid burning straight through working fish.' },
+  mackerel: { name:'Mackerel', depths:['inshore','mid'], structures:['reef','channel','dropoff'], tide:['runin','runout'], moon:['new','quarter'], windMax:15, waveMax:1.5, tactic:'Work bait schools, beacons, reef edges and current. Troll or cast metals while keeping wire/leader choices practical.' },
+  marlin: { name:'Marlin', depths:['deep'], structures:['open','dropoff','channel'], tide:['runin','runout'], moon:['new','full'], windMax:18, waveMax:2.0, tactic:'Focus on bait, temperature edges, current breaks and shelf/drop-off water. Cover ground with a tidy spread.' },
+  flathead: { name:'Flathead', depths:['shallow','inshore'], structures:['weed','channel','beach'], tide:['runout','change'], moon:['quarter'], windMax:20, waveMax:1.2, tactic:'Fish drains, sand edges and weed lines. Cast with the run-out tide and keep exact marks private.' },
+  whiting: { name:'Whiting', depths:['shallow'], structures:['beach','weed','channel'], tide:['runin','runout'], moon:['new','full'], windMax:16, waveMax:1.0, tactic:'Look for clean shallow banks, gutters and yabby/worm ground. Light gear and quiet movement matter.' },
+  bream: { name:'Bream', depths:['shallow','inshore'], structures:['reef','weed','channel'], tide:['runin','runout','change'], moon:['quarter','full'], windMax:18, waveMax:1.2, tactic:'Fish edges, pontoons, rock, weed and current seams. Small baits or finesse plastics suit cautious fish.' },
+  reef: { name:'Reef fish', depths:['mid','deep'], structures:['reef','dropoff'], tide:['change','runin','runout'], moon:['new','quarter'], windMax:18, waveMax:1.8, tactic:'Sound for life first. Anchor or drift to match current, then keep presentations close to structure.' }
+};
+
+function intelValue(id, fallback=''){
+  return String($(id)?.value || fallback);
+}
+
+function scoreMatch(value, preferred, points, label, positive, negative){
+  const ok = preferred.includes(value);
+  return { delta: ok ? points : -Math.round(points * 0.55), title: label, text: ok ? positive : negative };
+}
+
+function buildFishingIntel(){
+  const speciesKey = intelValue('intelSpecies','snapper');
+  const profile = INTEL_SPECIES[speciesKey] || INTEL_SPECIES.snapper;
+  const current = getDisplayedMarineHour();
+  let score = 50;
+  const reasons = [];
+  const depth = intelValue('intelDepth','mid');
+  const structure = intelValue('intelStructure','reef');
+  const water = intelValue('intelWater','clean');
+  const bait = intelValue('intelBait','some');
+  const tide = intelValue('intelTide','change');
+  const moon = intelValue('intelMoon','quarter');
+  const add = (item)=>{ score += item.delta; reasons.push(item); };
+
+  add(scoreMatch(depth, profile.depths, 13, 'Depth fit', `${profile.name} often suit this depth band.`, `This depth is less ideal for ${profile.name}; treat it as exploratory.`));
+  add(scoreMatch(structure, profile.structures, 15, 'Structure fit', `The selected structure suits ${profile.name} behaviour.`, `The selected structure is not the strongest ${profile.name} habitat.`));
+  add(scoreMatch(tide, profile.tide, 10, 'Tide window', `This tide stage can create movement and feeding windows.`, `This tide stage may be slower; look for current or bait before committing.`));
+  add(scoreMatch(moon, profile.moon, 5, 'Moon phase', `Moon timing is supportive for this target.`, `Moon timing is neutral rather than a standout trigger.`));
+
+  const wind = safeNumber(current?.wind_kts, null);
+  const wave = safeNumber(current?.wave_m ?? current?.swell_m, null);
+  if(wind == null){
+    reasons.push({delta:0,title:'Wind data',text:'Load Windy conditions for a stronger read.'});
+  }else if(wind <= profile.windMax){
+    const bonus = wind <= 10 ? 9 : 5;
+    score += bonus;
+    reasons.push({delta:bonus,title:'Wind',text:`${wind} kt is inside the comfort range for this target.`});
+  }else{
+    const penalty = wind > profile.windMax + 8 ? -18 : -10;
+    score += penalty;
+    reasons.push({delta:penalty,title:'Wind',text:`${wind} kt is pushing past the preferred range. Consider shelter, shorter runs or another day.`});
+  }
+
+  if(wave == null){
+    reasons.push({delta:0,title:'Sea state',text:'Load wave/swell data for better confidence.'});
+  }else if(wave <= profile.waveMax){
+    const bonus = wave <= 0.8 ? 8 : 4;
+    score += bonus;
+    reasons.push({delta:bonus,title:'Sea state',text:`${wave} m is workable for the selected target and area type.`});
+  }else{
+    const penalty = wave > profile.waveMax + 0.7 ? -16 : -8;
+    score += penalty;
+    reasons.push({delta:penalty,title:'Sea state',text:`${wave} m may reduce comfort, presentation quality and safety margin.`});
+  }
+
+  if(water === 'clean'){ score += 7; reasons.push({delta:7,title:'Water clarity',text:'Clean water helps visibility, bait movement and lure presentation.'}); }
+  if(water === 'green'){ score += 1; reasons.push({delta:1,title:'Water clarity',text:'Green water can still fish, but look for bait or cleaner edges.'}); }
+  if(water === 'dirty'){ score -= 9; reasons.push({delta:-9,title:'Water clarity',text:'Dirty water lowers confidence unless bait and structure are strong.'}); }
+
+  if(bait === 'strong'){ score += 12; reasons.push({delta:12,title:'Bait signs',text:'Strong bait is the best live signal. Prioritise this zone.'}); }
+  if(bait === 'some'){ score += 5; reasons.push({delta:5,title:'Bait signs',text:'Some bait or birds makes the area worth a closer look.'}); }
+  if(bait === 'none'){ score -= 6; reasons.push({delta:-6,title:'Bait signs',text:'No bait signs lowers confidence; keep moving until you find life.'}); }
+
+  const signal = String(current?.signal || state.marine?.signal || '').toLowerCase();
+  if(signal === 'green') score += 8;
+  if(signal === 'red') score -= 18;
+  if(signal === 'amber') score += 1;
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  const confidence = Math.max(35, Math.min(95, Math.round((current ? 62 : 42) + (bait === 'strong' ? 12 : 0) + (water === 'clean' ? 6 : 0) + (signal === 'green' ? 8 : 0) - (wind == null ? 8 : 0) - (wave == null ? 8 : 0))));
+  const label = score >= 78 ? 'High potential' : score >= 58 ? 'Worth a look' : score >= 40 ? 'Patchy' : 'Low confidence';
+  const source = current ? `${formatForecastLabel(current)} from ${state.marine?.source_name || current?.source_name || 'Windy'}` : 'Manual intel only';
+  const topReasons = reasons.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,5);
+  return { speciesKey, species:profile.name, score, confidence, label, source, tactic:profile.tactic, reasons:topReasons, current };
+}
+
+function renderFishingIntel(recalculate = true){
+  if(!$('intelScore')) return null;
+  const intel = recalculate || !state.fishingIntel ? buildFishingIntel() : state.fishingIntel;
+  state.fishingIntel = intel;
+  $('intelScore').textContent = String(intel.score);
+  $('intelConfidence').textContent = `${intel.confidence}%`;
+  $('intelLabel').textContent = `${intel.species}: ${intel.label}`;
+  $('intelSource').textContent = intel.source;
+  $('intelReasons').innerHTML = [
+    ...intel.reasons.map(row=>`<div><b>${escapeHtml(row.title)}</b><p>${escapeHtml(row.text)}</p></div>`),
+    `<div><b>Tactic</b><p>${escapeHtml(intel.tactic)}</p></div>`
+  ].join('');
+  return intel;
+}
+
+function fishingIntelPrompt(){
+  const intel = renderFishingIntel(true);
+  const current = intel.current;
+  const parts = [
+    `Use this OceanCore Fishing Intel to give me a practical plan for ${intel.species}.`,
+    `Habitat score: ${intel.score}/100 (${intel.label}), confidence ${intel.confidence}%.`,
+    `Location: ${formatCoordsText(state.selectedLat, state.selectedLng)}. Exact marks must stay private.`,
+    current ? `Conditions: wind ${formatMarineMetric(current.wind_kts,'kt')}, wave ${formatMarineMetric(current.wave_m,'m')}, swell ${formatMarineMetric(current.swell_m,'m')}.` : 'Live conditions are not loaded.',
+    `Intel reasons: ${intel.reasons.map(r=>`${r.title}: ${r.text}`).join(' ')}`,
+    `Base tactic: ${intel.tactic}`,
+    'Give me: whether to go, where to look in general-area terms, technique, timing, safety risks, and what would change your mind.'
+  ];
+  return parts.join('\n');
+}
+
+function askAiWithFishingIntel(){
+  const prompt = fishingIntelPrompt();
+  showSection('ai');
+  if($('chatInput')) $('chatInput').value = prompt;
+  $('btnSendChat')?.click();
+}
+
+function savePrivateFishingIntelNote(){
+  const intel = renderFishingIntel(true);
+  const note = `${new Date().toLocaleString()} - ${intel.species} ${intel.score}/100 ${intel.label} near ${formatCoordsText(state.selectedLat, state.selectedLng)}. ${intel.tactic}`;
+  const key = 'oceancore_private_fishing_intel_notes';
+  const notes = safeJsonParse(localStorage.getItem(key), []);
+  notes.unshift(note);
+  localStorage.setItem(key, JSON.stringify(notes.slice(0, 30)));
+  setStatusMessage('mapMsg','Private fishing intel note saved on this device.');
 }
 
 async function loadMapData(){
@@ -6735,11 +6956,22 @@ document.querySelectorAll('[data-map-view]').forEach(btn=>{
 document.querySelectorAll('[data-windy-overlay]').forEach(btn=>{
   btn.addEventListener('click', ()=>setWindyOverlay(btn.dataset.windyOverlay));
 });
+$('btnJumpFishingIntel')?.addEventListener('click', ()=>{
+  $('fishingIntelCard')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  renderFishingIntel(true);
+});
 $('forecastHourSelect')?.addEventListener('change', ()=>{
   state.selectedMarineHourIndex = safeNumber($('forecastHourSelect').value, 0);
   localStorage.setItem('oceancore_marine_hour_index', String(state.selectedMarineHourIndex));
   renderMarine();
 });
+$('btnRunFishingIntel')?.addEventListener('click', ()=>renderFishingIntel(true));
+$('btnIntelAskAi')?.addEventListener('click', askAiWithFishingIntel);
+$('btnIntelSavePrivate')?.addEventListener('click', savePrivateFishingIntelNote);
+['intelSpecies','intelDepth','intelStructure','intelWater','intelBait','intelTide','intelMoon'].forEach(id=>{
+  $(id)?.addEventListener('change', ()=>renderFishingIntel(true));
+});
+renderFishingIntel(true);
 $('btnUseMapCoords')?.addEventListener('click', ()=>{
   $('catchLat').value = $('mapLat').value;
   $('catchLng').value = $('mapLng').value;
