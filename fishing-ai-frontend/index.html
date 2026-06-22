@@ -1577,6 +1577,7 @@
             <div class="intel-controls">
               <div class="fld"><label for="intelSpecies">Target species</label><select id="intelSpecies">
                 <option value="snapper">Snapper</option>
+                <option value="pelagics">Pelagics</option>
                 <option value="tuna">Tuna</option>
                 <option value="mackerel">Mackerel</option>
                 <option value="marlin">Marlin</option>
@@ -5879,89 +5880,140 @@ function renderMarine(){
 }
 
 const INTEL_SPECIES = {
-  snapper: { name:'Snapper', depths:['inshore','mid','deep'], structures:['reef','dropoff','channel'], tide:['change','runout'], moon:['new','full'], windMax:18, waveMax:1.6, tactic:'Fish reef edges, rubble and pressure points. Start with lightly weighted baits or soft plastics near the tide change.' },
-  tuna: { name:'Tuna', depths:['mid','deep'], structures:['open','channel','dropoff'], tide:['runin','runout','change'], moon:['new','quarter','full'], windMax:16, waveMax:1.8, tactic:'Watch birds, bait schools and current lines. Keep lures ready and avoid burning straight through working fish.' },
-  mackerel: { name:'Mackerel', depths:['inshore','mid'], structures:['reef','channel','dropoff'], tide:['runin','runout'], moon:['new','quarter'], windMax:15, waveMax:1.5, tactic:'Work bait schools, beacons, reef edges and current. Troll or cast metals while keeping wire/leader choices practical.' },
-  marlin: { name:'Marlin', depths:['deep'], structures:['open','dropoff','channel'], tide:['runin','runout'], moon:['new','full'], windMax:18, waveMax:2.0, tactic:'Focus on bait, temperature edges, current breaks and shelf/drop-off water. Cover ground with a tidy spread.' },
-  flathead: { name:'Flathead', depths:['shallow','inshore'], structures:['weed','channel','beach'], tide:['runout','change'], moon:['quarter'], windMax:20, waveMax:1.2, tactic:'Fish drains, sand edges and weed lines. Cast with the run-out tide and keep exact marks private.' },
-  whiting: { name:'Whiting', depths:['shallow'], structures:['beach','weed','channel'], tide:['runin','runout'], moon:['new','full'], windMax:16, waveMax:1.0, tactic:'Look for clean shallow banks, gutters and yabby/worm ground. Light gear and quiet movement matter.' },
-  bream: { name:'Bream', depths:['shallow','inshore'], structures:['reef','weed','channel'], tide:['runin','runout','change'], moon:['quarter','full'], windMax:18, waveMax:1.2, tactic:'Fish edges, pontoons, rock, weed and current seams. Small baits or finesse plastics suit cautious fish.' },
-  reef: { name:'Reef fish', depths:['mid','deep'], structures:['reef','dropoff'], tide:['change','runin','runout'], moon:['new','quarter'], windMax:18, waveMax:1.8, tactic:'Sound for life first. Anchor or drift to match current, then keep presentations close to structure.' }
+  snapper: { name:'Snapper', family:'reef', depths:['inshore','mid','deep'], structures:['reef','dropoff','channel'], tide:['change','runout'], moon:['new','full'], windIdeal:12, windMax:20, waveIdeal:1.0, waveMax:1.8, tactic:'Fish reef edges, rubble, bait and pressure points. Use soft plastics or lightly weighted baits around the best tide/current window.' },
+  pelagics: { name:'Pelagics', family:'pelagic', depths:['inshore','mid','deep'], structures:['open','channel','dropoff','reef'], tide:['runin','runout','change'], moon:['new','quarter','full'], windIdeal:10, windMax:18, waveIdeal:1.1, waveMax:2.0, tactic:'Search for birds, bait, current lines, colour changes and pressure edges. Troll/cast first, then slow down only when you find life.' },
+  tuna: { name:'Tuna', family:'pelagic', depths:['mid','deep'], structures:['open','channel','dropoff'], tide:['runin','runout','change'], moon:['new','quarter','full'], windIdeal:10, windMax:17, waveIdeal:1.1, waveMax:1.9, tactic:'Watch birds, bait schools and current lines. Approach wide, cast ahead of moving fish, and avoid driving through the school.' },
+  mackerel: { name:'Mackerel', family:'pelagic', depths:['inshore','mid'], structures:['reef','channel','dropoff','open'], tide:['runin','runout'], moon:['new','quarter'], windIdeal:9, windMax:16, waveIdeal:0.9, waveMax:1.6, tactic:'Work bait schools, beacons, reef edges and current. Troll or cast metals; keep leaders practical and avoid exact public marks.' },
+  marlin: { name:'Marlin', family:'pelagic', depths:['deep'], structures:['open','dropoff','channel'], tide:['runin','runout'], moon:['new','full'], windIdeal:12, windMax:20, waveIdeal:1.2, waveMax:2.2, tactic:'Focus on bait, current breaks, shelf/drop-off water and temp/colour edges when available. Cover ground with a tidy spread.' },
+  flathead: { name:'Flathead', family:'inshore', depths:['shallow','inshore'], structures:['weed','channel','beach'], tide:['runout','change'], moon:['quarter'], windIdeal:14, windMax:22, waveIdeal:0.6, waveMax:1.2, tactic:'Fish drains, sand edges and weed lines. Cast with the run-out tide and keep exact marks private.' },
+  whiting: { name:'Whiting', family:'inshore', depths:['shallow'], structures:['beach','weed','channel'], tide:['runin','runout'], moon:['new','full'], windIdeal:10, windMax:16, waveIdeal:0.5, waveMax:1.0, tactic:'Look for clean shallow banks, gutters and yabby/worm ground. Light gear and quiet movement matter.' },
+  bream: { name:'Bream', family:'inshore', depths:['shallow','inshore'], structures:['reef','weed','channel'], tide:['runin','runout','change'], moon:['quarter','full'], windIdeal:12, windMax:18, waveIdeal:0.7, waveMax:1.2, tactic:'Fish edges, pontoons, rock, weed and current. Small baits or finesse plastics suit cautious fish.' },
+  reef: { name:'Reef fish', family:'reef', depths:['mid','deep'], structures:['reef','dropoff'], tide:['change','runin','runout'], moon:['new','quarter'], windIdeal:12, windMax:20, waveIdeal:1.1, waveMax:1.9, tactic:'Sound for life first. Anchor or drift to match current, then keep presentations close to structure.' }
 };
 
 function intelValue(id, fallback=''){
   return String($(id)?.value || fallback);
 }
 
-function scoreMatch(value, preferred, points, label, positive, negative){
-  const ok = preferred.includes(value);
-  return { delta: ok ? points : -Math.round(points * 0.55), title: label, text: ok ? positive : negative };
+function intelNumber(value){
+  if(value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function clampScore(value){
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function intelLabel(score){
+  return score >= 82 ? 'Prime window' : score >= 68 ? 'Strong window' : score >= 52 ? 'Worth checking' : score >= 36 ? 'Weak signal' : 'Low confidence';
+}
+
+function conditionCurve(value, ideal, max, weight){
+  if(value == null) return { score:0, text:'missing' };
+  if(value <= ideal) return { score:weight, text:'ideal' };
+  if(value <= max) return { score:Math.round(weight * (1 - ((value - ideal) / Math.max(1, max - ideal)) * 0.65)), text:'workable' };
+  return { score:-Math.round(weight * Math.min(1.4, 0.5 + ((value - max) / Math.max(1, max)))) , text:'poor' };
+}
+
+function matchCurve(value, preferred, weight){
+  return preferred.includes(value) ? weight : -Math.round(weight * 0.45);
+}
+
+function baitScore(value, family){
+  if(value === 'strong') return family === 'pelagic' ? 24 : 17;
+  if(value === 'some') return family === 'pelagic' ? 12 : 8;
+  return family === 'pelagic' ? -15 : -8;
+}
+
+function waterScore(value, family){
+  if(value === 'clean') return family === 'pelagic' ? 13 : 9;
+  if(value === 'green') return family === 'pelagic' ? 4 : 2;
+  return family === 'pelagic' ? -15 : -10;
+}
+
+function hourTrendBonus(hour, previous){
+  const wind = intelNumber(hour?.wind_kts);
+  const prevWind = intelNumber(previous?.wind_kts);
+  const wave = intelNumber(hour?.wave_m ?? hour?.swell_m);
+  const prevWave = intelNumber(previous?.wave_m ?? previous?.swell_m);
+  let bonus = 0;
+  if(wind != null && prevWind != null && wind < prevWind) bonus += 3;
+  if(wave != null && prevWave != null && wave <= prevWave) bonus += 2;
+  return bonus;
+}
+
+function scoreFishingIntelHour(hour, previous, context){
+  const { profile, depth, structure, water, bait, tide, moon } = context;
+  const wind = intelNumber(hour?.wind_kts);
+  const wave = intelNumber(hour?.wave_m ?? hour?.swell_m);
+  let score = 44;
+  const reasons = [];
+  const windCurve = conditionCurve(wind, profile.windIdeal, profile.windMax, 18);
+  const waveCurve = conditionCurve(wave, profile.waveIdeal, profile.waveMax, 16);
+  const depthDelta = matchCurve(depth, profile.depths, profile.family === 'pelagic' ? 8 : 14);
+  const structureDelta = matchCurve(structure, profile.structures, profile.family === 'pelagic' ? 16 : 18);
+  const tideDelta = matchCurve(tide, profile.tide, 10);
+  const moonDelta = matchCurve(moon, profile.moon, 5);
+  const baitDelta = baitScore(bait, profile.family);
+  const waterDelta = waterScore(water, profile.family);
+  const trendDelta = hourTrendBonus(hour, previous);
+  const signal = String(hour?.signal || '').toLowerCase();
+  const signalDelta = signal === 'green' ? 8 : signal === 'red' ? -18 : signal === 'amber' ? 1 : 0;
+  score += windCurve.score + waveCurve.score + depthDelta + structureDelta + tideDelta + moonDelta + baitDelta + waterDelta + trendDelta + signalDelta;
+
+  reasons.push({ title:'Forecast window', text: wind == null && wave == null ? 'Windy forecast data is missing for this hour.' : `Wind ${formatMarineMetric(wind,'kt')}, wave ${formatMarineMetric(hour?.wave_m,'m')}, swell ${formatMarineMetric(hour?.swell_m,'m')}.` });
+  reasons.push({ title:'Habitat match', text: `${profile.name} mode likes ${profile.structures.join(', ')} around ${profile.depths.join(', ')} depth bands. Your selected structure/depth ${depthDelta + structureDelta >= 15 ? 'fits well' : 'needs stronger bait or signs'}.` });
+  reasons.push({ title:'Live signs', text: bait === 'strong' ? 'Strong bait signs lift confidence sharply.' : bait === 'some' ? 'Some bait makes it worth a look.' : 'No bait signs means keep moving until you find life.' });
+  if(profile.family === 'pelagic') reasons.push({ title:'Pelagic rule', text:'Pelagics need moving food: bait, birds, current lines, colour/temp edges or pressure zones. Without satellite SST/chlorophyll, this is a forecast plus field-sign model.' });
+  if(trendDelta) reasons.push({ title:'Trend', text:'The selected forecast window is improving compared with the previous slot.' });
+
+  return { hour, score:clampScore(score), label:intelLabel(score), reasons, wind, wave };
 }
 
 function buildFishingIntel(){
   const speciesKey = intelValue('intelSpecies','snapper');
   const profile = INTEL_SPECIES[speciesKey] || INTEL_SPECIES.snapper;
-  const current = getDisplayedMarineHour();
-  let score = 50;
-  const reasons = [];
   const depth = intelValue('intelDepth','mid');
   const structure = intelValue('intelStructure','reef');
   const water = intelValue('intelWater','clean');
   const bait = intelValue('intelBait','some');
   const tide = intelValue('intelTide','change');
   const moon = intelValue('intelMoon','quarter');
-  const add = (item)=>{ score += item.delta; reasons.push(item); };
-
-  add(scoreMatch(depth, profile.depths, 13, 'Depth fit', `${profile.name} often suit this depth band.`, `This depth is less ideal for ${profile.name}; treat it as exploratory.`));
-  add(scoreMatch(structure, profile.structures, 15, 'Structure fit', `The selected structure suits ${profile.name} behaviour.`, `The selected structure is not the strongest ${profile.name} habitat.`));
-  add(scoreMatch(tide, profile.tide, 10, 'Tide window', `This tide stage can create movement and feeding windows.`, `This tide stage may be slower; look for current or bait before committing.`));
-  add(scoreMatch(moon, profile.moon, 5, 'Moon phase', `Moon timing is supportive for this target.`, `Moon timing is neutral rather than a standout trigger.`));
-
-  const wind = safeNumber(current?.wind_kts, null);
-  const wave = safeNumber(current?.wave_m ?? current?.swell_m, null);
-  if(wind == null){
-    reasons.push({delta:0,title:'Wind data',text:'Load Windy conditions for a stronger read.'});
-  }else if(wind <= profile.windMax){
-    const bonus = wind <= 10 ? 9 : 5;
-    score += bonus;
-    reasons.push({delta:bonus,title:'Wind',text:`${wind} kt is inside the comfort range for this target.`});
-  }else{
-    const penalty = wind > profile.windMax + 8 ? -18 : -10;
-    score += penalty;
-    reasons.push({delta:penalty,title:'Wind',text:`${wind} kt is pushing past the preferred range. Consider shelter, shorter runs or another day.`});
-  }
-
-  if(wave == null){
-    reasons.push({delta:0,title:'Sea state',text:'Load wave/swell data for better confidence.'});
-  }else if(wave <= profile.waveMax){
-    const bonus = wave <= 0.8 ? 8 : 4;
-    score += bonus;
-    reasons.push({delta:bonus,title:'Sea state',text:`${wave} m is workable for the selected target and area type.`});
-  }else{
-    const penalty = wave > profile.waveMax + 0.7 ? -16 : -8;
-    score += penalty;
-    reasons.push({delta:penalty,title:'Sea state',text:`${wave} m may reduce comfort, presentation quality and safety margin.`});
-  }
-
-  if(water === 'clean'){ score += 7; reasons.push({delta:7,title:'Water clarity',text:'Clean water helps visibility, bait movement and lure presentation.'}); }
-  if(water === 'green'){ score += 1; reasons.push({delta:1,title:'Water clarity',text:'Green water can still fish, but look for bait or cleaner edges.'}); }
-  if(water === 'dirty'){ score -= 9; reasons.push({delta:-9,title:'Water clarity',text:'Dirty water lowers confidence unless bait and structure are strong.'}); }
-
-  if(bait === 'strong'){ score += 12; reasons.push({delta:12,title:'Bait signs',text:'Strong bait is the best live signal. Prioritise this zone.'}); }
-  if(bait === 'some'){ score += 5; reasons.push({delta:5,title:'Bait signs',text:'Some bait or birds makes the area worth a closer look.'}); }
-  if(bait === 'none'){ score -= 6; reasons.push({delta:-6,title:'Bait signs',text:'No bait signs lowers confidence; keep moving until you find life.'}); }
-
-  const signal = String(current?.signal || state.marine?.signal || '').toLowerCase();
-  if(signal === 'green') score += 8;
-  if(signal === 'red') score -= 18;
-  if(signal === 'amber') score += 1;
-
-  score = Math.max(0, Math.min(100, Math.round(score)));
-  const confidence = Math.max(35, Math.min(95, Math.round((current ? 62 : 42) + (bait === 'strong' ? 12 : 0) + (water === 'clean' ? 6 : 0) + (signal === 'green' ? 8 : 0) - (wind == null ? 8 : 0) - (wave == null ? 8 : 0))));
-  const label = score >= 78 ? 'High potential' : score >= 58 ? 'Worth a look' : score >= 40 ? 'Patchy' : 'Low confidence';
-  const source = current ? `${formatForecastLabel(current)} from ${state.marine?.source_name || current?.source_name || 'Windy'}` : 'Manual intel only';
-  const topReasons = reasons.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,5);
-  return { speciesKey, species:profile.name, score, confidence, label, source, tactic:profile.tactic, reasons:topReasons, current };
+  const hours = Array.isArray(state.marine?.hours) && state.marine.hours.length ? state.marine.hours : [getDisplayedMarineHour()].filter(Boolean);
+  const context = { profile, depth, structure, water, bait, tide, moon };
+  const scored = hours.map((hour, index)=>scoreFishingIntelHour(hour, hours[index - 1] || null, context));
+  const current = getDisplayedMarineHour();
+  const currentScore = current ? scoreFishingIntelHour(current, hours[Math.max(0, Number(state.selectedMarineHourIndex || 0) - 1)] || null, context) : (scored[0] || scoreFishingIntelHour(null, null, context));
+  const best = scored.length ? scored.reduce((a,b)=>b.score > a.score ? b : a, scored[0]) : currentScore;
+  const missing = [];
+  if(!state.marine?.hours?.length) missing.push('hourly Windy forecast');
+  if(profile.family === 'pelagic') missing.push('satellite SST/chlorophyll/current-edge overlay');
+  if(bait === 'none') missing.push('bait/bird confirmation');
+  if(tide === 'unknown') missing.push('tide stage');
+  if(moon === 'unknown') missing.push('moon phase');
+  const knownFields = 7 - missing.filter(x=>x !== 'satellite SST/chlorophyll/current-edge overlay').length;
+  const confidence = Math.max(28, Math.min(94, Math.round(42 + (state.marine?.hours?.length ? 18 : 0) + knownFields * 4 + (bait === 'strong' ? 10 : bait === 'some' ? 4 : -6) + (water === 'clean' ? 5 : water === 'dirty' ? -6 : 0) - (profile.family === 'pelagic' ? 8 : 0))));
+  const source = state.marine?.hours?.length
+    ? `Scanned ${state.marine.hours.length} Windy forecast slots`
+    : 'Manual mode - load Windy data for real windows';
+  const bestText = best?.hour ? `${formatForecastLabel(best.hour)} · ${best.score}/100` : 'Load Windy forecast';
+  return {
+    speciesKey,
+    species:profile.name,
+    family:profile.family,
+    score:currentScore.score,
+    confidence,
+    label:currentScore.label,
+    source,
+    tactic:profile.tactic,
+    reasons:currentScore.reasons,
+    current:currentScore.hour || current || null,
+    best,
+    bestText,
+    missing,
+    assumptions:{ depth, structure, water, bait, tide, moon }
+  };
 }
 
 function renderFishingIntel(recalculate = true){
@@ -5973,8 +6025,10 @@ function renderFishingIntel(recalculate = true){
   $('intelLabel').textContent = `${intel.species}: ${intel.label}`;
   $('intelSource').textContent = intel.source;
   $('intelReasons').innerHTML = [
+    `<div><b>Best forecast window</b><p>${escapeHtml(intel.bestText)}. This scans the loaded Windy forecast slots instead of guessing from one click.</p></div>`,
     ...intel.reasons.map(row=>`<div><b>${escapeHtml(row.title)}</b><p>${escapeHtml(row.text)}</p></div>`),
-    `<div><b>Tactic</b><p>${escapeHtml(intel.tactic)}</p></div>`
+    `<div><b>Tactic</b><p>${escapeHtml(intel.tactic)}</p></div>`,
+    `<div><b>Data quality</b><p>${escapeHtml(intel.missing.length ? `Missing: ${intel.missing.join(', ')}.` : 'Forecast, field signs and manual context are complete for this first-pass model.')}</p></div>`
   ].join('');
   return intel;
 }
@@ -5985,8 +6039,11 @@ function fishingIntelPrompt(){
   const parts = [
     `Use this OceanCore Fishing Intel to give me a practical plan for ${intel.species}.`,
     `Habitat score: ${intel.score}/100 (${intel.label}), confidence ${intel.confidence}%.`,
+    `Best forecast window: ${intel.bestText}.`,
     `Location: ${formatCoordsText(state.selectedLat, state.selectedLng)}. Exact marks must stay private.`,
     current ? `Conditions: wind ${formatMarineMetric(current.wind_kts,'kt')}, wave ${formatMarineMetric(current.wave_m,'m')}, swell ${formatMarineMetric(current.swell_m,'m')}.` : 'Live conditions are not loaded.',
+    `Assumptions: ${Object.entries(intel.assumptions || {}).map(([k,v])=>`${k}=${v}`).join(', ')}.`,
+    intel.missing.length ? `Missing data: ${intel.missing.join(', ')}.` : 'No major missing data flags in the current model.',
     `Intel reasons: ${intel.reasons.map(r=>`${r.title}: ${r.text}`).join(' ')}`,
     `Base tactic: ${intel.tactic}`,
     'Give me: whether to go, where to look in general-area terms, technique, timing, safety risks, and what would change your mind.'
