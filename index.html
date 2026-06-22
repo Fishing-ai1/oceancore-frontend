@@ -322,6 +322,9 @@
     .intel-list{display:grid;gap:8px;margin-top:10px}.intel-list div{border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:10px;background:rgba(9,18,37,.72)}
     .intel-list b{display:block;margin-bottom:3px}.intel-list p{margin:0;color:#bfd0ee;font-size:13px;line-height:1.45}
     .intel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .heatmap-legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;color:#bfd0ee;font-size:12px}
+    .heatmap-swatch{width:34px;height:12px;border-radius:999px;border:1px solid rgba(255,255,255,.16)}
+    .heatmap-swatch.low{background:#12599b}.heatmap-swatch.mid{background:#f7c948}.heatmap-swatch.high{background:#ff4d6d}
     .map-side-panel{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     @media (max-width:900px){
       .core-dashboard,.map-side-panel{grid-template-columns:1fr}
@@ -1634,7 +1637,15 @@
               <div class="intel-actions">
                 <button class="btn" id="btnIntelAskAi" type="button">Ask AI with this intel</button>
                 <button class="btn ghost" id="btnIntelSavePrivate" type="button">Save private intel note</button>
+                <button class="btn primary" id="btnSatelliteHeatmap" type="button">Build Satellite Heat Map</button>
+                <button class="btn ghost" id="btnClearSatelliteHeatmap" type="button">Clear Heat Map</button>
               </div>
+              <div class="heatmap-legend">
+                <span class="heatmap-swatch low"></span><span>low</span>
+                <span class="heatmap-swatch mid"></span><span>medium</span>
+                <span class="heatmap-swatch high"></span><span>hot</span>
+              </div>
+              <div id="satelliteHeatmapMsg" class="subtle" style="margin-top:10px">Satellite heat map draws only real backend SST/chlorophyll cells. If NOAA has a cloud gap or timeout, no fake heat layer is shown.</div>
             </div>
           </div>
         </div>
@@ -2597,6 +2608,7 @@ const state = {
   feedbackDraft: { type:'bug', message:'' },
   marine: null,
   fishingIntel: null,
+  satelliteHeatmap: null,
   ramps: [],
   fuel: [],
   mapSearchResults: [],
@@ -4343,6 +4355,8 @@ function renderMap(){
     });
   }
 
+  renderSatelliteHeatmapLayer();
+
   scheduleMapResize();
   renderNotificationCenter();
 }
@@ -5322,7 +5336,11 @@ function formatDistance(value){
 }
 
 function formatMarineMetric(value, unit){
-  return value != null && value !== '' ? `${value} ${unit}` : 'Unavailable';
+  if(value == null || value === '') return 'Unavailable';
+  const n = Number(value);
+  if(!Number.isFinite(n)) return 'Unavailable';
+  const digits = unit === 'm' ? 1 : 0;
+  return `${n.toFixed(digits)} ${unit}`;
 }
 
 function formatCatchMeasures(row){
@@ -5870,9 +5888,9 @@ function renderMarine(){
   }
   $('signalText').textContent = signal ? String(signal).toUpperCase() : 'Unavailable';
   $('signalHint').textContent = current ? `${formatForecastLabel(current)} · ${sourceName}` : (state.marine?.warning || 'Load Windy conditions.');
-  $('windText').textContent = current?.wind_kts != null ? `${current.wind_kts} kt` : 'Unavailable';
-  $('waveText').textContent = current?.wave_m != null ? `${current.wave_m} m` : 'Unavailable';
-  $('swellText').textContent = current?.swell_m != null ? `${current.swell_m} m` : 'Unavailable';
+  $('windText').textContent = formatMarineMetric(current?.wind_kts, 'kt');
+  $('waveText').textContent = formatMarineMetric(current?.wave_m, 'm');
+  $('swellText').textContent = formatMarineMetric(current?.swell_m, 'm');
   syncSelectedMarineHour(state.selectedMarineHourIndex ?? state.marine?.current_index ?? 0);
   renderFishingIntel(false);
   renderHomeDashboard();
@@ -5902,7 +5920,7 @@ function intelNumber(value){
 }
 
 function clampScore(value){
-  return Math.max(0, Math.min(100, Math.round(value)));
+  return Math.max(0, Math.min(94, Math.round(value)));
 }
 
 function intelLabel(score){
@@ -6066,6 +6084,76 @@ function savePrivateFishingIntelNote(){
   notes.unshift(note);
   localStorage.setItem(key, JSON.stringify(notes.slice(0, 30)));
   setStatusMessage('mapMsg','Private fishing intel note saved on this device.');
+}
+
+function heatmapColor(score){
+  const n = Number(score || 0);
+  if(n >= 72) return '#ff4d6d';
+  if(n >= 56) return '#f7c948';
+  if(n >= 40) return '#28d8a2';
+  return '#1889d6';
+}
+
+function renderSatelliteHeatmapSummary(){
+  const data = state.satelliteHeatmap;
+  const msg = $('satelliteHeatmapMsg');
+  if(!msg) return;
+  if(!data){
+    msg.textContent = 'Satellite heat map uses backend NOAA ERDDAP SST/chlorophyll cells when available.';
+    return;
+  }
+  const best = data.best_cell;
+  const quality = Number(data.data_quality || 0);
+  msg.textContent = best
+    ? `Satellite ${data.source_status || 'heatmap'} · data quality ${quality}% · best cell ${best.score}/100 near ${formatCoordsText(best.lat,best.lng)} · ${data.warning || ''}`
+    : `Satellite heat map returned no usable SST/chlorophyll cells, so no heat layer was drawn. ${data.warning || ''}`;
+}
+
+function renderSatelliteHeatmapLayer(){
+  if(!state.map || !state.satelliteHeatmap?.cells?.length) return;
+  const cells = state.satelliteHeatmap.cells.filter(cell=>cell.sst_c != null || cell.chlorophyll_signal != null);
+  if(!cells.length) return;
+  cells.forEach(cell=>{
+    const color = heatmapColor(cell.score);
+    const circle = L.circle([Number(cell.lat), Number(cell.lng)], {
+      radius: Math.max(1500, Number(cell.radius_km || 8) * 1000),
+      color,
+      fillColor: color,
+      fillOpacity: Number(cell.score || 0) >= 70 ? 0.38 : 0.24,
+      opacity: 0.85,
+      weight: 1,
+    }).addTo(state.map).bindPopup(`<strong>Satellite heat ${Number(cell.score || 0)}/100</strong><br/>SST: ${cell.sst_c == null ? 'unavailable' : `${cell.sst_c}C`}<br/>Chlorophyll: ${cell.chlorophyll_signal == null ? 'unavailable' : cell.chlorophyll_signal}<br/>${escapeHtml((cell.reasons || []).join(' · '))}`);
+    state.mapLayers.push(circle);
+  });
+}
+
+async function buildSatelliteHeatmap(){
+  const button = $('btnSatelliteHeatmap');
+  const original = button?.textContent || 'Build Satellite Heat Map';
+  try{
+    if(button){ button.disabled = true; button.textContent = 'Sampling satellite...'; }
+    setStatusMessage('satelliteHeatmapMsg','Sampling NOAA satellite SST/chlorophyll cells. This can take a little while.');
+    const species = intelValue('intelSpecies','pelagics');
+    const radius = Math.max(5, Math.min(120, Number($('mapRadius')?.value || 35)));
+    const data = await apiFirst([
+      `/satellite/heatmap?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
+      `/api/satellite/heatmap?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
+    ]);
+    state.satelliteHeatmap = data;
+    setMapView('local');
+    renderMap();
+    renderSatelliteHeatmapSummary();
+  }catch(e){
+    setStatusMessage('satelliteHeatmapMsg', e.message || String(e));
+  }finally{
+    if(button){ button.disabled = false; button.textContent = original; }
+  }
+}
+
+function clearSatelliteHeatmap(){
+  state.satelliteHeatmap = null;
+  renderMap();
+  renderSatelliteHeatmapSummary();
 }
 
 async function loadMapData(){
@@ -7025,6 +7113,8 @@ $('forecastHourSelect')?.addEventListener('change', ()=>{
 $('btnRunFishingIntel')?.addEventListener('click', ()=>renderFishingIntel(true));
 $('btnIntelAskAi')?.addEventListener('click', askAiWithFishingIntel);
 $('btnIntelSavePrivate')?.addEventListener('click', savePrivateFishingIntelNote);
+$('btnSatelliteHeatmap')?.addEventListener('click', buildSatelliteHeatmap);
+$('btnClearSatelliteHeatmap')?.addEventListener('click', clearSatelliteHeatmap);
 ['intelSpecies','intelDepth','intelStructure','intelWater','intelBait','intelTide','intelMoon'].forEach(id=>{
   $(id)?.addEventListener('change', ()=>renderFishingIntel(true));
 });
