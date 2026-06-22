@@ -6102,13 +6102,14 @@ function renderSatelliteHeatmapSummary(){
     msg.textContent = 'Satellite heat map uses backend NOAA ERDDAP SST/chlorophyll cells when available.';
     return;
   }
-  const best = data.best_cell;
   const quality = Number(data.data_quality || 0);
+  const usableCount = Number(data.usable_cell_count || 0);
+  const usableCells = Array.isArray(data.cells) ? data.cells.filter(cell=>cell.sst_c != null || cell.chlorophyll_signal != null) : [];
+  const best = quality > 0 && (usableCount > 0 || usableCells.length > 0) ? data.best_cell : null;
   msg.textContent = best
-    ? `Satellite ${data.source_status || 'heatmap'} · data quality ${quality}% · best cell ${best.score}/100 near ${formatCoordsText(best.lat,best.lng)} · ${data.warning || ''}`
+    ? `Satellite ${data.source_status || 'heatmap'} - data quality ${quality}% - best cell ${best.score}/100 near ${formatCoordsText(best.lat,best.lng)} - ${data.warning || ''}`
     : `Satellite heat map returned no usable SST/chlorophyll cells, so no heat layer was drawn. ${data.warning || ''}`;
 }
-
 function renderSatelliteHeatmapLayer(){
   if(!state.map || !state.satelliteHeatmap?.cells?.length) return;
   const cells = state.satelliteHeatmap.cells.filter(cell=>cell.sst_c != null || cell.chlorophyll_signal != null);
