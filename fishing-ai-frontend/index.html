@@ -203,7 +203,24 @@
     .map-wrap{border-radius:16px;overflow:hidden;border:1px solid var(--border);background:#0b1225}
     #map,#windyMapFrame{height:420px;width:100%;display:block;border:0}
     .map-wrap[data-map-view="windy"] #map{display:none}
-    .map-wrap[data-map-view="local"] #windyMapFrame{display:none}
+    .map-wrap[data-map-view="local"] #windyMapFrame,.map-wrap[data-map-view="satellite"] #windyMapFrame{display:none}
+    .map-wrap[data-map-view="satellite"]{background:#05111c;box-shadow:0 0 0 1px rgba(73,231,255,.18),0 18px 60px rgba(0,0,0,.35)}
+    .satellite-map-tools{
+      display:none;position:absolute;z-index:650;top:12px;right:12px;width:min(280px,calc(100% - 76px));
+      padding:10px;border:1px solid rgba(137,166,201,.28);border-radius:12px;
+      background:rgba(3,9,20,.90);box-shadow:0 12px 32px rgba(0,0,0,.42);backdrop-filter:blur(12px)
+    }
+    .map-wrap[data-map-view="satellite"] .satellite-map-tools{display:block}
+    .satellite-map-tools strong{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+    .satellite-layer-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+    .satellite-layer-buttons button{
+      min-height:38px;padding:8px;border:1px solid var(--border);border-radius:8px;background:#071225;color:#c5d4ed;
+      font:inherit;font-size:12px;font-weight:850;cursor:pointer
+    }
+    .satellite-layer-buttons button.active{color:#051018;border-color:#7dffd5;background:linear-gradient(135deg,#7dffd5,#49e7ff)}
+    .satellite-layer-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;color:#9eb2d4;font-size:11px}
+    .scientific-scale{height:8px;margin-top:8px;border-radius:999px;background:linear-gradient(90deg,#150b36,#5a167e,#b52f73,#f66a32,#f6c542,#fff7a1)}
+    .map-wrap{position:relative}
     .app-screen-title{display:flex;align-items:center;gap:12px;margin:0 0 14px}
     .app-screen-title h2{margin:0;font-size:32px;line-height:1.05;letter-spacing:-.02em}
     .back-glyph{font-size:30px;color:#fff;line-height:1}
@@ -1522,6 +1539,7 @@
             <div class="map-source-bar" aria-label="Map source">
               <button class="active" data-map-view="windy" type="button">Windy map</button>
               <button data-map-view="local" type="button">Ramps & fuel map</button>
+              <button data-map-view="satellite" type="button">Satellite intel</button>
               <button data-windy-overlay="wind" type="button">Wind</button>
               <button data-windy-overlay="waves" type="button">Waves</button>
               <button id="btnJumpFishingIntel" type="button">Fishing Intel</button>
@@ -1541,6 +1559,17 @@
             <div class="map-wrap" id="mapWrap" data-map-view="windy" style="margin-top:12px">
               <iframe id="windyMapFrame" title="Windy live wind and waves map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
               <div id="map"></div>
+              <div class="satellite-map-tools" id="satelliteMapTools" aria-label="Satellite intelligence layers">
+                <strong>Ocean intelligence layer</strong>
+                <div class="satellite-layer-buttons">
+                  <button data-satellite-layer="fronts" type="button">Thermal fronts</button>
+                  <button data-satellite-layer="sst" type="button">Sea temperature</button>
+                  <button data-satellite-layer="chlorophyll" type="button">Chlorophyll</button>
+                  <button class="active" data-satellite-layer="habitat" type="button">Habitat view</button>
+                </div>
+                <div class="scientific-scale" aria-hidden="true"></div>
+                <div class="satellite-layer-meta"><span id="satelliteLayerName">SST + thermal fronts</span><span id="satelliteLayerDate">Latest available</span></div>
+              </div>
             </div>
 
             <div class="grid-4" style="margin-top:12px">
@@ -1637,7 +1666,7 @@
               <div class="intel-actions">
                 <button class="btn" id="btnIntelAskAi" type="button">Ask AI with this intel</button>
                 <button class="btn ghost" id="btnIntelSavePrivate" type="button">Save private intel note</button>
-                <button class="btn primary" id="btnSatelliteHeatmap" type="button">Build Satellite Heat Map</button>
+                <button class="btn primary" id="btnSatelliteHeatmap" type="button">Refresh Satellite Analysis</button>
                 <button class="btn ghost" id="btnClearSatelliteHeatmap" type="button">Clear Heat Map</button>
               </div>
               <div class="heatmap-legend">
@@ -1645,7 +1674,7 @@
                 <span class="heatmap-swatch mid"></span><span>medium</span>
                 <span class="heatmap-swatch high"></span><span>hot</span>
               </div>
-              <div id="satelliteHeatmapMsg" class="subtle" style="margin-top:10px">Satellite heat map draws only real backend SST/chlorophyll cells. If NOAA has a cloud gap or timeout, no fake heat layer is shown.</div>
+              <div id="satelliteHeatmapMsg" class="subtle" style="margin-top:10px">Scientific layers use the latest available NOAA CoastWatch SST, thermal-front and chlorophyll observations. Cloud gaps remain transparent; OceanCore does not invent missing satellite data.</div>
             </div>
           </div>
         </div>
@@ -1997,7 +2026,7 @@
             </div></div></div>
 
             <div class="settings-panel" data-settings-panel-root="map"><div class="panel"><div class="hd"><h2>Map & Conditions Settings</h2></div><div class="bd settings-grid">
-              <label class="setting-row"><span><strong>Default map view</strong><small>Windy stays the main marine map.</small></span><select data-setting="map.defaultView"><option value="windy">Windy map</option><option value="local">Ramps & fuel map</option></select></label>
+              <label class="setting-row"><span><strong>Default map view</strong><small>Choose weather, local services or scientific ocean intelligence.</small></span><select data-setting="map.defaultView"><option value="windy">Windy map</option><option value="local">Ramps & fuel map</option><option value="satellite">Satellite intelligence</option></select></label>
               <label class="setting-row"><span><strong>Default Windy overlay</strong><small>Choose wind or waves first.</small></span><select data-setting="map.defaultOverlay"><option value="wind">Wind</option><option value="waves">Waves</option></select></label>
               <label class="setting-row"><span><strong>Default radius km</strong><small>Used for ramps, fuel and saved areas.</small></span><input type="number" min="1" max="250" data-setting="map.defaultRadiusKm"/></label>
               <label class="setting-row"><span><strong>Use GPS on map open</strong><small>Ask for location when opening map.</small></span><input type="checkbox" data-setting="map.useGpsOnOpen"/></label>
@@ -2619,7 +2648,9 @@ const state = {
   activeChatId: localStorage.getItem('oceancore_active_chat_id') || null,
   legacyChat: safeJsonParse(localStorage.getItem('oceancore_chat_history'), []),
   map: null,
+  mapBaseLayers: null,
   mapView: localStorage.getItem('oceancore_map_view') || 'windy',
+  satelliteLayer: localStorage.getItem('oceancore_satellite_layer') || 'habitat',
   windyOverlay: localStorage.getItem('oceancore_windy_overlay') || 'wind',
   mapLayers: [],
   selectedLat: safeNumber(localStorage.getItem('oceancore_lat'), -27.36),
@@ -3534,7 +3565,7 @@ function applyCommunityTabSetting(){
 function applyFeatureSettings(){
   const fs=state.featureSettings||{};
   if(fs.map){
-    state.mapView=fs.map.defaultView==='local'?'local':'windy';
+    state.mapView=['local','satellite'].includes(fs.map.defaultView)?fs.map.defaultView:'windy';
     state.windyOverlay=fs.map.defaultOverlay==='waves'?'waves':'wind';
     localStorage.setItem('oceancore_map_view',state.mapView);
     localStorage.setItem('oceancore_windy_overlay',state.windyOverlay);
@@ -4263,7 +4294,7 @@ function renderWindyMap(){
 }
 
 function setMapView(view){
-  state.mapView = view === 'local' ? 'local' : 'windy';
+  state.mapView = ['local','satellite'].includes(view) ? view : 'windy';
   localStorage.setItem('oceancore_map_view', state.mapView);
   const wrap = $('mapWrap');
   if(wrap) wrap.dataset.mapView = state.mapView;
@@ -4271,8 +4302,9 @@ function setMapView(view){
     btn.classList.toggle('active', btn.dataset.mapView === state.mapView);
   });
   renderWindyMap();
-  if(state.mapView === 'local'){
+  if(state.mapView !== 'windy'){
     ensureMap();
+    applyMapBaseLayer();
     renderMap();
     scheduleMapResize(80);
   }
@@ -4291,10 +4323,21 @@ function setWindyOverlay(overlay){
 function ensureMap(){
   if(state.map) return;
   state.map = L.map('map', { preferCanvas:true }).setView([state.selectedLat, state.selectedLng], 9);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    maxZoom:19,
-    attribution:'&copy; OpenStreetMap'
-  }).addTo(state.map);
+  state.mapBaseLayers = {
+    local: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap'
+    }),
+    satellite: L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      {
+        maxZoom:19,
+        subdomains:'abcd',
+        attribution:'&copy; OpenStreetMap &copy; CARTO | Ocean data NOAA CoastWatch'
+      }
+    )
+  };
+  applyMapBaseLayer();
 
   scheduleMapResize();
 
@@ -4320,28 +4363,35 @@ function clearMapLayers(){
 function renderMap(){
   renderWindyMap();
   ensureMap();
+  applyMapBaseLayer();
   scheduleMapResize();
   clearMapLayers();
 
   const center = [state.selectedLat, state.selectedLng];
-  state.map.setView(center, 10, { animate:false });
+  if(state.mapView === 'satellite'){
+    const radiusKm = Math.max(5, Math.min(120, Number($('mapRadius')?.value || 35)));
+    state.map.fitBounds(satelliteBounds(radiusKm), { padding:[18,18], animate:false });
+  }else{
+    state.map.setView(center, 10, { animate:false });
+    const userMarker = L.marker(center).addTo(state.map).bindPopup('Selected location');
+    state.mapLayers.push(userMarker);
+  }
 
-  const userMarker = L.marker(center).addTo(state.map).bindPopup('Selected location');
-  state.mapLayers.push(userMarker);
+  if(state.mapView === 'local'){
+    state.ramps.forEach(r=>{
+      const marker = L.circleMarker([r.lat, r.lng], { radius:8 }).addTo(state.map)
+        .bindPopup(`<strong>${escapeHtml(r.name)}</strong><br/>${escapeHtml(r.address || '')}<br/>${r.distance_km} km`);
+      state.mapLayers.push(marker);
+    });
 
-  state.ramps.forEach(r=>{
-    const marker = L.circleMarker([r.lat, r.lng], { radius:8 }).addTo(state.map)
-      .bindPopup(`<strong>${escapeHtml(r.name)}</strong><br/>${escapeHtml(r.address || '')}<br/>${r.distance_km} km`);
-    state.mapLayers.push(marker);
-  });
+    state.fuel.forEach(f=>{
+      const marker = L.circleMarker([f.lat, f.lng], { radius:8 }).addTo(state.map)
+        .bindPopup(`<strong>${escapeHtml(f.name)}</strong><br/>${escapeHtml(f.address || f.brand || '')}<br/>${f.distance_km} km`);
+      state.mapLayers.push(marker);
+    });
+  }
 
-  state.fuel.forEach(f=>{
-    const marker = L.circleMarker([f.lat, f.lng], { radius:8 }).addTo(state.map)
-      .bindPopup(`<strong>${escapeHtml(f.name)}</strong><br/>${escapeHtml(f.address || f.brand || '')}<br/>${f.distance_km} km`);
-    state.mapLayers.push(marker);
-  });
-
-  if(getSetting('saved.showOnMap') !== false){
+  if(state.mapView !== 'satellite' && getSetting('saved.showOnMap') !== false){
     (state.savedAreas || []).forEach(area=>{
       if(!Number.isFinite(Number(area.lat)) || !Number.isFinite(Number(area.lng))) return;
       const circle = L.circle([Number(area.lat), Number(area.lng)], {
@@ -4355,7 +4405,7 @@ function renderMap(){
     });
   }
 
-  renderSatelliteHeatmapLayer();
+  renderScientificRasterLayer();
 
   scheduleMapResize();
   renderNotificationCenter();
@@ -5061,6 +5111,15 @@ function adminFilteredUsers(){
     if(filter==='inactive') return !user.last_sign_in_at || Date.parse(user.last_sign_in_at)<cutoff;
     return true;
   });
+}
+
+function applyMapBaseLayer(){
+  if(!state.map || !state.mapBaseLayers) return;
+  Object.values(state.mapBaseLayers).forEach(layer=>{
+    if(state.map.hasLayer(layer)) state.map.removeLayer(layer);
+  });
+  const key = state.mapView === 'satellite' ? 'satellite' : 'local';
+  state.mapBaseLayers[key].addTo(state.map);
 }
 
 function adminFilteredCatches(){
@@ -6094,12 +6153,44 @@ function heatmapColor(score){
   return '#1889d6';
 }
 
+function satelliteBounds(radiusKm){
+  const lat = Number(state.selectedLat);
+  const lng = Number(state.selectedLng);
+  const radius = Math.max(5, Math.min(120, Number(radiusKm || $('mapRadius')?.value || 35)));
+  const latSpan = radius / 111.32;
+  const lngSpan = radius / Math.max(20, 111.32 * Math.abs(Math.cos(lat * Math.PI / 180)));
+  return L.latLngBounds([lat - latSpan, lng - lngSpan], [lat + latSpan, lng + lngSpan]);
+}
+
+function erddapRasterUrl(layer, bounds){
+  const south = Number(bounds.getSouth().toFixed(4));
+  const north = Number(bounds.getNorth().toFixed(4));
+  const west = Number(bounds.getWest().toFixed(4));
+  const east = Number(bounds.getEast().toFixed(4));
+  const configs = {
+    fronts:{dataset:'noaacwLEOACSPOSSTL3SnrtPMDay',variable:'sst_gradient_magnitude',palette:'Inferno',scale:'Linear',min:'0',max:'0.2'},
+    sst:{dataset:'noaacwLEOACSPOSSTL3SnrtPMDay',variable:'sea_surface_temperature',palette:'KT_thermal',scale:'Linear',min:'16',max:'31'},
+    chlorophyll:{dataset:'noaacwNPPVIIRSchlaDaily',variable:'chlor_a',palette:'Inferno',scale:'Log',min:'0.03',max:'3'},
+  };
+  const cfg = configs[layer] || configs.fronts;
+  const subset = `${cfg.variable}[(last)][(${south}):1:(${north})][(${west}):1:(${east})]`;
+  const graph = `&.draw=surface&.vars=longitude|latitude|${cfg.variable}&.colorBar=${cfg.palette}||${cfg.scale}|${cfg.min}|${cfg.max}|&.size=900|900`;
+  return `https://coastwatch.noaa.gov/erddap/griddap/${cfg.dataset}.transparentPng?${subset}${graph}`;
+}
+
+function setSatelliteLayer(layer){
+  state.satelliteLayer = ['fronts','sst','chlorophyll','habitat'].includes(layer) ? layer : 'fronts';
+  localStorage.setItem('oceancore_satellite_layer', state.satelliteLayer);
+  document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
+  setMapView('satellite');
+}
+
 function renderSatelliteHeatmapSummary(){
   const data = state.satelliteHeatmap;
   const msg = $('satelliteHeatmapMsg');
   if(!msg) return;
   if(!data){
-    msg.textContent = 'Satellite heat map uses backend NOAA ERDDAP SST/chlorophyll cells when available.';
+    msg.textContent = 'Choose a NOAA scientific layer on the map, then refresh the analysis for a local species score.';
     return;
   }
   const quality = Number(data.data_quality || 0);
@@ -6128,9 +6219,39 @@ function renderSatelliteHeatmapLayer(){
   });
 }
 
+function renderScientificRasterLayer(){
+  if(!state.map || state.mapView !== 'satellite') return;
+  const bounds = satelliteBounds();
+  const labels = {
+    fronts:'Thermal fronts',
+    sst:'Sea temperature',
+    chlorophyll:'Chlorophyll productivity',
+    habitat:'SST + thermal fronts',
+  };
+  const addRaster = (layer, opacity)=>{
+    const raster = L.imageOverlay(erddapRasterUrl(layer, bounds), bounds, {
+      opacity,
+      interactive:false,
+      crossOrigin:true,
+      alt:`NOAA ${labels[layer] || layer} satellite layer`,
+      zIndex:420,
+    }).addTo(state.map);
+    state.mapLayers.push(raster);
+  };
+  if(state.satelliteLayer === 'habitat'){
+    addRaster('sst', 0.68);
+    addRaster('fronts', 0.92);
+  }else{
+    addRaster(state.satelliteLayer, state.satelliteLayer === 'sst' ? 0.82 : 0.92);
+  }
+  if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
+  if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Latest NOAA pass';
+  document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
+}
+
 async function buildSatelliteHeatmap(){
   const button = $('btnSatelliteHeatmap');
-  const original = button?.textContent || 'Build Satellite Heat Map';
+  const original = button?.textContent || 'Refresh Satellite Analysis';
   try{
     if(button){ button.disabled = true; button.textContent = 'Sampling satellite...'; }
     setStatusMessage('satelliteHeatmapMsg','Sampling NOAA satellite SST/chlorophyll cells. This can take a little while.');
@@ -6141,7 +6262,7 @@ async function buildSatelliteHeatmap(){
       `/api/satellite/heatmap?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
     ]);
     state.satelliteHeatmap = data;
-    setMapView('local');
+    setMapView('satellite');
     renderMap();
     renderSatelliteHeatmapSummary();
   }catch(e){
@@ -7101,6 +7222,9 @@ document.querySelectorAll('[data-map-view]').forEach(btn=>{
 });
 document.querySelectorAll('[data-windy-overlay]').forEach(btn=>{
   btn.addEventListener('click', ()=>setWindyOverlay(btn.dataset.windyOverlay));
+});
+document.querySelectorAll('[data-satellite-layer]').forEach(btn=>{
+  btn.addEventListener('click', ()=>setSatelliteLayer(btn.dataset.satelliteLayer));
 });
 $('btnJumpFishingIntel')?.addEventListener('click', ()=>{
   $('fishingIntelCard')?.scrollIntoView({ behavior:'smooth', block:'start' });
