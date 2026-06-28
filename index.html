@@ -220,6 +220,13 @@
     .satellite-layer-buttons button.active{color:#051018;border-color:#7dffd5;background:linear-gradient(135deg,#7dffd5,#49e7ff)}
     .satellite-layer-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;color:#9eb2d4;font-size:11px}
     .scientific-scale{height:8px;margin-top:8px;border-radius:999px;background:linear-gradient(90deg,#150b36,#5a167e,#b52f73,#f66a32,#f6c542,#fff7a1)}
+    .scientific-raster{
+      image-rendering:auto!important;
+      filter:blur(3px) saturate(1.32) contrast(1.08);
+      transform:scale(1.015);
+      transform-origin:center;
+    }
+    .scientific-raster-fronts{filter:blur(1.5px) saturate(1.45) contrast(1.18)}
     .map-wrap{position:relative}
     .app-screen-title{display:flex;align-items:center;gap:12px;margin:0 0 14px}
     .app-screen-title h2{margin:0;font-size:32px;line-height:1.05;letter-spacing:-.02em}
@@ -4295,6 +4302,9 @@ function renderWindyMap(){
 
 function setMapView(view){
   state.mapView = ['local','satellite'].includes(view) ? view : 'windy';
+  if(state.mapView === 'satellite' && $('mapRadius') && Number($('mapRadius').value || 0) < 100){
+    $('mapRadius').value = 100;
+  }
   localStorage.setItem('oceancore_map_view', state.mapView);
   const wrap = $('mapWrap');
   if(wrap) wrap.dataset.mapView = state.mapView;
@@ -6156,7 +6166,7 @@ function heatmapColor(score){
 function satelliteBounds(radiusKm){
   const lat = Number(state.selectedLat);
   const lng = Number(state.selectedLng);
-  const radius = Math.max(5, Math.min(120, Number(radiusKm || $('mapRadius')?.value || 35)));
+  const radius = Math.max(100, Math.min(120, Number(radiusKm || $('mapRadius')?.value || 100)));
   const latSpan = radius / 111.32;
   const lngSpan = radius / Math.max(20, 111.32 * Math.abs(Math.cos(lat * Math.PI / 180)));
   return L.latLngBounds([lat - latSpan, lng - lngSpan], [lat + latSpan, lng + lngSpan]);
@@ -6234,9 +6244,10 @@ function renderScientificRasterLayer(){
       interactive:false,
       alt:`NOAA ${labels[layer] || layer} satellite layer`,
       zIndex:420,
+      className:`scientific-raster scientific-raster-${layer}`,
     });
     raster.on('load', ()=>{
-      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Latest NOAA pass';
+      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = '200 km coverage · latest NOAA';
     });
     raster.on('error', ()=>{
       if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Layer unavailable';
@@ -6252,7 +6263,7 @@ function renderScientificRasterLayer(){
     addRaster(state.satelliteLayer, state.satelliteLayer === 'sst' ? 0.82 : 0.92);
   }
   if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
-  if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Latest NOAA pass';
+  if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
   document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
 }
 
