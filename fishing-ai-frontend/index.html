@@ -218,6 +218,7 @@
       font:inherit;font-size:12px;font-weight:850;cursor:pointer
     }
     .satellite-layer-buttons button.active{color:#051018;border-color:#7dffd5;background:linear-gradient(135deg,#7dffd5,#49e7ff)}
+    .satellite-layer-buttons button[data-satellite-layer="habitat"]{grid-column:1/-1}
     .satellite-layer-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;color:#9eb2d4;font-size:11px}
     .pelagic-source-status{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
     .pelagic-source-status span{padding:3px 6px;border-radius:5px;border:1px solid rgba(137,166,201,.22);color:#91a7c9;font-size:9px;font-weight:850;text-transform:uppercase}
@@ -1637,12 +1638,11 @@
                 <div class="satellite-layer-buttons">
                   <button data-satellite-layer="fronts" type="button">Thermal fronts</button>
                   <button data-satellite-layer="sst" type="button">Sea temperature</button>
-                  <button data-satellite-layer="chlorophyll" type="button">Chlorophyll</button>
                   <button class="active" data-satellite-layer="habitat" type="button">Pelagic composite</button>
                 </div>
                 <div class="scientific-scale" aria-hidden="true"></div>
                 <div class="satellite-layer-meta"><span id="satelliteLayerName">SST + thermal fronts</span><span id="satelliteLayerDate">Latest available</span></div>
-                <div class="pelagic-source-status"><span class="live">SST live</span><span class="live">Fronts live</span><span>Currents pending</span><span>Eddies pending</span></div>
+                <div class="pelagic-source-status"><span class="live">SST live</span><span class="live">Fronts live</span><span>Chlorophyll pending</span><span>Currents pending</span><span>Eddies pending</span></div>
               </div>
             </div>
 
@@ -4388,7 +4388,7 @@ function setMapView(view){
     renderMap();
     scheduleMapResize(80);
   }
-  if(state.mapView === 'satellite' && state.satelliteLayer !== 'chlorophyll') loadPelagicGrid();
+  if(state.mapView === 'satellite') loadPelagicGrid();
 }
 
 function setWindyOverlay(overlay){
@@ -4505,7 +4505,7 @@ function renderMap(){
 
   scheduleMapResize();
   renderNotificationCenter();
-  if(state.mapView === 'satellite' && state.satelliteLayer !== 'chlorophyll' && !state.pelagicGridLoading){
+  if(state.mapView === 'satellite' && !state.pelagicGridLoading){
     setTimeout(()=>loadPelagicGrid(),0);
   }
 }
@@ -6278,7 +6278,7 @@ function erddapRasterUrl(layer, bounds){
 }
 
 function setSatelliteLayer(layer){
-  state.satelliteLayer = ['fronts','sst','chlorophyll','habitat'].includes(layer) ? layer : 'fronts';
+  state.satelliteLayer = ['fronts','sst','habitat'].includes(layer) ? layer : 'habitat';
   localStorage.setItem('oceancore_satellite_layer', state.satelliteLayer);
   document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
   setMapView('satellite');
@@ -6401,7 +6401,7 @@ async function loadPelagicGrid(force=false){
     ]);
     state.pelagicGrid = grid;
     state.pelagicGridKey = key;
-    if(state.mapView === 'satellite' && state.satelliteLayer !== 'chlorophyll') renderMap();
+    if(state.mapView === 'satellite') renderMap();
     renderSatelliteHeatmapSummary();
   }catch(error){
     const message = error.message || String(error);
@@ -6456,8 +6456,6 @@ function renderScientificRasterLayer(){
     }else{
       if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Pelagic grid unavailable';
     }
-  }else if(state.satelliteLayer === 'chlorophyll'){
-    addRaster('chlorophyll',0.9);
   }
   if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
   if($('satelliteLayerDate') && state.satelliteLayer !== 'habitat') $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
