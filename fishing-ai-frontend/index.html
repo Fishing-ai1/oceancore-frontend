@@ -6232,10 +6232,17 @@ function renderScientificRasterLayer(){
     const raster = L.imageOverlay(erddapRasterUrl(layer, bounds), bounds, {
       opacity,
       interactive:false,
-      crossOrigin:true,
       alt:`NOAA ${labels[layer] || layer} satellite layer`,
       zIndex:420,
-    }).addTo(state.map);
+    });
+    raster.on('load', ()=>{
+      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Latest NOAA pass';
+    });
+    raster.on('error', ()=>{
+      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Layer unavailable';
+      setStatusMessage('satelliteHeatmapMsg','NOAA could not render this layer for the selected area. Try Sea temperature or Chlorophyll, or retry shortly.');
+    });
+    raster.addTo(state.map);
     state.mapLayers.push(raster);
   };
   if(state.satelliteLayer === 'habitat'){
