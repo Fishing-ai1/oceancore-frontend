@@ -228,6 +228,65 @@
     }
     .scientific-raster-fronts{filter:blur(1.5px) saturate(1.45) contrast(1.18)}
     .map-wrap{position:relative}
+    .shell:has(#section-map.active){max-width:1560px}
+    .layout:has(#section-map.active){grid-template-columns:minmax(0,1fr)}
+    .layout:has(#section-map.active)>.nav{display:none}
+    #section-map.active{min-width:0}
+    .marine-screen-title{align-items:flex-start;margin:2px 0 18px}
+    .marine-screen-title>div{min-width:0}
+    .marine-screen-title p{margin:5px 0 0;color:#9fb2d3;font-size:14px}
+    .marine-workspace{position:relative;margin-bottom:18px}
+    .marine-command-bar{
+      display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:10px;align-items:center;
+      padding:12px;border:1px solid rgba(137,166,201,.20);border-radius:12px 12px 0 0;background:#071122
+    }
+    .marine-search{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center}
+    .marine-search .fld{min-width:0}
+    .marine-search input{height:46px;border-radius:8px}
+    .marine-location-options{display:flex;gap:8px;align-items:center}
+    .marine-location-options details{position:relative}
+    .marine-location-options summary{list-style:none;cursor:pointer}
+    .marine-location-options summary::-webkit-details-marker{display:none}
+    .marine-coordinate-popover{
+      position:absolute;right:0;top:52px;z-index:720;width:320px;padding:12px;border:1px solid var(--border);
+      border-radius:10px;background:#071122;box-shadow:0 18px 42px rgba(0,0,0,.55)
+    }
+    .marine-coordinate-popover .fld{min-width:0}
+    .marine-modebar{
+      display:flex;align-items:center;gap:6px;padding:10px 12px;border-left:1px solid rgba(137,166,201,.20);
+      border-right:1px solid rgba(137,166,201,.20);background:#050d1b;overflow-x:auto
+    }
+    .marine-modebar button{white-space:nowrap;border-radius:7px;padding:9px 13px}
+    .marine-forecast-strip{
+      display:grid;grid-template-columns:minmax(220px,340px) minmax(0,1fr);gap:8px;padding:0 12px 10px;
+      border-left:1px solid rgba(137,166,201,.20);border-right:1px solid rgba(137,166,201,.20);background:#050d1b
+    }
+    .marine-forecast-strip select,.marine-forecast-strip .muted-box{min-height:42px;border-radius:8px}
+    .marine-map-frame{margin:0!important;border-radius:0;border-color:rgba(137,166,201,.24)}
+    #section-map .marine-map-frame #map,#section-map .marine-map-frame #windyMapFrame{height:clamp(560px,68vh,820px)}
+    .marine-map-message{position:absolute;z-index:620;left:16px;bottom:108px;max-width:min(480px,calc(100% - 32px));margin:0!important;padding:7px 10px;border-radius:7px;background:rgba(3,9,20,.82);backdrop-filter:blur(8px)}
+    .marine-condition-dock{
+      position:absolute;z-index:610;left:14px;right:14px;bottom:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:1px;margin:0!important;border:1px solid rgba(137,166,201,.24);border-radius:10px;overflow:hidden;background:rgba(3,9,20,.88);backdrop-filter:blur(14px)
+    }
+    .marine-condition-dock .stat{border:0;border-radius:0;background:transparent;padding:12px 14px}
+    .marine-condition-dock .value{font-size:25px}
+    #section-map .intel-card{margin-top:0;border-radius:12px}
+    #section-map>.grid-2{gap:12px}
+    @media(max-width:900px){
+      .shell:has(#section-map.active){padding-left:0;padding-right:0}
+      #section-map .marine-screen-title{padding:0 12px}
+      .marine-command-bar{grid-template-columns:1fr;border-radius:0;padding:10px}
+      .marine-search{grid-template-columns:minmax(0,1fr) auto}.marine-search #btnUseGps,.marine-search #btnLoadMapData{grid-column:auto}
+      .marine-location-options{display:none}.marine-modebar{padding:8px 10px}.marine-modebar button{min-height:40px;padding:8px 11px}
+      .marine-forecast-strip{grid-template-columns:1fr;padding:0 10px 8px}.marine-forecast-strip .muted-box{display:none}
+      #section-map .marine-map-frame #map,#section-map .marine-map-frame #windyMapFrame{height:calc(100vh - 300px);min-height:480px}
+      .satellite-map-tools{top:10px;right:10px;width:min(250px,calc(100% - 70px))}
+      .marine-condition-dock{grid-template-columns:repeat(2,1fr);bottom:10px;left:10px;right:10px}
+      .marine-condition-dock .stat:nth-child(3),.marine-condition-dock .stat:nth-child(4){display:none}
+      .marine-map-message{bottom:100px;left:10px}
+      #section-map .intel-card,#section-map>.grid-2{margin-left:10px;margin-right:10px}
+    }
     .app-screen-title{display:flex;align-items:center;gap:12px;margin:0 0 14px}
     .app-screen-title h2{margin:0;font-size:32px;line-height:1.05;letter-spacing:-.02em}
     .back-glyph{font-size:30px;color:#fff;line-height:1}
@@ -1521,29 +1580,31 @@
         </div>
       </section>
 
-      <section class="section" id="section-map">
-        <div class="app-screen-title">
+      <section class="section marine-screen" id="section-map">
+        <div class="app-screen-title marine-screen-title">
           <button class="btn ghost" type="button" data-section="home" aria-label="Back to home">Back</button>
-          <h2>Map & Conditions</h2>
+          <div><h2>Ocean Intelligence</h2><p>Explore weather, access, satellite observations and fishing conditions.</p></div>
         </div>
-        <div class="panel">
-          <div class="hd"><h2>Map & Conditions</h2></div>
-          <div class="bd">
-            <div class="row">
+        <div class="marine-workspace">
+          <div class="marine-command-bar">
+            <div class="marine-search">
               <div class="fld" style="flex:1 1 420px"><input id="mapSearch" placeholder="Search location, ramp, bay or town e.g. Moreton Bay"/></div>
-              <button class="btn" id="btnSearchLocation" type="button">Search Location</button>
+              <button class="btn primary" id="btnSearchLocation" type="button">Search</button>
+              <button class="btn" id="btnUseGps" type="button">Use GPS</button>
+              <button class="btn" id="btnLoadMapData">Load conditions</button>
             </div>
-            <div id="mapSearchResults" class="list" style="margin-top:10px"></div>
-            <div class="row">
-              <div class="fld"><input id="mapLat" type="number" step="0.000001" placeholder="Latitude"/></div>
-              <div class="fld"><input id="mapLng" type="number" step="0.000001" placeholder="Longitude"/></div>
-              <div class="fld"><input id="mapRadius" type="number" step="1" placeholder="Radius km" value="35"/></div>
+            <div class="marine-location-options">
+              <details>
+                <summary class="btn">Coordinates</summary>
+                <div class="marine-coordinate-popover">
+                  <div class="row"><div class="fld"><input id="mapLat" type="number" step="0.000001" placeholder="Latitude"/></div><div class="fld"><input id="mapLng" type="number" step="0.000001" placeholder="Longitude"/></div></div>
+                  <div class="row" style="margin-top:8px"><div class="fld"><input id="mapRadius" type="number" step="1" placeholder="Radius km" value="100"/></div></div>
+                </div>
+              </details>
             </div>
-            <div class="row" style="margin-top:10px">
-              <button class="btn primary" id="btnLoadMapData">Load Map Data</button>
-              <button class="btn" id="btnUseGps">Use GPS</button>
-            </div>
-            <div class="map-source-bar" aria-label="Map source">
+          </div>
+            <div id="mapSearchResults" class="list"></div>
+            <div class="map-source-bar marine-modebar" aria-label="Map source">
               <button class="active" data-map-view="windy" type="button">Windy map</button>
               <button data-map-view="local" type="button">Ramps & fuel map</button>
               <button data-map-view="satellite" type="button">Satellite intel</button>
@@ -1551,7 +1612,7 @@
               <button data-windy-overlay="waves" type="button">Waves</button>
               <button id="btnJumpFishingIntel" type="button">Fishing Intel</button>
             </div>
-            <div class="row" style="margin-top:10px">
+            <div class="marine-forecast-strip">
               <div class="fld">
                 <select id="forecastHourSelect">
                   <option value="0">Closest Windy forecast</option>
@@ -1561,9 +1622,9 @@
                 <div class="muted-box" id="forecastModelInfo">Windy forecast model details will show here after load.</div>
               </div>
             </div>
-            <div id="mapMsg" class="subtle" style="margin-top:10px"></div>
+            <div id="mapMsg" class="subtle marine-map-message"></div>
 
-            <div class="map-wrap" id="mapWrap" data-map-view="windy" style="margin-top:12px">
+            <div class="map-wrap marine-map-frame" id="mapWrap" data-map-view="windy">
               <iframe id="windyMapFrame" title="Windy live wind and waves map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
               <div id="map"></div>
               <div class="satellite-map-tools" id="satelliteMapTools" aria-label="Satellite intelligence layers">
@@ -1579,7 +1640,7 @@
               </div>
             </div>
 
-            <div class="grid-4" style="margin-top:12px">
+            <div class="grid-4 marine-condition-dock">
               <div class="stat">
                 <div class="label">Signal</div>
                 <div class="value" id="signalText">—</div>
@@ -1683,7 +1744,6 @@
               </div>
               <div id="satelliteHeatmapMsg" class="subtle" style="margin-top:10px">Scientific layers use the latest available NOAA CoastWatch SST, thermal-front and chlorophyll observations. Cloud gaps remain transparent; OceanCore does not invent missing satellite data.</div>
             </div>
-          </div>
         </div>
 
         <div class="grid-2">
