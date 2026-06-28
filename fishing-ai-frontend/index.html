@@ -2726,7 +2726,7 @@ const state = {
   map: null,
   mapBaseLayers: null,
   mapView: localStorage.getItem('oceancore_map_view') || 'windy',
-  satelliteLayer: localStorage.getItem('oceancore_satellite_layer') || 'habitat',
+  satelliteLayer: 'habitat',
   windyOverlay: localStorage.getItem('oceancore_windy_overlay') || 'wind',
   mapLayers: [],
   selectedLat: safeNumber(localStorage.getItem('oceancore_lat'), -27.36),
@@ -4387,7 +4387,7 @@ function setMapView(view){
     renderMap();
     scheduleMapResize(80);
   }
-  if(state.mapView === 'satellite' && state.satelliteLayer === 'habitat') loadPelagicGrid();
+  if(state.mapView === 'satellite' && state.satelliteLayer !== 'chlorophyll') loadPelagicGrid();
 }
 
 function setWindyOverlay(overlay){
@@ -4491,7 +4491,7 @@ function renderMap(){
 
   scheduleMapResize();
   renderNotificationCenter();
-  if(state.mapView === 'satellite' && state.satelliteLayer === 'habitat' && !state.pelagicGridLoading){
+  if(state.mapView === 'satellite' && state.satelliteLayer !== 'chlorophyll' && !state.pelagicGridLoading){
     setTimeout(()=>loadPelagicGrid(),0);
   }
 }
@@ -6325,7 +6325,7 @@ function pelagicColor(score){
   return a.map((value,index)=>Math.round(value + (b[index] - value) * mix));
 }
 
-function pelagicRasterDataUrl(grid){
+function pelagicRasterDataUrl(grid,mode='habitat'){
   const cells = Array.isArray(grid?.cells) ? grid.cells : [];
   if(!cells.length) return '';
   const lats = Array.isArray(grid.latitudes) && grid.latitudes.length
@@ -6348,11 +6348,18 @@ function pelagicRasterDataUrl(grid){
     if(x == null || latRow == null) return;
     const y = source.height - 1 - latRow;
     const offset = (y * source.width + x) * 4;
-    const color = pelagicColor(cell.score);
+    const displayScore = mode === 'sst'
+      ? Math.max(0,Math.min(100,((Number(cell.sst_c) - 15) / 16) * 100))
+      : mode === 'fronts'
+        ? Math.max(0,Math.min(100,(Number(cell.front_strength || 0) / 0.08) * 100))
+        : Number(cell.score || 0);
+    const color = pelagicColor(displayScore);
     image.data[offset] = color[0];
     image.data[offset + 1] = color[1];
     image.data[offset + 2] = color[2];
-    image.data[offset + 3] = Number(cell.score || 0) < 22 ? 0 : Math.min(238,70 + Number(cell.score || 0) * 1.7);
+    image.data[offset + 3] = mode === 'fronts'
+      ? (displayScore < 5 ? 0 : Math.min(245,80 + displayScore * 1.7))
+      : (mode === 'habitat' && displayScore < 18 ? 0 : Math.min(232,82 + displayScore * 1.45));
   });
   ctx.putImageData(image,0,0);
   const output = document.createElement('canvas');
@@ -6380,10 +6387,13 @@ async function loadPelagicGrid(force=false){
     ]);
     state.pelagicGrid = grid;
     state.pelagicGridKey = key;
-    if(state.mapView === 'satellite' && state.satelliteLayer === 'habitat') renderMap();
+    if(state.mapView === 'satellite' && state.satelliteLayer !== 'chlorophyll') renderMap();
     renderSatelliteHeatmapSummary();
   }catch(error){
-    setStatusMessage('satelliteHeatmapMsg',error.message || String(error));
+    const message = error.message || String(error);
+    setStatusMessage('satelliteHeatmapMsg',/not found/i.test(message)
+      ? 'Pelagic grid service is waiting for the backend deployment. The raw patch-image fallback has been disabled.'
+      : message);
   }finally{
     state.pelagicGridLoading = false;
   }
@@ -6416,8 +6426,8 @@ function renderScientificRasterLayer(){
     raster.addTo(state.map);
     state.mapLayers.push(raster);
   };
-  if(state.satelliteLayer === 'habitat'){
-    const dataUrl = pelagicRasterDataUrl(state.pelagicGrid);
+  if(['habitat','sst','fronts'].includes(state.satelliteLayer)){
+    const dataUrl = pelagicRasterDataUrl(state.pelagicGrid,state.satelliteLayer);
     if(dataUrl && state.pelagicGrid?.bounds){
       const b = state.pelagicGrid.bounds;
       const raster = L.imageOverlay(dataUrl,[[b.south,b.west],[b.north,b.east]],{
@@ -6425,16 +6435,15 @@ function renderScientificRasterLayer(){
         interactive:false,
         zIndex:420,
         className:'pelagic-generated-raster',
-        alt:'OceanCore pelagic SST and thermal-front composite',
+        alt:`OceanCore ${labels[state.satelliteLayer]} grid`,
       }).addTo(state.map);
       state.mapLayers.push(raster);
       if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Dense NOAA grid';
     }else{
-      addRaster('sst',0.72);
-      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Loading pelagic grid';
+      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Pelagic grid unavailable';
     }
-  }else{
-    addRaster(state.satelliteLayer, state.satelliteLayer === 'sst' ? 0.82 : 0.92);
+  }else if(state.satelliteLayer === 'chlorophyll'){
+    addRaster('chlorophyll',0.9);
   }
   if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
   if($('satelliteLayerDate') && state.satelliteLayer !== 'habitat') $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
