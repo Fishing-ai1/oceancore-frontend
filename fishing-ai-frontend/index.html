@@ -219,6 +219,9 @@
     }
     .satellite-layer-buttons button.active{color:#051018;border-color:#7dffd5;background:linear-gradient(135deg,#7dffd5,#49e7ff)}
     .satellite-layer-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;color:#9eb2d4;font-size:11px}
+    .pelagic-source-status{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+    .pelagic-source-status span{padding:3px 6px;border-radius:5px;border:1px solid rgba(137,166,201,.22);color:#91a7c9;font-size:9px;font-weight:850;text-transform:uppercase}
+    .pelagic-source-status .live{color:#7cf9bd;border-color:rgba(124,249,189,.34)}
     .scientific-scale{height:8px;margin-top:8px;border-radius:999px;background:linear-gradient(90deg,#150b36,#5a167e,#b52f73,#f66a32,#f6c542,#fff7a1)}
     .scientific-raster{
       image-rendering:auto!important;
@@ -1635,10 +1638,11 @@
                   <button data-satellite-layer="fronts" type="button">Thermal fronts</button>
                   <button data-satellite-layer="sst" type="button">Sea temperature</button>
                   <button data-satellite-layer="chlorophyll" type="button">Chlorophyll</button>
-                  <button class="active" data-satellite-layer="habitat" type="button">Habitat view</button>
+                  <button class="active" data-satellite-layer="habitat" type="button">Pelagic composite</button>
                 </div>
                 <div class="scientific-scale" aria-hidden="true"></div>
                 <div class="satellite-layer-meta"><span id="satelliteLayerName">SST + thermal fronts</span><span id="satelliteLayerDate">Latest available</span></div>
+                <div class="pelagic-source-status"><span class="live">SST live</span><span class="live">Fronts live</span><span>Currents pending</span><span>Eddies pending</span></div>
               </div>
             </div>
 
@@ -2707,6 +2711,9 @@ const state = {
   marine: null,
   fishingIntel: null,
   satelliteHeatmap: null,
+  pelagicGrid: null,
+  pelagicGridKey: '',
+  pelagicGridLoading: false,
   ramps: [],
   fuel: [],
   mapSearchResults: [],
@@ -4380,6 +4387,7 @@ function setMapView(view){
     renderMap();
     scheduleMapResize(80);
   }
+  if(state.mapView === 'satellite' && state.satelliteLayer === 'habitat') loadPelagicGrid();
 }
 
 function setWindyOverlay(overlay){
@@ -4483,6 +4491,9 @@ function renderMap(){
 
   scheduleMapResize();
   renderNotificationCenter();
+  if(state.mapView === 'satellite' && state.satelliteLayer === 'habitat' && !state.pelagicGridLoading){
+    setTimeout(()=>loadPelagicGrid(),0);
+  }
 }
 
 async function useGps(){
@@ -6263,6 +6274,12 @@ function renderSatelliteHeatmapSummary(){
   const data = state.satelliteHeatmap;
   const msg = $('satelliteHeatmapMsg');
   if(!msg) return;
+  if(state.pelagicGrid){
+    const grid = state.pelagicGrid;
+    const observed = grid.observed_at ? new Date(grid.observed_at).toLocaleString() : 'latest NOAA pass';
+    msg.textContent = `${grid.product} · ${grid.usable_cell_count}/${grid.sample_count} cells · observed ${observed} · SST and thermal fronts connected. Currents, chlorophyll and sea-height eddies are not yet included in this score.`;
+    return;
+  }
   if(!data){
     msg.textContent = 'Choose a NOAA scientific layer on the map, then refresh the analysis for a local species score.';
     return;
@@ -6293,6 +6310,85 @@ function renderSatelliteHeatmapLayer(){
   });
 }
 
+function pelagicColor(score){
+  const stops = [
+    [0,[18,8,33]], [0.24,[59,15,112]], [0.48,[140,41,129]],
+    [0.68,[222,73,104]], [0.84,[254,159,109]], [1,[252,253,191]],
+  ];
+  const t = Math.max(0,Math.min(1,Number(score || 0) / 100));
+  let upper = stops.findIndex(stop=>t <= stop[0]);
+  if(upper <= 0) return stops[0][1];
+  if(upper < 0) return stops[stops.length - 1][1];
+  const [aT,a] = stops[upper - 1];
+  const [bT,b] = stops[upper];
+  const mix = (t - aT) / Math.max(0.001,bT - aT);
+  return a.map((value,index)=>Math.round(value + (b[index] - value) * mix));
+}
+
+function pelagicRasterDataUrl(grid){
+  const cells = Array.isArray(grid?.cells) ? grid.cells : [];
+  if(!cells.length) return '';
+  const lats = Array.isArray(grid.latitudes) && grid.latitudes.length
+    ? grid.latitudes.map(Number)
+    : [...new Set(cells.map(cell=>Number(cell.lat)))].sort((a,b)=>a-b);
+  const lngs = Array.isArray(grid.longitudes) && grid.longitudes.length
+    ? grid.longitudes.map(Number)
+    : [...new Set(cells.map(cell=>Number(cell.lng)))].sort((a,b)=>a-b);
+  if(!lats.length || !lngs.length) return '';
+  const latIndex = new Map(lats.map((value,index)=>[String(value),index]));
+  const lngIndex = new Map(lngs.map((value,index)=>[String(value),index]));
+  const source = document.createElement('canvas');
+  source.width = lngs.length;
+  source.height = lats.length;
+  const ctx = source.getContext('2d');
+  const image = ctx.createImageData(source.width,source.height);
+  cells.forEach(cell=>{
+    const x = lngIndex.get(String(Number(cell.lng)));
+    const latRow = latIndex.get(String(Number(cell.lat)));
+    if(x == null || latRow == null) return;
+    const y = source.height - 1 - latRow;
+    const offset = (y * source.width + x) * 4;
+    const color = pelagicColor(cell.score);
+    image.data[offset] = color[0];
+    image.data[offset + 1] = color[1];
+    image.data[offset + 2] = color[2];
+    image.data[offset + 3] = Number(cell.score || 0) < 22 ? 0 : Math.min(238,70 + Number(cell.score || 0) * 1.7);
+  });
+  ctx.putImageData(image,0,0);
+  const output = document.createElement('canvas');
+  output.width = 900;
+  output.height = 900;
+  const out = output.getContext('2d');
+  out.imageSmoothingEnabled = true;
+  out.imageSmoothingQuality = 'high';
+  out.drawImage(source,0,0,output.width,output.height);
+  return output.toDataURL('image/png');
+}
+
+async function loadPelagicGrid(force=false){
+  if(state.pelagicGridLoading) return;
+  const species = intelValue('intelSpecies','pelagics');
+  const radius = Math.max(100,Math.min(200,Number($('mapRadius')?.value || 100)));
+  const key = `${Number(state.selectedLat).toFixed(3)}:${Number(state.selectedLng).toFixed(3)}:${radius}:${species}`;
+  if(!force && state.pelagicGrid && state.pelagicGridKey === key) return;
+  state.pelagicGridLoading = true;
+  setStatusMessage('satelliteHeatmapMsg','Building a dense NOAA SST and thermal-front grid for this area...');
+  try{
+    const grid = await apiFirst([
+      `/pelagic/grid?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
+      `/api/pelagic/grid?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
+    ]);
+    state.pelagicGrid = grid;
+    state.pelagicGridKey = key;
+    if(state.mapView === 'satellite' && state.satelliteLayer === 'habitat') renderMap();
+    renderSatelliteHeatmapSummary();
+  }catch(error){
+    setStatusMessage('satelliteHeatmapMsg',error.message || String(error));
+  }finally{
+    state.pelagicGridLoading = false;
+  }
+}
+
 function renderScientificRasterLayer(){
   if(!state.map || state.mapView !== 'satellite') return;
   const bounds = satelliteBounds();
@@ -6300,7 +6396,7 @@ function renderScientificRasterLayer(){
     fronts:'Thermal fronts',
     sst:'Sea temperature',
     chlorophyll:'Chlorophyll productivity',
-    habitat:'SST + thermal fronts',
+    habitat:'Pelagic SST/front composite',
   };
   const addRaster = (layer, opacity)=>{
     const raster = L.imageOverlay(erddapRasterUrl(layer, bounds), bounds, {
@@ -6321,13 +6417,27 @@ function renderScientificRasterLayer(){
     state.mapLayers.push(raster);
   };
   if(state.satelliteLayer === 'habitat'){
-    addRaster('sst', 0.68);
-    addRaster('fronts', 0.92);
+    const dataUrl = pelagicRasterDataUrl(state.pelagicGrid);
+    if(dataUrl && state.pelagicGrid?.bounds){
+      const b = state.pelagicGrid.bounds;
+      const raster = L.imageOverlay(dataUrl,[[b.south,b.west],[b.north,b.east]],{
+        opacity:0.9,
+        interactive:false,
+        zIndex:420,
+        className:'pelagic-generated-raster',
+        alt:'OceanCore pelagic SST and thermal-front composite',
+      }).addTo(state.map);
+      state.mapLayers.push(raster);
+      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Dense NOAA grid';
+    }else{
+      addRaster('sst',0.72);
+      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Loading pelagic grid';
+    }
   }else{
     addRaster(state.satelliteLayer, state.satelliteLayer === 'sst' ? 0.82 : 0.92);
   }
   if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
-  if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
+  if($('satelliteLayerDate') && state.satelliteLayer !== 'habitat') $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
   document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
 
   const reference = L.tileLayer(
@@ -6345,18 +6455,10 @@ async function buildSatelliteHeatmap(){
   const button = $('btnSatelliteHeatmap');
   const original = button?.textContent || 'Refresh Satellite Analysis';
   try{
-    if(button){ button.disabled = true; button.textContent = 'Sampling satellite...'; }
-    setStatusMessage('satelliteHeatmapMsg','Sampling NOAA satellite SST/chlorophyll cells. This can take a little while.');
-    const species = intelValue('intelSpecies','pelagics');
-    const radius = Math.max(5, Math.min(120, Number($('mapRadius')?.value || 35)));
-    const data = await apiFirst([
-      `/satellite/heatmap?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
-      `/api/satellite/heatmap?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
-    ]);
-    state.satelliteHeatmap = data;
+    if(button){ button.disabled = true; button.textContent = 'Building pelagic grid...'; }
+    state.satelliteLayer = 'habitat';
     setMapView('satellite');
-    renderMap();
-    renderSatelliteHeatmapSummary();
+    await loadPelagicGrid(true);
   }catch(e){
     setStatusMessage('satelliteHeatmapMsg', e.message || String(e));
   }finally{
@@ -6366,6 +6468,8 @@ async function buildSatelliteHeatmap(){
 
 function clearSatelliteHeatmap(){
   state.satelliteHeatmap = null;
+  state.pelagicGrid = null;
+  state.pelagicGridKey = '';
   renderMap();
   renderSatelliteHeatmapSummary();
 }
