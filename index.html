@@ -18,6 +18,11 @@
   <meta property="og:description" content="Plan trips, log catches, and fish with clearer marine conditions."/>
   <meta property="og:type" content="website"/>
   <meta name="oceancore-api-url" content=""/>
+  <script>
+    if(window.location.protocol === 'file:'){
+      window.location.replace('https://oceancore-frontend.vercel.app/');
+    }
+  </script>
   <link rel="manifest" href="./manifest.webmanifest"/>
   <link rel="icon" href="./assets/icons/favicon.svg" type="image/svg+xml"/>
   <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png"/>
