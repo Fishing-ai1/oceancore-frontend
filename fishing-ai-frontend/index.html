@@ -5219,11 +5219,11 @@ function adminFilteredUsers(){
 
 function applyMapBaseLayer(){
   if(!state.map || !state.mapBaseLayers) return;
-  Object.values(state.mapBaseLayers).forEach(layer=>{
-    if(state.map.hasLayer(layer)) state.map.removeLayer(layer);
-  });
   const key = state.mapView === 'satellite' ? 'satellite' : 'local';
-  state.mapBaseLayers[key].addTo(state.map);
+  Object.entries(state.mapBaseLayers).forEach(([layerKey,layer])=>{
+    if(layerKey !== key && state.map.hasLayer(layer)) state.map.removeLayer(layer);
+  });
+  if(!state.map.hasLayer(state.mapBaseLayers[key])) state.mapBaseLayers[key].addTo(state.map);
 }
 
 function adminFilteredCatches(){
@@ -6344,6 +6344,21 @@ function pelagicColor(score){
   return a.map((value,index)=>Math.round(value + (b[index] - value) * mix));
 }
 
+function pelagicGridRequestKey(species=intelValue('intelSpecies','pelagics')){
+  const radius = Math.max(100,Math.min(200,Number($('mapRadius')?.value || 100)));
+  return `${Number(state.selectedLat).toFixed(3)}:${Number(state.selectedLng).toFixed(3)}:${radius}:${species}`;
+}
+
+function pelagicGridMatchesSelection(grid=state.pelagicGrid){
+  const b = grid?.bounds;
+  if(!b) return false;
+  const lat = Number(state.selectedLat);
+  const lng = Number(state.selectedLng);
+  return state.pelagicGridKey === pelagicGridRequestKey()
+    && lat >= Number(b.south) && lat <= Number(b.north)
+    && lng >= Number(b.west) && lng <= Number(b.east);
+}
+
 function pelagicRasterDataUrl(grid,mode='habitat'){
   const cells = Array.isArray(grid?.cells) ? grid.cells : [];
   if(!cells.length) return '';
@@ -6356,38 +6371,47 @@ function pelagicRasterDataUrl(grid,mode='habitat'){
   if(!lats.length || !lngs.length) return '';
   const latIndex = new Map(lats.map((value,index)=>[String(value),index]));
   const lngIndex = new Map(lngs.map((value,index)=>[String(value),index]));
-  const source = document.createElement('canvas');
-  source.width = lngs.length;
-  source.height = lats.length;
-  const ctx = source.getContext('2d');
-  const image = ctx.createImageData(source.width,source.height);
+  const values = Array.from({length:lats.length},()=>Array(lngs.length).fill(null));
   cells.forEach(cell=>{
     const x = lngIndex.get(String(Number(cell.lng)));
     const latRow = latIndex.get(String(Number(cell.lat)));
     if(x == null || latRow == null) return;
-    const y = source.height - 1 - latRow;
-    const offset = (y * source.width + x) * 4;
     const displayScore = mode === 'sst'
       ? Math.max(0,Math.min(100,((Number(cell.sst_c) - 15) / 16) * 100))
       : mode === 'fronts'
         ? Math.max(0,Math.min(100,(Number(cell.front_strength || 0) / 0.08) * 100))
         : Number(cell.score || 0);
-    const color = pelagicColor(displayScore);
-    image.data[offset] = color[0];
-    image.data[offset + 1] = color[1];
-    image.data[offset + 2] = color[2];
-    image.data[offset + 3] = mode === 'fronts'
-      ? (displayScore < 5 ? 0 : Math.min(245,80 + displayScore * 1.7))
-      : (mode === 'habitat' && displayScore < 18 ? 0 : Math.min(232,82 + displayScore * 1.45));
+    values[lats.length - 1 - latRow][x] = Number.isFinite(displayScore) ? displayScore : null;
   });
-  ctx.putImageData(image,0,0);
+
   const output = document.createElement('canvas');
-  output.width = 900;
-  output.height = 900;
+  output.width = 1200;
+  output.height = 1200;
   const out = output.getContext('2d');
-  out.imageSmoothingEnabled = true;
-  out.imageSmoothingQuality = 'high';
-  out.drawImage(source,0,0,output.width,output.height);
+  const image = out.createImageData(output.width,output.height);
+  const sample = (row,col)=>values[Math.max(0,Math.min(values.length-1,row))]?.[Math.max(0,Math.min(lngs.length-1,col))];
+  for(let py=0;py<output.height;py++){
+    const gy = (py / (output.height - 1)) * (lats.length - 1);
+    const y0 = Math.floor(gy), y1 = Math.min(lats.length - 1,y0 + 1), fy = gy - y0;
+    for(let px=0;px<output.width;px++){
+      const gx = (px / (output.width - 1)) * (lngs.length - 1);
+      const x0 = Math.floor(gx), x1 = Math.min(lngs.length - 1,x0 + 1), fx = gx - x0;
+      const corners = [[sample(y0,x0),(1-fx)*(1-fy)],[sample(y0,x1),fx*(1-fy)],[sample(y1,x0),(1-fx)*fy],[sample(y1,x1),fx*fy]];
+      let weighted = 0, weight = 0;
+      corners.forEach(([value,w])=>{ if(Number.isFinite(value)){ weighted += value*w; weight += w; } });
+      if(weight < 0.35) continue;
+      const score = weighted / weight;
+      const color = pelagicColor(score);
+      const offset = (py * output.width + px) * 4;
+      image.data[offset] = color[0];
+      image.data[offset + 1] = color[1];
+      image.data[offset + 2] = color[2];
+      image.data[offset + 3] = mode === 'fronts'
+        ? (score < 5 ? 0 : Math.min(238,55 + score * 1.8))
+        : (mode === 'habitat' && score < 18 ? 0 : Math.min(224,65 + score * 1.5));
+    }
+  }
+  out.putImageData(image,0,0);
   return output.toDataURL('image/png');
 }
 
@@ -6395,7 +6419,7 @@ async function loadPelagicGrid(force=false){
   if(state.pelagicGridLoading) return;
   const species = intelValue('intelSpecies','pelagics');
   const radius = Math.max(100,Math.min(200,Number($('mapRadius')?.value || 100)));
-  const key = `${Number(state.selectedLat).toFixed(3)}:${Number(state.selectedLng).toFixed(3)}:${radius}:${species}`;
+  const key = pelagicGridRequestKey(species);
   if(!force && state.pelagicGrid && state.pelagicGridKey === key) return;
   state.pelagicGridLoading = true;
   setStatusMessage('satelliteHeatmapMsg','Building a dense NOAA SST and thermal-front grid for this area...');
@@ -6428,6 +6452,11 @@ async function loadPelagicGrid(force=false){
     renderSatelliteHeatmapSummary();
   }catch(error){
     const message = error.message || String(error);
+    if(state.pelagicGridKey !== key){
+      state.pelagicGrid = null;
+      state.pelagicGridKey = '';
+      if(state.mapView === 'satellite') renderMap();
+    }
     setStatusMessage('satelliteHeatmapMsg',/not found/i.test(message)
       ? 'Pelagic grid service is waiting for the backend deployment. The raw patch-image fallback has been disabled.'
       : message);
@@ -6464,7 +6493,8 @@ function renderScientificRasterLayer(){
     state.mapLayers.push(raster);
   };
   if(['habitat','sst','fronts'].includes(state.satelliteLayer)){
-    const dataUrl = pelagicRasterDataUrl(state.pelagicGrid,state.satelliteLayer);
+    const validGrid = pelagicGridMatchesSelection();
+    const dataUrl = validGrid ? pelagicRasterDataUrl(state.pelagicGrid,state.satelliteLayer) : '';
     if(dataUrl && state.pelagicGrid?.bounds){
       const b = state.pelagicGrid.bounds;
       const raster = L.imageOverlay(dataUrl,[[b.south,b.west],[b.north,b.east]],{
