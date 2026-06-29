@@ -6395,10 +6395,28 @@ async function loadPelagicGrid(force=false){
   state.pelagicGridLoading = true;
   setStatusMessage('satelliteHeatmapMsg','Building a dense NOAA SST and thermal-front grid for this area...');
   try{
-    const grid = await apiFirst([
+    const paths = [
       `/pelagic/grid?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
       `/api/pelagic/grid?lat=${encodeURIComponent(state.selectedLat)}&lng=${encodeURIComponent(state.selectedLng)}&radius_km=${encodeURIComponent(radius)}&species=${encodeURIComponent(species)}`,
-    ]);
+    ];
+    let grid;
+    try{
+      grid = await apiFirst(paths);
+    }catch(primaryError){
+      const message = String(primaryError?.message || primaryError || '');
+      if(!(primaryError?.status === 404 || /not found|missing this route|404/i.test(message))) throw primaryError;
+      let cloudError = primaryError;
+      for(const path of paths){
+        try{
+          grid = await api(path,{},true,configuredApiUrl());
+          break;
+        }catch(error){
+          cloudError = error;
+          if(!(error?.status === 404 || /not found|404/i.test(String(error?.message || error || '')))) throw error;
+        }
+      }
+      if(!grid) throw cloudError;
+    }
     state.pelagicGrid = grid;
     state.pelagicGridKey = key;
     if(state.mapView === 'satellite') renderMap();
