@@ -217,6 +217,16 @@
     }
     .map-wrap[data-map-view="satellite"] .satellite-map-tools{display:block}
     .satellite-map-tools strong{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+    .chartplotter-tools{
+      display:none;position:absolute;z-index:650;top:12px;left:54px;width:min(330px,calc(100% - 124px));
+      padding:9px;border:1px solid rgba(137,166,201,.28);border-radius:12px;background:rgba(3,9,20,.90);
+      box-shadow:0 12px 32px rgba(0,0,0,.42);backdrop-filter:blur(12px)
+    }
+    .map-wrap:not([data-map-view="windy"]) .chartplotter-tools{display:block}
+    .chartplotter-tools strong{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+    .chartplotter-row{display:flex;gap:5px;flex-wrap:wrap}.chartplotter-row+strong{margin-top:8px}
+    .chartplotter-row button{min-height:34px;padding:7px 9px;border:1px solid var(--border);border-radius:7px;background:#071225;color:#c5d4ed;font:inherit;font-size:11px;font-weight:850;cursor:pointer}
+    .chartplotter-row button.active{color:#051018;border-color:#7dffd5;background:linear-gradient(135deg,#7dffd5,#49e7ff)}
     .satellite-layer-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
     .satellite-layer-buttons button{
       min-height:38px;padding:8px;border:1px solid var(--border);border-radius:8px;background:#071225;color:#c5d4ed;
@@ -291,7 +301,8 @@
       .marine-location-options{display:none}.marine-modebar{padding:8px 10px}.marine-modebar button{min-height:40px;padding:8px 11px}
       .marine-forecast-strip{grid-template-columns:1fr;padding:0 10px 8px}.marine-forecast-strip .muted-box{display:none}
       #section-map .marine-map-frame #map,#section-map .marine-map-frame #windyMapFrame{height:calc(100vh - 300px);min-height:480px}
-      .satellite-map-tools{top:10px;right:10px;width:min(250px,calc(100% - 70px))}
+      .chartplotter-tools{top:10px;left:54px;width:calc(100% - 64px)}
+      .satellite-map-tools{top:154px;right:10px;width:min(250px,calc(100% - 20px))}
       .marine-condition-dock{grid-template-columns:repeat(2,1fr);bottom:10px;left:10px;right:10px}
       .marine-condition-dock .stat:nth-child(3),.marine-condition-dock .stat:nth-child(4){display:none}
       .marine-map-message{bottom:100px;left:10px}
@@ -1638,6 +1649,20 @@
             <div class="map-wrap marine-map-frame" id="mapWrap" data-map-view="windy">
               <iframe id="windyMapFrame" title="Windy live wind and waves map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
               <div id="map"></div>
+              <div class="chartplotter-tools" id="chartplotterTools" aria-label="Chart display layers">
+                <strong>Map style</strong>
+                <div class="chartplotter-row">
+                  <button class="active" data-chart-base="chart" type="button">Marine chart</button>
+                  <button data-chart-base="satellite" type="button">Satellite</button>
+                  <button data-chart-base="depth" type="button">Depth relief</button>
+                </div>
+                <strong>Structure</strong>
+                <div class="chartplotter-row">
+                  <button data-chart-overlay="bathymetry" type="button">Bathymetry</button>
+                  <button data-chart-overlay="geomorphology" type="button">Seabed features</button>
+                  <button class="active" data-chart-overlay="seamarks" type="button">Reefs &amp; wrecks</button>
+                </div>
+              </div>
               <div class="satellite-map-tools" id="satelliteMapTools" aria-label="Satellite intelligence layers">
                 <strong>Ocean intelligence layer</strong>
                 <div class="satellite-layer-buttons">
@@ -2730,6 +2755,9 @@ const state = {
   legacyChat: safeJsonParse(localStorage.getItem('oceancore_chat_history'), []),
   map: null,
   mapBaseLayers: null,
+  mapOverlayLayers: null,
+  chartBaseStyle: localStorage.getItem('oceancore_chart_base') || 'chart',
+  chartOverlayFlags: safeJsonParse(localStorage.getItem('oceancore_chart_overlays'), { bathymetry:false, geomorphology:false, seamarks:true }),
   mapView: localStorage.getItem('oceancore_map_view') || 'windy',
   satelliteLayer: 'habitat',
   windyOverlay: localStorage.getItem('oceancore_windy_overlay') || 'wind',
@@ -4421,9 +4449,30 @@ function ensureMap(){
     'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
     { maxZoom:18, pane:'overlayPane', zIndex:640, opacity:0.9, attribution:'Sea marks &copy; OpenSeaMap contributors' }
   );
+  const satelliteBase = ()=>L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:19, attribution:'Satellite imagery &copy; Esri, Maxar, Earthstar Geographics' }
+  );
+  const depthRelief = ()=>L.tileLayer(
+    'https://services.ga.gov.au/gis/rest/services/World_Bathymetry_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:9, maxNativeZoom:9, attribution:'Bathymetry &copy; Commonwealth of Australia (Geoscience Australia) CC BY 4.0' }
+  );
   state.mapBaseLayers = {
-    local: L.layerGroup([oceanBase(), oceanReference(), seamarks()]),
-    satellite: oceanBase()
+    chart: oceanBase(),
+    satellite: satelliteBase(),
+    depth: depthRelief(),
+  };
+  state.mapOverlayLayers = {
+    reference:oceanReference(),
+    seamarks:seamarks(),
+    bathymetry:L.tileLayer.wms('https://services.ga.gov.au/gis/services/Bathymetry_Topography/MapServer/WMSServer',{
+      layers:'Australian_Bathymetry_and_Topography',format:'image/png',transparent:true,opacity:0.58,version:'1.3.0',zIndex:220,
+      attribution:'Bathymetry &copy; Commonwealth of Australia (Geoscience Australia) CC BY 4.0'
+    }),
+    geomorphology:L.tileLayer.wms('https://services.ga.gov.au/gis/services/Marine_Geomorphic_Features/MapServer/WMSServer',{
+      layers:'Geomorphic_Features',format:'image/png',transparent:true,opacity:0.46,version:'1.3.0',zIndex:230,
+      attribution:'Seabed features &copy; Commonwealth of Australia (Geoscience Australia) CC BY 4.0'
+    }),
   };
   applyMapBaseLayer();
 
@@ -4450,6 +4499,40 @@ function ensureMap(){
     ).openPopup();
     state.pelagicGridKey = '';
     setStatusMessage('mapMsg','Point selected. The map view will stay where you left it.');
+  });
+}
+
+function syncChartplotterControls(){
+  document.querySelectorAll('[data-chart-base]').forEach(button=>button.classList.toggle('active',button.dataset.chartBase === state.chartBaseStyle));
+  document.querySelectorAll('[data-chart-overlay]').forEach(button=>button.classList.toggle('active',state.chartOverlayFlags?.[button.dataset.chartOverlay] === true));
+}
+
+function setChartBaseStyle(style){
+  state.chartBaseStyle = ['chart','satellite','depth'].includes(style) ? style : 'chart';
+  localStorage.setItem('oceancore_chart_base',state.chartBaseStyle);
+  syncChartplotterControls();
+  applyMapBaseLayer();
+}
+
+function toggleChartOverlay(name){
+  if(!['bathymetry','geomorphology','seamarks'].includes(name)) return;
+  state.chartOverlayFlags = {...state.chartOverlayFlags,[name]:state.chartOverlayFlags?.[name] !== true};
+  localStorage.setItem('oceancore_chart_overlays',JSON.stringify(state.chartOverlayFlags));
+  syncChartplotterControls();
+  applyMapStructureLayers();
+}
+
+function applyMapStructureLayers(){
+  if(!state.map || !state.mapOverlayLayers) return;
+  const desired = {
+    reference:state.chartBaseStyle !== 'satellite',
+    seamarks:state.chartOverlayFlags?.seamarks === true,
+    bathymetry:state.chartOverlayFlags?.bathymetry === true && state.chartBaseStyle !== 'depth',
+    geomorphology:state.chartOverlayFlags?.geomorphology === true,
+  };
+  Object.entries(state.mapOverlayLayers).forEach(([name,layer])=>{
+    if(desired[name] && !state.map.hasLayer(layer)) layer.addTo(state.map);
+    if(!desired[name] && state.map.hasLayer(layer)) state.map.removeLayer(layer);
   });
 }
 
@@ -5219,11 +5302,13 @@ function adminFilteredUsers(){
 
 function applyMapBaseLayer(){
   if(!state.map || !state.mapBaseLayers) return;
-  const key = state.mapView === 'satellite' ? 'satellite' : 'local';
+  const key = ['chart','satellite','depth'].includes(state.chartBaseStyle) ? state.chartBaseStyle : 'chart';
   Object.entries(state.mapBaseLayers).forEach(([layerKey,layer])=>{
     if(layerKey !== key && state.map.hasLayer(layer)) state.map.removeLayer(layer);
   });
   if(!state.map.hasLayer(state.mapBaseLayers[key])) state.mapBaseLayers[key].addTo(state.map);
+  applyMapStructureLayers();
+  syncChartplotterControls();
 }
 
 function adminFilteredCatches(){
@@ -6514,15 +6599,7 @@ function renderScientificRasterLayer(){
   if($('satelliteLayerDate') && state.satelliteLayer !== 'habitat') $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
   document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
 
-  const reference = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:16, pane:'overlayPane', zIndex:630, attribution:'Ocean reference &copy; Esri' }
-  ).addTo(state.map);
-  const marks = L.tileLayer(
-    'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
-    { maxZoom:18, pane:'overlayPane', zIndex:640, opacity:0.9, attribution:'Sea marks &copy; OpenSeaMap contributors' }
-  ).addTo(state.map);
-  state.mapLayers.push(reference, marks);
+  applyMapStructureLayers();
 }
 
 async function buildSatelliteHeatmap(){
@@ -7495,6 +7572,12 @@ document.querySelectorAll('[data-windy-overlay]').forEach(btn=>{
 });
 document.querySelectorAll('[data-satellite-layer]').forEach(btn=>{
   btn.addEventListener('click', ()=>setSatelliteLayer(btn.dataset.satelliteLayer));
+});
+document.querySelectorAll('[data-chart-base]').forEach(btn=>{
+  btn.addEventListener('click', ()=>setChartBaseStyle(btn.dataset.chartBase));
+});
+document.querySelectorAll('[data-chart-overlay]').forEach(btn=>{
+  btn.addEventListener('click', ()=>toggleChartOverlay(btn.dataset.chartOverlay));
 });
 $('btnJumpFishingIntel')?.addEventListener('click', ()=>{
   $('fishingIntelCard')?.scrollIntoView({ behavior:'smooth', block:'start' });
