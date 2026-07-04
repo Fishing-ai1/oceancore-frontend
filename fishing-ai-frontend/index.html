@@ -1655,6 +1655,7 @@
                   <button class="active" data-chart-base="chart" type="button">Marine chart</button>
                   <button data-chart-base="satellite" type="button">Satellite</button>
                   <button data-chart-base="depth" type="button">Depth relief</button>
+                  <button id="btnRecenterMap" type="button">Center map</button>
                 </div>
                 <strong>Structure</strong>
                 <div class="chartplotter-row">
@@ -2756,6 +2757,7 @@ const state = {
   map: null,
   mapBaseLayers: null,
   mapOverlayLayers: null,
+  mapNeedsRecenter: true,
   chartBaseStyle: localStorage.getItem('oceancore_chart_base') || 'chart',
   chartOverlayFlags: safeJsonParse(localStorage.getItem('oceancore_chart_overlays'), { bathymetry:false, geomorphology:false, seamarks:true }),
   mapView: localStorage.getItem('oceancore_map_view') || 'windy',
@@ -4347,6 +4349,7 @@ async function selectMapSearchResult(index){
   if($('savedAreaGeneral') && !$('savedAreaGeneral').value.trim()) $('savedAreaGeneral').value = row.name || '';
   localStorage.setItem('oceancore_lat', String(state.selectedLat));
   localStorage.setItem('oceancore_lng', String(state.selectedLng));
+  state.mapNeedsRecenter = true;
   state.mapSearchResults = [];
   renderMapSearchResults();
   renderWindyMap();
@@ -4500,6 +4503,9 @@ function ensureMap(){
     state.pelagicGridKey = '';
     setStatusMessage('mapMsg','Point selected. The map view will stay where you left it.');
   });
+  state.map.on('dragstart zoomstart', ()=>{
+    state.mapNeedsRecenter = false;
+  });
 }
 
 function syncChartplotterControls(){
@@ -4525,7 +4531,7 @@ function toggleChartOverlay(name){
 function applyMapStructureLayers(){
   if(!state.map || !state.mapOverlayLayers) return;
   const desired = {
-    reference:state.chartBaseStyle !== 'satellite',
+    reference:state.chartBaseStyle === 'chart' && state.chartOverlayFlags?.bathymetry !== true,
     seamarks:state.chartOverlayFlags?.seamarks === true,
     bathymetry:state.chartOverlayFlags?.bathymetry === true && state.chartBaseStyle !== 'depth',
     geomorphology:state.chartOverlayFlags?.geomorphology === true,
@@ -4552,11 +4558,16 @@ function renderMap(){
   clearMapLayers();
 
   const center = [state.selectedLat, state.selectedLng];
-  if(state.mapView === 'satellite'){
-    const radiusKm = Math.max(5, Math.min(120, Number($('mapRadius')?.value || 35)));
-    state.map.fitBounds(satelliteBounds(radiusKm), { padding:[18,18], animate:false });
-  }else{
-    state.map.setView(center, 10, { animate:false });
+  if(state.mapNeedsRecenter){
+    if(state.mapView === 'satellite'){
+      const radiusKm = Math.max(5, Math.min(120, Number($('mapRadius')?.value || 35)));
+      state.map.fitBounds(satelliteBounds(radiusKm), { padding:[18,18], animate:false });
+    }else{
+      state.map.setView(center, 10, { animate:false });
+    }
+    state.mapNeedsRecenter = false;
+  }
+  if(state.mapView !== 'satellite'){
     const userMarker = L.marker(center).addTo(state.map).bindPopup('Selected location');
     state.mapLayers.push(userMarker);
   }
@@ -4611,6 +4622,7 @@ async function useGps(){
       $('mapLng').value = state.selectedLng;
       localStorage.setItem('oceancore_lat', String(state.selectedLat));
       localStorage.setItem('oceancore_lng', String(state.selectedLng));
+      state.mapNeedsRecenter = true;
       renderWindyMap();
       renderMap();
       setStatusMessage('mapMsg','GPS location loaded.');
@@ -4735,6 +4747,7 @@ async function loadSavedAreaToMap(id){
   try{
     const row = findSavedArea(id); if(!row) throw new Error('Saved area not found.');
     state.selectedLat = Number(row.lat); state.selectedLng = Number(row.lng);
+    state.mapNeedsRecenter = true;
     if($('mapLat')) $('mapLat').value = state.selectedLat;
     if($('mapLng')) $('mapLng').value = state.selectedLng;
     if($('mapRadius')) $('mapRadius').value = row.radius_km || 35;
@@ -6637,8 +6650,13 @@ async function loadMapData(){
     button.disabled = true;
     button.textContent = 'Loading...';
 
-    state.selectedLat = Number($('mapLat').value);
-    state.selectedLng = Number($('mapLng').value);
+    const nextLat = Number($('mapLat').value);
+    const nextLng = Number($('mapLng').value);
+    if(Math.abs(nextLat - Number(state.selectedLat)) > 0.000001 || Math.abs(nextLng - Number(state.selectedLng)) > 0.000001){
+      state.mapNeedsRecenter = true;
+    }
+    state.selectedLat = nextLat;
+    state.selectedLng = nextLng;
     const radius = Number($('mapRadius').value || 35);
 
     if(!Number.isFinite(state.selectedLat) || !Number.isFinite(state.selectedLng)) throw new Error('Pick a valid map location first.');
@@ -7578,6 +7596,10 @@ document.querySelectorAll('[data-chart-base]').forEach(btn=>{
 });
 document.querySelectorAll('[data-chart-overlay]').forEach(btn=>{
   btn.addEventListener('click', ()=>toggleChartOverlay(btn.dataset.chartOverlay));
+});
+$('btnRecenterMap')?.addEventListener('click', ()=>{
+  state.mapNeedsRecenter = true;
+  renderMap();
 });
 $('btnJumpFishingIntel')?.addEventListener('click', ()=>{
   $('fishingIntelCard')?.scrollIntoView({ behavior:'smooth', block:'start' });
