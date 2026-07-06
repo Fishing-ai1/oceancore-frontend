@@ -486,6 +486,7 @@
     .account-summary p{margin:0;color:#bfd0ee;font-size:13px;line-height:1.55}
     .step-note{margin-bottom:10px;color:#bfd0ee;font-size:13px;line-height:1.6}
     .hidden{display:none!important}
+    #mapOnlyContent[hidden]{display:none!important}
     body.auth-loading .shell{opacity:0;pointer-events:none}
     body.auth-locked .shell{filter:blur(10px);pointer-events:none;user-select:none}
     .auth-gate{
@@ -899,7 +900,7 @@
     .oc-media.vertical{aspect-ratio:9/13;max-height:520px;background:radial-gradient(circle at 50% 25%,rgba(73,231,255,.28),transparent 22%),linear-gradient(180deg,#0c3452,#020611)}
     .oc-play{width:58px;height:58px;border-radius:999px;background:rgba(2,6,16,.55);display:grid;place-items:center;font-size:24px;border:1px solid rgba(255,255,255,.24)}
     .oc-feed-body{padding:14px}.oc-feed-body p{margin:0 0 10px;color:#dce9ff;line-height:1.5}.oc-tag-row{display:flex;gap:8px;flex-wrap:wrap}
-    .oc-feed-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 14px 14px}.oc-feed-actions button{min-height:42px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(2,6,16,.48);color:#dce9ff;font-weight:800}
+    .oc-feed-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 14px 14px}.oc-feed-actions button{min-height:42px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(2,6,16,.48);color:#dce9ff;font-weight:800}.oc-feed-actions>span{display:flex;align-items:center;justify-content:center;color:#9fb4d6;font-size:12px;font-weight:800}
     .oc-discovery-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-discovery-card{border:1px solid var(--border);border-radius:20px;background:rgba(7,12,24,.78);padding:13px;min-height:132px}.oc-discovery-card b{display:block;font-size:15px;margin-bottom:7px}.oc-discovery-card span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
     .oc-create-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.oc-create-card{display:block;cursor:pointer;text-align:left;border:1px solid rgba(73,231,255,.18);background:rgba(7,12,24,.78);border-radius:20px;padding:14px;min-height:142px;color:#eef7ff}.oc-create-card strong{display:block;font-size:17px;margin-bottom:7px}.oc-create-card span{color:var(--muted);font-size:13px;line-height:1.45}
     .oc-profile-cover{border:1px solid rgba(73,231,255,.24);border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#082033,#07101f 58%,#123b4a);margin-bottom:14px}.oc-cover-art{height:190px;background:radial-gradient(circle at 28% 36%,rgba(73,231,255,.36),transparent 18%),linear-gradient(135deg,#073854,#061121 48%,#0e5b69)}
@@ -1702,6 +1703,7 @@
           </div>
         </div>
 
+        <div id="mapOnlyContent">
         <div class="intel-card" id="fishingIntelCard">
           <div class="intel-head">
             <div>
@@ -1782,6 +1784,7 @@
               <div id="satelliteHeatmapMsg" class="subtle" style="margin-top:10px">Scientific layers use the latest available NOAA CoastWatch SST, thermal-front and chlorophyll observations. Cloud gaps remain transparent; OceanCore does not invent missing satellite data.</div>
             </div>
         </div>
+        </div>
 
         <div class="grid-2">
           <div class="panel">
@@ -1792,6 +1795,7 @@
             <div class="hd"><h2>Nearby Fuel</h2></div>
             <div class="bd"><div id="fuelList" class="list"></div></div>
           </div>
+        </div>
         </div>
       </section>
 
@@ -3156,6 +3160,8 @@ function stopBackgroundMedia(options={}){
 
 function showSection(name){
   stopBackgroundMedia({ keepWatch: name === 'watch' });
+  const mapOnlyContent = $('mapOnlyContent');
+  if(mapOnlyContent) mapOnlyContent.hidden = name !== 'map';
   document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('[data-section]').forEach(el=>el.classList.remove('active'));
   const section = document.getElementById(`section-${name}`);
@@ -4441,8 +4447,8 @@ function ensureMap(){
   if(state.map) return;
   state.map = L.map('map', { preferCanvas:true }).setView([state.selectedLat, state.selectedLng], 9);
   const oceanBase = ()=>L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:16, attribution:'Ocean Basemap &copy; Esri, GEBCO' }
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:19, maxNativeZoom:19, keepBuffer:4, updateWhenIdle:false, attribution:'Topographic map &copy; Esri' }
   );
   const oceanReference = ()=>L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}',
@@ -4531,7 +4537,7 @@ function toggleChartOverlay(name){
 function applyMapStructureLayers(){
   if(!state.map || !state.mapOverlayLayers) return;
   const desired = {
-    reference:state.chartBaseStyle === 'chart' && state.chartOverlayFlags?.bathymetry !== true,
+    reference:false,
     seamarks:state.chartOverlayFlags?.seamarks === true,
     bathymetry:state.chartOverlayFlags?.bathymetry === true && state.chartBaseStyle !== 'depth',
     geomorphology:state.chartOverlayFlags?.geomorphology === true,
@@ -5808,7 +5814,7 @@ function videoRecommendationHtml(post){
   const title = post?.title || post?.species || 'OceanCore video';
   const author = post?.author_name || post?.user_email || 'OceanCore creator';
   const thumbStyle = media && !isCommunityVideo(post) ? ` style="background-image:url('${escapeHtml(media)}')"` : '';
-  return `<button class="oc-watch-recommendation" type="button" onclick="openVideoWatch('${id}')"><span class="oc-watch-thumb"${thumbStyle}></span><span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(author)}</span><span>${Number(post?.likes_count || 0)} likes - ${escapeHtml(formatFriendlyDate(post?.created_at))}</span></span></button>`;
+  return `<button class="oc-watch-recommendation" type="button" onclick="openVideoWatch('${id}')"><span class="oc-watch-thumb"${thumbStyle}></span><span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(author)}</span><span>${Number(post?.views_count || 0).toLocaleString()} views - ${Number(post?.likes_count || 0)} likes - ${escapeHtml(formatFriendlyDate(post?.created_at))}</span></span></button>`;
 }
 
 function savedCommunityPostIds(){
@@ -5866,12 +5872,35 @@ function renderVideoWatch(){
   if($('watchTitle')) $('watchTitle').textContent = title;
   if($('watchAuthor')) $('watchAuthor').textContent = author;
   if($('watchAvatar')) $('watchAvatar').textContent = socialInitials(author);
-  if($('watchMeta')) $('watchMeta').textContent = `${post.general_area || 'Spot Safe area'} - ${formatFriendlyDate(post.created_at)}`;
+  if($('watchMeta')) $('watchMeta').textContent = `${Number(post.views_count || 0).toLocaleString()} views - ${post.general_area || 'Spot Safe area'} - ${formatFriendlyDate(post.created_at)}`;
   if($('watchDescription')) $('watchDescription').textContent = post.caption || post.notes || 'Shared with the OceanCore community.';
   if($('btnWatchLike')) $('btnWatchLike').textContent = `Like ${Number(post.likes_count || 0)}`;
   if($('btnWatchSave')) $('btnWatchSave').textContent = savedCommunityPostIds().map(String).includes(String(post.id)) ? 'Saved' : 'Save';
   if($('watchComments')) $('watchComments').innerHTML = `<button class="btn" type="button" onclick="loadWatchComments('${escapeHtml(String(post.id || ''))}')">View ${Number(post.comments_count || 0)} comments</button>`;
   if($('watchRecommendations')) $('watchRecommendations').innerHTML = posts.filter(row=>String(row.id) !== String(post.id) && isCommunityVideo(row)).slice(0,12).map(videoRecommendationHtml).join('') || '<div class="muted-box">More videos will appear as creators upload them.</div>';
+  const player = $('watchMedia')?.querySelector('video');
+  if(player) player.addEventListener('playing', ()=>scheduleCommunityVideoView(post.id), { once:true });
+}
+
+const sessionVideoViews = new Set();
+function scheduleCommunityVideoView(id){
+  const key = String(id || '');
+  if(!key || sessionVideoViews.has(key)) return;
+  sessionVideoViews.add(key);
+  setTimeout(async()=>{
+    const player = $('watchMedia')?.querySelector('video');
+    if(!player || player.paused || player.currentTime < 2.5){ sessionVideoViews.delete(key); return; }
+    try{
+      const result = await apiFirst([`/api/community/posts/${encodeURIComponent(key)}/view`,`/community/posts/${encodeURIComponent(key)}/view`],{method:'POST'});
+      const post = (state.communityPosts || []).find(row=>String(row.id) === key);
+      if(post) post.views_count = Number(result.views_count || 0);
+      if($('watchMeta') && post) $('watchMeta').textContent = `${Number(post.views_count || 0).toLocaleString()} views - ${post.general_area || 'Spot Safe area'} - ${formatFriendlyDate(post.created_at)}`;
+      renderCommunityLiveModules();
+    }catch(error){
+      sessionVideoViews.delete(key);
+      console.warn('Video view could not be recorded',error);
+    }
+  },3000);
 }
 
 function openVideoWatch(id){
@@ -5915,7 +5944,7 @@ function renderSocialHome(){
         <div class="oc-feed-head"><div class="oc-avatar">${escapeHtml(socialInitials(author))}</div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div></div>
         ${mediaHtml}
         <div class="oc-feed-body"><p>${escapeHtml(post.caption || post.notes || 'Shared with the OceanCore community.')}</p><div class="oc-tag-row"><span class="chip">${escapeHtml(post.post_type || 'Community')}</span><span class="chip">Spot Safe</span></div></div>
-        <div class="oc-feed-actions"><button type="button" onclick="likeCommunityPost('${escapeHtml(post.id)}')">Like ${Number(post.likes_count || 0)}</button><button type="button" onclick="toggleCommunityComments('${escapeHtml(post.id)}')">Comment</button><button type="button" onclick="shareCommunityPost('${escapeHtml(post.id)}')">Share</button><button type="button" data-section="areas">Save</button><button type="button" onclick="reportCommunityPost('${escapeHtml(post.id)}')">Report</button></div>
+        <div class="oc-feed-actions">${isCommunityVideo(post) ? `<span>${Number(post.views_count || 0).toLocaleString()} views</span>` : ''}<button type="button" onclick="likeCommunityPost('${escapeHtml(post.id)}')">Like ${Number(post.likes_count || 0)}</button><button type="button" onclick="toggleCommunityComments('${escapeHtml(post.id)}')">Comment</button><button type="button" onclick="shareCommunityPost('${escapeHtml(post.id)}')">Share</button><button type="button" data-section="areas">Save</button><button type="button" onclick="reportCommunityPost('${escapeHtml(post.id)}')">Report</button></div>
       </article>`;
     }).join('');
     bindSectionButtons($('socialHomeFeed'));
@@ -7775,6 +7804,7 @@ function renderCommunityPost(post){
       ${details.length ? `<div class="crew-post-badges">${details.map(detail=>`<span>${escapeHtml(detail)}</span>`).join('')}</div>` : ''}
       ${poll}
       <div class="crew-actions">
+        ${isCommunityVideo(post) ? `<span class="chip">Views - ${Number(post.views_count||0).toLocaleString()}</span>` : ''}
         <button class="chip" type="button" onclick="likeCommunityPost('${id}')">Like - ${Number(post.likes_count||0)}</button>
         <button class="chip" type="button" ${commentsOff ? 'disabled' : `onclick="toggleCommunityComments('${id}')"`}>${escapeHtml(commentLabel)}</button>
         <button class="chip" type="button" onclick="shareCommunityPost('${id}')">Share</button>
@@ -7838,7 +7868,7 @@ function renderCommunityLiveModules(){
   const storyNames=[...new Set(posts.map(p=>p.author_name||p.user_email).filter(Boolean))].slice(0,8);
   if($('communityStories')) $('communityStories').innerHTML=storyNames.length?storyNames.map(name=>`<div class="community-story"><div class="community-story-avatar"></div><span>${escapeHtml(name)}</span></div>`).join(''):`${communityTile('Start a story','Share a catch, clip, boat update or local report today.')}`;
   if($('homeCommunityStories')) $('homeCommunityStories').innerHTML=storyNames.length?storyNames.slice(0,5).map(name=>`<div class="community-story"><div class="community-story-avatar"></div><span>${escapeHtml(name)}</span></div>`).join(''):`${communityTile('Start a story','Share a catch, clip or report today.')}`;
-  if($('communityTrendingVideos')) $('communityTrendingVideos').innerHTML=videos.length?videos.slice(0,6).map(p=>communityTile(p.title||p.species||'Fishing clip', `${p.general_area||'Spot Safe'} · ${Number(p.likes_count||0)} likes`, p.caption||'')).join(''):communityTile('No videos yet','Upload the first OceanCore clip from your trip.');
+  if($('communityTrendingVideos')) $('communityTrendingVideos').innerHTML=videos.length?videos.slice(0,6).map(p=>communityTile(p.title||p.species||'Fishing clip', `${p.general_area||'Spot Safe'} · ${Number(p.views_count||0).toLocaleString()} views · ${Number(p.likes_count||0)} likes`, p.caption||'')).join(''):communityTile('No videos yet','Upload the first OceanCore clip from your trip.');
   if($('communityLocalReports')) $('communityLocalReports').innerHTML=reports.length?reports.slice(0,5).map(p=>communityMiniItem(p.title||p.species||'Local report', p.general_area||'Spot Safe')).join(''):communityMiniItem('No reports yet','Share water, ramp, weather or bite intel.');
   if($('homeCommunityReports')) $('homeCommunityReports').innerHTML=reports.length?reports.slice(0,3).map(p=>communityMiniItem(p.title||p.species||'Local report', p.general_area||'Spot Safe')).join(''):communityMiniItem('No reports yet','Share water, ramp, weather or bite intel.');
   if($('communityActiveMembers')) $('communityActiveMembers').innerHTML=leaders.length?leaders.slice(0,5).map(x=>communityMiniItem(x.name, `${Number(x.posts||0)} posts`)).join(''):communityMiniItem('Crew is warming up','Follow anglers and post useful updates.');
