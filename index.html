@@ -4620,7 +4620,9 @@ function addBathymetryVectorLayer(enabled){
 function ensureMap(){
   if(state.map) return;
   const token = state.mapboxToken || window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || MAPBOX_PUBLIC_FALLBACK;
-  $('mapWrap')?.classList.toggle('mapbox-missing', !token);
+  const needsMapbox = state.mapView !== 'windy';
+  $('mapWrap')?.classList.toggle('mapbox-missing', needsMapbox && !token);
+  if(!needsMapbox) return;
   if(!token || !window.mapboxgl){
     setStatusMessage('mapMsg','Mapbox is not configured yet. Add MAPBOX_PUBLIC_TOKEN to the backend environment and redeploy.');
     return;
@@ -4709,6 +4711,12 @@ function clearMapLayers(){
 
 function renderMap(){
   renderWindyMap();
+  if(state.mapView === 'windy'){
+    $('mapWrap')?.classList.remove('mapbox-missing');
+    scheduleMapResize();
+    renderNotificationCenter();
+    return;
+  }
   ensureMap();
   if(!state.map || !state.mapReady) return;
   applyMapBaseLayer();
