@@ -2559,6 +2559,8 @@ function configuredApiUrl(){
   return normalizeApiUrl(window.OCEANCORE_API_URL || meta || 'https://fishing-ai-backend.onrender.com');
 }
 
+const MAPBOX_PUBLIC_FALLBACK = '';
+
 function sameOriginProxyApiUrl(){
   const origin = normalizeApiUrl(currentHttpOrigin());
   return /^https:\/\/oceancore-frontend\.vercel\.app$/i.test(origin) ? origin : '';
@@ -2782,7 +2784,7 @@ const state = {
   legacyChat: safeJsonParse(localStorage.getItem('oceancore_chat_history'), []),
   map: null,
   mapReady: false,
-  mapboxToken: window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || '',
+  mapboxToken: window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || MAPBOX_PUBLIC_FALLBACK,
   mapBaseLayers: null,
   mapOverlayLayers: null,
   mapNeedsRecenter: true,
@@ -3439,8 +3441,13 @@ async function refreshHealth(){
     setBadge('apiBadge', j?.auth_api_configured ? 'API OK' : 'API PART', j?.auth_api_configured ? 'ok' : 'warn');
     state.lastHealth = j || null;
     if(j?.mapbox_public_token){
+      const hadToken = !!state.mapboxToken;
       state.mapboxToken = j.mapbox_public_token;
       localStorage.setItem('oceancore_mapbox_token', state.mapboxToken);
+      if(!hadToken || !state.map){
+        $('mapWrap')?.classList.remove('mapbox-missing');
+        setTimeout(()=>renderMap(), 0);
+      }
     }
     setStatusMessage('gateHint', state.token ? 'Restoring saved login on this device...' : 'Sign in to open OceanCore.');
     if(!j?.auth_api_configured){
@@ -4612,7 +4619,7 @@ function addBathymetryVectorLayer(enabled){
 
 function ensureMap(){
   if(state.map) return;
-  const token = state.mapboxToken || window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || '';
+  const token = state.mapboxToken || window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || MAPBOX_PUBLIC_FALLBACK;
   $('mapWrap')?.classList.toggle('mapbox-missing', !token);
   if(!token || !window.mapboxgl){
     setStatusMessage('mapMsg','Mapbox is not configured yet. Add MAPBOX_PUBLIC_TOKEN to the backend environment and redeploy.');
