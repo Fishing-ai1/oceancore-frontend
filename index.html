@@ -27,7 +27,7 @@
   <link rel="icon" href="./assets/icons/favicon.svg" type="image/svg+xml"/>
   <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png"/>
   <script src="./assets/native-config.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.css"/>
   <style>
     :root{
       --bg:#040813;
@@ -207,6 +207,22 @@
     .map-source-bar button.active{background:linear-gradient(135deg,var(--brand2),var(--brand));color:#04121a;border-color:rgba(125,255,213,.65)}
     .map-wrap{border-radius:16px;overflow:hidden;border:1px solid var(--border);background:#0b1225}
     #map,#windyMapFrame{height:420px;width:100%;display:block;border:0}
+    #map{background:#06111f}
+    .mapboxgl-ctrl-logo,.mapboxgl-ctrl-attrib{filter:saturate(.7);opacity:.82}
+    .mapboxgl-ctrl-bottom-left,.mapboxgl-ctrl-bottom-right{z-index:25}
+    .mapboxgl-popup-content{background:#071225;color:#e8f0ff;border:1px solid rgba(148,163,184,.28);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.38);font:13px/1.45 Inter,system-ui,sans-serif}
+    .mapboxgl-popup-tip{border-top-color:#071225!important;border-bottom-color:#071225!important}
+    .mapboxgl-ctrl button{width:36px;height:36px}
+    .mapboxgl-ctrl-group{border-radius:10px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.32)}
+    .mapboxgl-marker.oc-marker{width:18px;height:18px;border-radius:999px;background:#49e7ff;border:3px solid #dffcff;box-shadow:0 0 0 8px rgba(73,231,255,.18),0 10px 22px rgba(0,0,0,.32)}
+    .mapbox-setup{
+      position:absolute;inset:0;z-index:620;display:none;align-items:center;justify-content:center;text-align:center;
+      padding:22px;background:radial-gradient(circle at center,rgba(73,231,255,.12),rgba(3,9,20,.88) 58%,rgba(3,9,20,.96));
+    }
+    .map-wrap.mapbox-missing .mapbox-setup{display:flex}
+    .mapbox-setup .setup-card{max-width:520px;border:1px solid rgba(73,231,255,.25);border-radius:18px;background:rgba(5,12,28,.92);padding:20px;box-shadow:0 24px 64px rgba(0,0,0,.45)}
+    .mapbox-setup h3{margin:0 0 8px;font-size:20px}
+    .mapbox-setup p{margin:0;color:#bfd0ee}
     .map-wrap[data-map-view="windy"] #map{display:none}
     .map-wrap[data-map-view="local"] #windyMapFrame,.map-wrap[data-map-view="satellite"] #windyMapFrame{display:none}
     .map-wrap[data-map-view="satellite"]{background:#05111c;box-shadow:0 0 0 1px rgba(73,231,255,.18),0 18px 60px rgba(0,0,0,.35)}
@@ -1650,6 +1666,12 @@
             <div class="map-wrap marine-map-frame" id="mapWrap" data-map-view="windy">
               <iframe id="windyMapFrame" title="Windy live wind and waves map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
               <div id="map"></div>
+              <div class="mapbox-setup" id="mapboxSetup">
+                <div class="setup-card">
+                  <h3>Mapbox token needed</h3>
+                  <p>Set <strong>MAPBOX_PUBLIC_TOKEN</strong> in the backend environment, redeploy, then OceanCore will load the premium Mapbox chart engine here.</p>
+                </div>
+              </div>
               <div class="chartplotter-tools" id="chartplotterTools" aria-label="Chart display layers">
                 <strong>Map style</strong>
                 <div class="chartplotter-row">
@@ -2477,7 +2499,7 @@
   <button class="mobile-tab" data-section="profile" type="button" aria-label="Profile">P<span>Profile</span></button>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js" crossorigin="anonymous"></script>
 <script>
 const $ = (id)=>document.getElementById(id);
@@ -2759,6 +2781,8 @@ const state = {
   activeChatId: localStorage.getItem('oceancore_active_chat_id') || null,
   legacyChat: safeJsonParse(localStorage.getItem('oceancore_chat_history'), []),
   map: null,
+  mapReady: false,
+  mapboxToken: window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || '',
   mapBaseLayers: null,
   mapOverlayLayers: null,
   mapNeedsRecenter: true,
@@ -3139,7 +3163,7 @@ function scheduleMapResize(){
   if(!state.map) return;
   [0,120,320].forEach(delay=>{
     setTimeout(()=>{
-      try{ state.map.invalidateSize(); }catch(_e){}
+      try{ state.map.resize(); }catch(_e){}
     }, delay);
   });
 }
@@ -3414,6 +3438,10 @@ async function refreshHealth(){
     const j = await api('/health');
     setBadge('apiBadge', j?.auth_api_configured ? 'API OK' : 'API PART', j?.auth_api_configured ? 'ok' : 'warn');
     state.lastHealth = j || null;
+    if(j?.mapbox_public_token){
+      state.mapboxToken = j.mapbox_public_token;
+      localStorage.setItem('oceancore_mapbox_token', state.mapboxToken);
+    }
     setStatusMessage('gateHint', state.token ? 'Restoring saved login on this device...' : 'Sign in to open OceanCore.');
     if(!j?.auth_api_configured){
       setAuthFeedback('Backend is up, but auth is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY in backend .env, then restart.');
@@ -4443,73 +4471,192 @@ function setWindyOverlay(overlay){
   renderWindyMap();
 }
 
+function mapboxStyleForCurrentMode(){
+  if(state.mapView === 'satellite' || state.chartBaseStyle === 'satellite') return 'mapbox://styles/mapbox/satellite-streets-v12';
+  if(state.chartBaseStyle === 'depth') return 'mapbox://styles/mapbox/navigation-night-v1';
+  return 'mapbox://styles/mapbox/outdoors-v12';
+}
+
+function removeMapLayerAndSource(id){
+  if(!state.map || !state.mapReady) return;
+  try{ if(state.map.getLayer(id)) state.map.removeLayer(id); }catch(_e){}
+  try{ if(state.map.getSource(id)) state.map.removeSource(id); }catch(_e){}
+}
+
+function upsertGeojsonSource(id, data){
+  if(!state.map || !state.mapReady) return;
+  const source = state.map.getSource(id);
+  if(source?.setData) source.setData(data);
+  else state.map.addSource(id,{ type:'geojson', data });
+}
+
+function markerEl(className='oc-marker'){
+  const el = document.createElement('div');
+  el.className = `mapboxgl-marker ${className}`;
+  return el;
+}
+
+function upsertMapMarkers(){
+  if(!state.map || !state.mapReady) return;
+  (state.mapLayers || []).forEach(marker=>{ try{ marker.remove(); }catch(_e){} });
+  state.mapLayers = [];
+  if(state.mapView !== 'satellite'){
+    const userMarker = new mapboxgl.Marker({ element:markerEl('oc-marker'), anchor:'center' })
+      .setLngLat([state.selectedLng,state.selectedLat])
+      .setPopup(new mapboxgl.Popup().setHTML('Selected location'))
+      .addTo(state.map);
+    state.mapLayers.push(userMarker);
+  }
+  const poiFeatures = [];
+  if(state.mapView === 'local'){
+    state.ramps.forEach(r=>{
+      if(Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng))){
+        poiFeatures.push({ type:'Feature', geometry:{ type:'Point', coordinates:[Number(r.lng),Number(r.lat)] }, properties:{ kind:'ramp', title:r.name || 'Boat ramp', subtitle:`${r.address || ''} ${r.distance_km || ''} km` } });
+      }
+    });
+    state.fuel.forEach(f=>{
+      if(Number.isFinite(Number(f.lat)) && Number.isFinite(Number(f.lng))){
+        poiFeatures.push({ type:'Feature', geometry:{ type:'Point', coordinates:[Number(f.lng),Number(f.lat)] }, properties:{ kind:'fuel', title:f.name || 'Fuel', subtitle:`${f.address || f.brand || ''} ${f.distance_km || ''} km` } });
+      }
+    });
+  }
+  upsertGeojsonSource('oc-poi-circles',{ type:'FeatureCollection', features:poiFeatures });
+  if(!state.map.getLayer('oc-poi-circles')){
+    state.map.addLayer({
+      id:'oc-poi-circles',
+      type:'circle',
+      source:'oc-poi-circles',
+      paint:{
+        'circle-radius':8,
+        'circle-color':['match',['get','kind'],'fuel','#ffd36f','ramp','#49e7ff','#7dffd5'],
+        'circle-stroke-color':'#e8f0ff',
+        'circle-stroke-width':2,
+        'circle-opacity':0.88,
+      },
+    });
+    state.map.on('click','oc-poi-circles',(e)=>{
+      const feature = e.features?.[0];
+      if(!feature) return;
+      new mapboxgl.Popup().setLngLat(feature.geometry.coordinates).setHTML(`<strong>${escapeHtml(feature.properties.title || '')}</strong><br/>${escapeHtml(feature.properties.subtitle || '')}`).addTo(state.map);
+    });
+  }
+}
+
+function circlePolygon(lng, lat, radiusKm, steps=80){
+  const coords = [];
+  const radius = Math.max(0.5,Number(radiusKm || 10));
+  const latRad = lat * Math.PI / 180;
+  for(let i=0;i<=steps;i++){
+    const angle = (i / steps) * Math.PI * 2;
+    const dLat = (radius / 111.32) * Math.sin(angle);
+    const dLng = (radius / Math.max(20,111.32 * Math.cos(latRad))) * Math.cos(angle);
+    coords.push([lng + dLng, lat + dLat]);
+  }
+  return coords;
+}
+
+function upsertSavedAreaLayers(){
+  if(!state.map || !state.mapReady || state.mapView === 'satellite' || getSetting('saved.showOnMap') === false) return;
+  const features = (state.savedAreas || []).filter(area=>Number.isFinite(Number(area.lat)) && Number.isFinite(Number(area.lng))).map(area=>({
+    type:'Feature',
+    geometry:{ type:'Polygon', coordinates:[circlePolygon(Number(area.lng),Number(area.lat),Number(area.radius_km || 10))] },
+    properties:{ name:area.name || 'Saved Area', general_area:area.general_area || 'Spot Safe Area' },
+  }));
+  const data = { type:'FeatureCollection', features };
+  upsertGeojsonSource('oc-saved-area-fill',data);
+  upsertGeojsonSource('oc-saved-area-line',data);
+  if(!state.map.getLayer('oc-saved-area-fill')){
+    state.map.addLayer({ id:'oc-saved-area-fill', type:'fill', source:'oc-saved-area-fill', paint:{ 'fill-color':'#49e7ff','fill-opacity':0.08 } });
+  }
+  if(!state.map.getLayer('oc-saved-area-line')){
+    state.map.addLayer({ id:'oc-saved-area-line', type:'line', source:'oc-saved-area-line', paint:{ 'line-color':'#49e7ff','line-width':1.5,'line-opacity':0.62 } });
+  }
+}
+
+function upsertRasterTileSource(id, tileUrl, enabled, opacity=1){
+  if(!state.map || !state.mapReady) return;
+  if(!enabled){ removeMapLayerAndSource(id); return; }
+  if(!state.map.getSource(id)){
+    state.map.addSource(id,{ type:'raster', tiles:[tileUrl], tileSize:256, attribution:'Sea marks &copy; OpenSeaMap contributors' });
+  }
+  if(!state.map.getLayer(id)){
+    state.map.addLayer({ id, type:'raster', source:id, paint:{ 'raster-opacity':opacity } });
+  }else{
+    state.map.setPaintProperty(id,'raster-opacity',opacity);
+  }
+}
+
+function addBathymetryVectorLayer(enabled){
+  if(!state.map || !state.mapReady) return;
+  if(!enabled){
+    removeMapLayerAndSource('oc-bathymetry-contours');
+    return;
+  }
+  try{
+    if(!state.map.getSource('oc-bathymetry-contours')){
+      state.map.addSource('oc-bathymetry-contours',{ type:'vector', url:'mapbox://mapbox.mapbox-bathymetry-v2' });
+    }
+    if(!state.map.getLayer('oc-bathymetry-contours')){
+      state.map.addLayer({
+        id:'oc-bathymetry-contours',
+        type:'line',
+        source:'oc-bathymetry-contours',
+        'source-layer':'depth',
+        paint:{ 'line-color':'rgba(73,231,255,0.42)', 'line-width':['interpolate',['linear'],['zoom'],4,0.4,9,1.1,13,1.8] },
+      });
+    }
+  }catch(_e){
+    setStatusMessage('mapMsg','Mapbox bathymetry contours need the Mapbox Bathymetry tileset enabled on this token.');
+  }
+}
+
 function ensureMap(){
   if(state.map) return;
-  state.map = L.map('map', { preferCanvas:true }).setView([state.selectedLat, state.selectedLng], 9);
-  const oceanBase = ()=>L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:19, maxNativeZoom:19, keepBuffer:4, updateWhenIdle:false, attribution:'Topographic map &copy; Esri' }
-  );
-  const oceanReference = ()=>L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:16, pane:'overlayPane', zIndex:630, attribution:'Ocean reference &copy; Esri' }
-  );
-  const seamarks = ()=>L.tileLayer(
-    'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
-    { maxZoom:18, pane:'overlayPane', zIndex:640, opacity:0.9, attribution:'Sea marks &copy; OpenSeaMap contributors' }
-  );
-  const satelliteBase = ()=>L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:19, attribution:'Satellite imagery &copy; Esri, Maxar, Earthstar Geographics' }
-  );
-  const depthRelief = ()=>L.tileLayer(
-    'https://services.ga.gov.au/gis/rest/services/World_Bathymetry_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:9, maxNativeZoom:9, attribution:'Bathymetry &copy; Commonwealth of Australia (Geoscience Australia) CC BY 4.0' }
-  );
-  state.mapBaseLayers = {
-    chart: oceanBase(),
-    satellite: satelliteBase(),
-    depth: depthRelief(),
-  };
-  state.mapOverlayLayers = {
-    reference:oceanReference(),
-    seamarks:seamarks(),
-    bathymetry:L.tileLayer.wms('https://services.ga.gov.au/gis/services/Bathymetry_Topography/MapServer/WMSServer',{
-      layers:'Australian_Bathymetry_and_Topography',format:'image/png',transparent:true,opacity:0.58,version:'1.3.0',zIndex:220,
-      attribution:'Bathymetry &copy; Commonwealth of Australia (Geoscience Australia) CC BY 4.0'
-    }),
-    geomorphology:L.tileLayer.wms('https://services.ga.gov.au/gis/services/Marine_Geomorphic_Features/MapServer/WMSServer',{
-      layers:'Geomorphic_Features',format:'image/png',transparent:true,opacity:0.46,version:'1.3.0',zIndex:230,
-      attribution:'Seabed features &copy; Commonwealth of Australia (Geoscience Australia) CC BY 4.0'
-    }),
-  };
-  applyMapBaseLayer();
+  const token = state.mapboxToken || window.OCEANCORE_MAPBOX_TOKEN || localStorage.getItem('oceancore_mapbox_token') || '';
+  $('mapWrap')?.classList.toggle('mapbox-missing', !token);
+  if(!token || !window.mapboxgl){
+    setStatusMessage('mapMsg','Mapbox is not configured yet. Add MAPBOX_PUBLIC_TOKEN to the backend environment and redeploy.');
+    return;
+  }
+  mapboxgl.accessToken = token;
+  state.map = new mapboxgl.Map({
+    container:'map',
+    style:mapboxStyleForCurrentMode(),
+    center:[state.selectedLng,state.selectedLat],
+    zoom:8.6,
+    pitch:state.chartBaseStyle === 'depth' ? 42 : 18,
+    bearing:0,
+    projection:'mercator',
+    attributionControl:true,
+  });
+  state.map.__oceancoreStyle = mapboxStyleForCurrentMode();
+  state.map.addControl(new mapboxgl.NavigationControl({ visualizePitch:true }), 'top-left');
+  state.mapReady = false;
+  state.map.on('load', ()=>{
+    state.mapReady = true;
+    applyMapStructureLayers();
+    renderMap();
+  });
 
   scheduleMapResize();
 
   state.map.on('click', (e)=>{
-    state.selectedLat = Number(e.latlng.lat.toFixed(6));
-    state.selectedLng = Number(e.latlng.lng.toFixed(6));
+    state.selectedLat = Number(e.lngLat.lat.toFixed(6));
+    state.selectedLng = Number(e.lngLat.lng.toFixed(6));
     $('mapLat').value = state.selectedLat;
     $('mapLng').value = state.selectedLng;
     localStorage.setItem('oceancore_lat', String(state.selectedLat));
     localStorage.setItem('oceancore_lng', String(state.selectedLng));
-    if(state.mapSelectionLayer){
-      try{ state.map.removeLayer(state.mapSelectionLayer); }catch(_error){}
-    }
-    state.mapSelectionLayer = L.circleMarker(e.latlng,{
-      radius:6,
-      color:'#7dffd5',
-      fillColor:'#49e7ff',
-      fillOpacity:0.9,
-      weight:2,
-    }).addTo(state.map).bindPopup(
-      `<strong>Selected point</strong><br/>${formatCoordsText(state.selectedLat,state.selectedLng)}<br/>Load conditions or refresh analysis when ready.`
-    ).openPopup();
+    upsertMapMarkers();
+    new mapboxgl.Popup({ closeButton:true, closeOnClick:true })
+      .setLngLat([state.selectedLng,state.selectedLat])
+      .setHTML(`<strong>Selected point</strong><br/>${formatCoordsText(state.selectedLat,state.selectedLng)}<br/>Load conditions or refresh analysis when ready.`)
+      .addTo(state.map);
     state.pelagicGridKey = '';
     setStatusMessage('mapMsg','Point selected. The map view will stay where you left it.');
   });
-  state.map.on('dragstart zoomstart', ()=>{
+  state.map.on('dragstart', ()=>{ state.mapNeedsRecenter = false; });
+  state.map.on('zoomstart', ()=>{
     state.mapNeedsRecenter = false;
   });
 }
@@ -4535,30 +4682,28 @@ function toggleChartOverlay(name){
 }
 
 function applyMapStructureLayers(){
-  if(!state.map || !state.mapOverlayLayers) return;
-  const desired = {
-    reference:false,
-    seamarks:state.chartOverlayFlags?.seamarks === true,
-    bathymetry:state.chartOverlayFlags?.bathymetry === true && state.chartBaseStyle !== 'depth',
-    geomorphology:state.chartOverlayFlags?.geomorphology === true,
-  };
-  Object.entries(state.mapOverlayLayers).forEach(([name,layer])=>{
-    if(desired[name] && !state.map.hasLayer(layer)) layer.addTo(state.map);
-    if(!desired[name] && state.map.hasLayer(layer)) state.map.removeLayer(layer);
-  });
+  if(!state.map || !state.mapReady) return;
+  upsertRasterTileSource('oc-seamarks','https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',state.chartOverlayFlags?.seamarks === true,0.82);
+  addBathymetryVectorLayer(state.chartOverlayFlags?.bathymetry === true || state.chartBaseStyle === 'depth');
 }
 
 function clearMapLayers(){
-  if(!state.map) return;
-  state.mapLayers.forEach(layer=>{
-    try{ state.map.removeLayer(layer); }catch(_e){}
-  });
+  if(!state.map || !state.mapReady) return;
+  removeMapLayerAndSource('oc-poi-circles');
+  removeMapLayerAndSource('oc-saved-area-fill');
+  removeMapLayerAndSource('oc-saved-area-line');
+  removeMapLayerAndSource('oc-satellite-raster');
+  removeMapLayerAndSource('oc-satellite-heatmap');
+  removeMapLayerAndSource('oc-noaa-raster');
+  removeMapLayerAndSource('oc-pelagic-raster');
+  (state.mapLayers || []).forEach(marker=>{ try{ marker.remove(); }catch(_e){} });
   state.mapLayers = [];
 }
 
 function renderMap(){
   renderWindyMap();
   ensureMap();
+  if(!state.map || !state.mapReady) return;
   applyMapBaseLayer();
   scheduleMapResize();
   clearMapLayers();
@@ -4567,44 +4712,15 @@ function renderMap(){
   if(state.mapNeedsRecenter){
     if(state.mapView === 'satellite'){
       const radiusKm = Math.max(5, Math.min(120, Number($('mapRadius')?.value || 35)));
-      state.map.fitBounds(satelliteBounds(radiusKm), { padding:[18,18], animate:false });
+      state.map.fitBounds(mapboxBounds(satelliteBounds(radiusKm)), { padding:42, duration:0 });
     }else{
-      state.map.setView(center, 10, { animate:false });
+      state.map.jumpTo({ center:[state.selectedLng,state.selectedLat], zoom:10 });
     }
     state.mapNeedsRecenter = false;
   }
-  if(state.mapView !== 'satellite'){
-    const userMarker = L.marker(center).addTo(state.map).bindPopup('Selected location');
-    state.mapLayers.push(userMarker);
-  }
 
-  if(state.mapView === 'local'){
-    state.ramps.forEach(r=>{
-      const marker = L.circleMarker([r.lat, r.lng], { radius:8 }).addTo(state.map)
-        .bindPopup(`<strong>${escapeHtml(r.name)}</strong><br/>${escapeHtml(r.address || '')}<br/>${r.distance_km} km`);
-      state.mapLayers.push(marker);
-    });
-
-    state.fuel.forEach(f=>{
-      const marker = L.circleMarker([f.lat, f.lng], { radius:8 }).addTo(state.map)
-        .bindPopup(`<strong>${escapeHtml(f.name)}</strong><br/>${escapeHtml(f.address || f.brand || '')}<br/>${f.distance_km} km`);
-      state.mapLayers.push(marker);
-    });
-  }
-
-  if(state.mapView !== 'satellite' && getSetting('saved.showOnMap') !== false){
-    (state.savedAreas || []).forEach(area=>{
-      if(!Number.isFinite(Number(area.lat)) || !Number.isFinite(Number(area.lng))) return;
-      const circle = L.circle([Number(area.lat), Number(area.lng)], {
-        radius: Math.max(500, Number(area.radius_km || 10) * 1000),
-        color: '#49e7ff',
-        fillColor: '#49e7ff',
-        fillOpacity: 0.08,
-        weight: 1,
-      }).addTo(state.map).bindPopup(`<strong>${escapeHtml(area.name || 'Saved Area')}</strong><br/>${escapeHtml(area.general_area || 'Spot Safe Area')}`);
-      state.mapLayers.push(circle);
-    });
-  }
+  upsertMapMarkers();
+  upsertSavedAreaLayers();
 
   renderScientificRasterLayer();
 
@@ -5320,12 +5436,19 @@ function adminFilteredUsers(){
 }
 
 function applyMapBaseLayer(){
-  if(!state.map || !state.mapBaseLayers) return;
-  const key = ['chart','satellite','depth'].includes(state.chartBaseStyle) ? state.chartBaseStyle : 'chart';
-  Object.entries(state.mapBaseLayers).forEach(([layerKey,layer])=>{
-    if(layerKey !== key && state.map.hasLayer(layer)) state.map.removeLayer(layer);
-  });
-  if(!state.map.hasLayer(state.mapBaseLayers[key])) state.mapBaseLayers[key].addTo(state.map);
+  if(!state.map) return;
+  const style = mapboxStyleForCurrentMode();
+  if(state.map.__oceancoreStyle !== style){
+    state.mapReady = false;
+    state.map.__oceancoreStyle = style;
+    state.map.setStyle(style);
+    state.map.once('style.load', ()=>{
+      state.mapReady = true;
+      applyMapStructureLayers();
+      renderMap();
+    });
+    return;
+  }
   applyMapStructureLayers();
   syncChartplotterControls();
 }
@@ -6390,14 +6513,32 @@ function satelliteBounds(radiusKm){
   const radius = Math.max(100, Math.min(120, Number(radiusKm || $('mapRadius')?.value || 100)));
   const latSpan = radius / 111.32;
   const lngSpan = radius / Math.max(20, 111.32 * Math.abs(Math.cos(lat * Math.PI / 180)));
-  return L.latLngBounds([lat - latSpan, lng - lngSpan], [lat + latSpan, lng + lngSpan]);
+  return {
+    south: lat - latSpan,
+    west: lng - lngSpan,
+    north: lat + latSpan,
+    east: lng + lngSpan,
+  };
+}
+
+function mapboxBounds(bounds){
+  return [[Number(bounds.west), Number(bounds.south)], [Number(bounds.east), Number(bounds.north)]];
+}
+
+function imageOverlayCoordinates(bounds){
+  return [
+    [Number(bounds.west), Number(bounds.north)],
+    [Number(bounds.east), Number(bounds.north)],
+    [Number(bounds.east), Number(bounds.south)],
+    [Number(bounds.west), Number(bounds.south)],
+  ];
 }
 
 function erddapRasterUrl(layer, bounds){
-  const south = Number(bounds.getSouth().toFixed(4));
-  const north = Number(bounds.getNorth().toFixed(4));
-  const west = Number(bounds.getWest().toFixed(4));
-  const east = Number(bounds.getEast().toFixed(4));
+  const south = Number(Number(bounds.south).toFixed(4));
+  const north = Number(Number(bounds.north).toFixed(4));
+  const west = Number(Number(bounds.west).toFixed(4));
+  const east = Number(Number(bounds.east).toFixed(4));
   const configs = {
     fronts:{dataset:'noaacwLEOACSPOSSTL3SnrtPMDay',variable:'sst_gradient_magnitude',palette:'Inferno',scale:'Linear',min:'0',max:'0.2'},
     sst:{dataset:'noaacwLEOACSPOSSTL3SnrtPMDay',variable:'sea_surface_temperature',palette:'KT_thermal',scale:'Linear',min:'16',max:'31'},
@@ -6442,20 +6583,37 @@ function renderSatelliteHeatmapLayer(){
   if(!state.map || !state.satelliteHeatmap?.cells?.length) return;
   const cells = state.satelliteHeatmap.cells.filter(cell=>cell.sst_c != null || cell.chlorophyll_signal != null);
   if(!cells.length) return;
-  cells.forEach(cell=>{
-    const color = heatmapColor(cell.score);
-    const circle = L.circle([Number(cell.lat), Number(cell.lng)], {
-      radius: Math.max(1500, Number(cell.radius_km || 8) * 1000),
-      color,
-      fillColor: color,
-      fillOpacity: Number(cell.score || 0) >= 70 ? 0.38 : 0.24,
-      opacity: 0.85,
-      weight: 1,
-    }).addTo(state.map).bindPopup(`<strong>Satellite heat ${Number(cell.score || 0)}/100</strong><br/>SST: ${cell.sst_c == null ? 'unavailable' : `${cell.sst_c}C`}<br/>Chlorophyll: ${cell.chlorophyll_signal == null ? 'unavailable' : cell.chlorophyll_signal}<br/>${escapeHtml((cell.reasons || []).join(' · '))}`);
-    state.mapLayers.push(circle);
+  removeMapLayerAndSource('oc-satellite-heatmap');
+  const features = cells.map(cell=>{
+    const score = Number(cell.score || 0);
+    const color = heatmapColor(score);
+    return {
+      type:'Feature',
+      properties:{
+        score,
+        color,
+        opacity: score >= 70 ? 0.38 : 0.24,
+        title:`Satellite heat ${score}/100`,
+        subtitle:`SST: ${cell.sst_c == null ? 'unavailable' : `${cell.sst_c}C`} - Chlorophyll: ${cell.chlorophyll_signal == null ? 'unavailable' : cell.chlorophyll_signal}`,
+      },
+      geometry:{
+        type:'Polygon',
+        coordinates:[circlePolygon(Number(cell.lng), Number(cell.lat), Math.max(1.5, Number(cell.radius_km || 8)), 72)],
+      },
+    };
+  });
+  state.map.addSource('oc-satellite-heatmap',{ type:'geojson', data:{ type:'FeatureCollection', features } });
+  state.map.addLayer({
+    id:'oc-satellite-heatmap',
+    type:'fill',
+    source:'oc-satellite-heatmap',
+    paint:{
+      'fill-color':['get','color'],
+      'fill-opacity':['get','opacity'],
+      'fill-outline-color':['get','color'],
+    },
   });
 }
-
 function pelagicColor(score){
   const stops = [
     [0,[18,8,33]], [0.24,[59,15,112]], [0.48,[140,41,129]],
@@ -6592,6 +6750,26 @@ async function loadPelagicGrid(force=false){
   }
 }
 
+function addMapboxImageOverlay(id, url, bounds, opacity=0.88){
+  if(!state.map || !url || !bounds) return false;
+  removeMapLayerAndSource(id);
+  state.map.addSource(id, {
+    type:'image',
+    url,
+    coordinates:imageOverlayCoordinates(bounds),
+  });
+  state.map.addLayer({
+    id,
+    type:'raster',
+    source:id,
+    paint:{
+      'raster-opacity':opacity,
+      'raster-fade-duration':180,
+    },
+  });
+  return true;
+}
+
 function renderScientificRasterLayer(){
   if(!state.map || state.mapView !== 'satellite') return;
   const bounds = satelliteBounds();
@@ -6601,49 +6779,33 @@ function renderScientificRasterLayer(){
     chlorophyll:'Chlorophyll productivity',
     habitat:'Pelagic SST/front composite',
   };
-  const addRaster = (layer, opacity)=>{
-    const raster = L.imageOverlay(erddapRasterUrl(layer, bounds), bounds, {
-      opacity,
-      interactive:false,
-      alt:`NOAA ${labels[layer] || layer} satellite layer`,
-      zIndex:420,
-      className:`scientific-raster scientific-raster-${layer}`,
-    });
-    raster.on('load', ()=>{
-      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = '200 km coverage · latest NOAA';
-    });
-    raster.on('error', ()=>{
-      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Layer unavailable';
-      setStatusMessage('satelliteHeatmapMsg','NOAA could not render this layer for the selected area. Try Sea temperature or Chlorophyll, or retry shortly.');
-    });
-    raster.addTo(state.map);
-    state.mapLayers.push(raster);
-  };
+  const setLayerDate = text=>{ if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = text; };
+  removeMapLayerAndSource('oc-noaa-raster');
+  removeMapLayerAndSource('oc-pelagic-raster');
+
   if(['habitat','sst','fronts'].includes(state.satelliteLayer)){
     const validGrid = pelagicGridMatchesSelection();
     const dataUrl = validGrid ? pelagicRasterDataUrl(state.pelagicGrid,state.satelliteLayer) : '';
     if(dataUrl && state.pelagicGrid?.bounds){
       const b = state.pelagicGrid.bounds;
-      const raster = L.imageOverlay(dataUrl,[[b.south,b.west],[b.north,b.east]],{
-        opacity:0.9,
-        interactive:false,
-        zIndex:420,
-        className:'pelagic-generated-raster',
-        alt:`OceanCore ${labels[state.satelliteLayer]} grid`,
-      }).addTo(state.map);
-      state.mapLayers.push(raster);
-      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Dense NOAA grid';
+      const gridBounds = { south:Number(b.south), west:Number(b.west), north:Number(b.north), east:Number(b.east) };
+      addMapboxImageOverlay('oc-pelagic-raster', dataUrl, gridBounds, 0.9);
+      setLayerDate('Dense NOAA grid');
+    }else if(state.satelliteLayer === 'sst' || state.satelliteLayer === 'fronts'){
+      addMapboxImageOverlay('oc-noaa-raster', erddapRasterUrl(state.satelliteLayer, bounds), bounds, 0.72);
+      setLayerDate('Loading 200 km coverage');
     }else{
-      if($('satelliteLayerDate')) $('satelliteLayerDate').textContent = 'Pelagic grid unavailable';
+      setLayerDate('Pelagic grid unavailable');
     }
+  }else if(state.satelliteLayer === 'chlorophyll'){
+    addMapboxImageOverlay('oc-noaa-raster', erddapRasterUrl('chlorophyll', bounds), bounds, 0.72);
+    setLayerDate('Loading 200 km coverage');
   }
-  if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
-  if($('satelliteLayerDate') && state.satelliteLayer !== 'habitat') $('satelliteLayerDate').textContent = 'Loading 200 km coverage';
-  document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
 
+  if($('satelliteLayerName')) $('satelliteLayerName').textContent = labels[state.satelliteLayer] || labels.fronts;
+  document.querySelectorAll('[data-satellite-layer]').forEach(btn=>btn.classList.toggle('active', btn.dataset.satelliteLayer === state.satelliteLayer));
   applyMapStructureLayers();
 }
-
 async function buildSatelliteHeatmap(){
   const button = $('btnSatelliteHeatmap');
   const original = button?.textContent || 'Refresh Satellite Analysis';
