@@ -1,4 +1,4 @@
-const CACHE_NAME = "oceancore-app-v2026-06-17-pricing-plans";
+const CACHE_NAME = "oceancore-app-v2026-08-31-seaglass-brand";
 const NATIVE_APP_OFFLINE_PATH = "/app/offline.html";
 const NATIVE_APP_CONFIG_PATH = "/app/assets/native-config.js";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
