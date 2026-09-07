@@ -949,8 +949,11 @@
     .oc-home-intro{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 14px}
     .oc-home-intro h2{margin:0;font-size:28px}.oc-home-intro p{margin:3px 0 0;color:var(--muted)}
     #section-home>.oc-legacy-home,#section-home>.oc-help-bar,#section-home>.oc-simple-actions,#section-home>.oc-top-feed{display:none}
-    #socialHomeFeed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    #socialHomeFeed{display:grid;grid-template-columns:minmax(0,720px);justify-content:center;gap:14px}
     #socialHomeFeed .oc-feed-card{margin:0}
+    .oc-feed-sentinel{min-height:64px;display:grid;place-items:center;color:var(--muted);font-size:13px}
+    .oc-feed-load-more{min-height:44px;padding:0 18px;border:1px solid rgba(85,189,170,.35);border-radius:999px;background:rgba(8,31,35,.78);color:#e0ece6;font-weight:900;cursor:pointer}
+    .oc-feed-load-more:disabled{cursor:wait;opacity:.7}
     .oc-media-button{width:100%;border:0;cursor:pointer;text-align:left;color:inherit;padding:0;background:transparent;position:relative;display:block}
     .oc-media-button .oc-media{transition:filter .16s ease,transform .16s ease}.oc-media-button:hover .oc-media{filter:saturate(1.1) brightness(1.04)}
     .oc-video-overlay{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
@@ -1164,6 +1167,11 @@
           <div><h2>Your OceanCore feed</h2><p>Useful fishing videos, local reports and conditions chosen for you.</p></div>
           <button class="btn primary" type="button" data-section="create">Create</button>
         </div>
+        <div class="oc-composer" aria-label="Create a community post">
+          <div class="oc-avatar" id="socialComposerAvatarHome">OC</div>
+          <button class="fake-input" type="button" data-section="create">Share a catch, trip, boat update, video or question</button>
+          <button class="btn primary" type="button" data-section="create">Post</button>
+        </div>
         <div class="hero oc-legacy-home">
           <h2>Plan better trips. Log catches. Fish smarter.</h2>
           <p>
@@ -1220,10 +1228,12 @@
 
         <div class="oc-feed-tabs" aria-label="Home feed types">
           <button class="active" type="button" data-home-feed="home">For You</button>
+          <button type="button" data-home-feed="following">Following</button>
+          <button type="button" data-home-feed="latest">Latest</button>
+          <button type="button" data-home-feed="local">Local</button>
           <button type="button" data-home-feed="videos">Videos</button>
-          <button type="button" data-home-feed="local">Reports</button>
-          <button type="button" data-section="catch">Catch Logs</button>
           <button type="button" data-home-feed="boats">Boats</button>
+          <button type="button" data-section="catch">My Catches</button>
           <button type="button" data-section="map">Conditions</button>
         </div>
 
@@ -1827,7 +1837,7 @@
           </div>
         </div>
 
-        <div id="mapOnlyContent">
+        <div id="mapOnlyContent" hidden>
         <div class="intel-card" id="fishingIntelCard">
           <div class="intel-head">
             <div>
@@ -2960,6 +2970,11 @@ const state = {
   socialFeed: [],
   socialFeedMode: "home",
   socialFeedLoading: false,
+  socialFeedLoadingMore: false,
+  socialFeedNextCursor: "",
+  socialFeedHasMore: false,
+  socialFeedRequestId: 0,
+  socialFeedObserver: null,
   socialFeedMessage: "",
   communityMediaDataUrl: "",
   communityMediaMime: "",
@@ -6343,6 +6358,33 @@ function socialFeedPosts(){
   return Array.isArray(state.communityPosts) ? state.communityPosts : [];
 }
 
+function mergeSocialFeedItems(items, { append=false } = {}){
+  const incoming = Array.isArray(items) ? items : [];
+  const byId = new Map((append ? state.socialFeed : []).map(item=>[String(item?.id || ''), item]));
+  incoming.forEach(item=>{
+    const id = String(item?.id || '');
+    if(id) byId.set(id, {...byId.get(id), ...item});
+  });
+  state.socialFeed = Array.from(byId.values());
+  const merged = state.socialFeed.map(socialFeedItemToCommunityPost);
+  if(merged.length){
+    const existing = new Map((state.communityPosts || []).map(post=>[String(post.id), post]));
+    merged.forEach(post=>existing.set(String(post.id), {...existing.get(String(post.id)), ...post}));
+    state.communityPosts = Array.from(existing.values());
+  }
+}
+
+function syncSocialFeedPost(id, changes={}){
+  const key = String(id || '');
+  if(!key) return;
+  state.socialFeed = (state.socialFeed || []).map(item=>String(item?.id || '') === key
+    ? {...item, ...changes, metrics:{...(item.metrics || {}), ...(changes.metrics || {})}}
+    : item);
+  state.communityPosts = (state.communityPosts || []).map(post=>String(post?.id || '') === key
+    ? {...post, ...changes, likes_count:changes.metrics?.likes ?? changes.likes_count ?? post.likes_count, comments_count:changes.metrics?.comments ?? changes.comments_count ?? post.comments_count, views_count:changes.metrics?.views ?? changes.views_count ?? post.views_count}
+    : post);
+}
+
 function renderSocialFeedEmpty(){
   if(state.socialFeedLoading){
     return `<div class="community-skeleton" style="min-height:180px"></div><div class="community-skeleton" style="min-height:180px"></div>`;
@@ -6374,7 +6416,7 @@ function renderSocialFeedCard(post){
     post.category || '',
     post.spot_safe === false ? '' : 'Spot Safe'
   ].filter(Boolean).slice(0,4);
-  return `<article class="oc-feed-card">
+  return `<article class="oc-feed-card" data-social-post-id="${id}">
     <div class="oc-feed-head"><div class="oc-avatar">${escapeHtml(socialInitials(author))}</div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div>${post.user_id && String(post.user_id)!==String(state.authUser?.id||'') ? `<div class="crew-card-member-actions"><button class="chip" type="button" onclick="followCommunityUser('${escapeHtml(post.user_id)}')">Follow</button><button class="chip" type="button" onclick="requestCommunityFriend('${escapeHtml(post.user_id)}')">Add friend</button><button class="chip" type="button" onclick="openCommunityMessages('${escapeHtml(post.user_id)}')">Message</button></div>` : ''}</div>
     ${mediaHtml}
     <div class="oc-feed-body">
@@ -6402,28 +6444,67 @@ function setHomeFeedTab(feed){
 
 async function loadSocialHomeFeed(feed = state.socialFeedMode || 'home'){
   state.socialFeedMode = feed || 'home';
+  state.socialFeedRequestId += 1;
+  const requestId = state.socialFeedRequestId;
   state.socialFeedLoading = true;
+  state.socialFeedLoadingMore = false;
+  state.socialFeedNextCursor = '';
+  state.socialFeedHasMore = false;
   state.socialFeedMessage = '';
   setHomeFeedTab(state.socialFeedMode);
   renderSocialHome();
   try{
     const query = `feed=${encodeURIComponent(state.socialFeedMode)}&limit=12`;
     const j = await apiFirst([`/api/social/feed?${query}`, `/social/feed?${query}`]);
-    state.socialFeed = Array.isArray(j?.items) ? j.items : [];
-    const merged = state.socialFeed.map(socialFeedItemToCommunityPost);
-    if(merged.length){
-      const existing = new Map((state.communityPosts || []).map(post=>[String(post.id), post]));
-      merged.forEach(post=>existing.set(String(post.id), {...existing.get(String(post.id)), ...post}));
-      state.communityPosts = Array.from(existing.values());
-    }
+    if(requestId !== state.socialFeedRequestId) return;
+    mergeSocialFeedItems(j?.items);
+    state.socialFeedNextCursor = String(j?.next_cursor || '');
+    state.socialFeedHasMore = Boolean(j?.has_more && state.socialFeedNextCursor);
     state.socialFeedMessage = state.socialFeed.length ? '' : 'No ranked posts came back for this feed yet.';
   }catch(e){
+    if(requestId !== state.socialFeedRequestId) return;
     state.socialFeed = [];
     state.socialFeedMessage = e.message || String(e);
   }finally{
+    if(requestId !== state.socialFeedRequestId) return;
     state.socialFeedLoading = false;
     renderSocialHome();
   }
+}
+
+async function loadMoreSocialHomeFeed(){
+  if(state.socialFeedLoading || state.socialFeedLoadingMore || !state.socialFeedHasMore || !state.socialFeedNextCursor) return;
+  const requestId = state.socialFeedRequestId;
+  state.socialFeedLoadingMore = true;
+  renderSocialHome();
+  try{
+    const query = `feed=${encodeURIComponent(state.socialFeedMode)}&limit=12&cursor=${encodeURIComponent(state.socialFeedNextCursor)}`;
+    const j = await apiFirst([`/api/social/feed?${query}`, `/social/feed?${query}`]);
+    if(requestId !== state.socialFeedRequestId) return;
+    mergeSocialFeedItems(j?.items, {append:true});
+    state.socialFeedNextCursor = String(j?.next_cursor || '');
+    state.socialFeedHasMore = Boolean(j?.has_more && state.socialFeedNextCursor);
+  }catch(e){
+    if(requestId === state.socialFeedRequestId) state.socialFeedMessage = e.message || String(e);
+  }finally{
+    if(requestId === state.socialFeedRequestId){
+      state.socialFeedLoadingMore = false;
+      renderSocialHome();
+    }
+  }
+}
+
+function observeSocialFeedSentinel(){
+  const sentinel = $('socialHomeFeedSentinel');
+  if(state.socialFeedObserver){
+    state.socialFeedObserver.disconnect();
+    state.socialFeedObserver = null;
+  }
+  if(!sentinel || !state.socialFeedHasMore || !('IntersectionObserver' in window)) return;
+  state.socialFeedObserver = new IntersectionObserver(entries=>{
+    if(entries.some(entry=>entry.isIntersecting)) loadMoreSocialHomeFeed();
+  }, {rootMargin:'500px 0px'});
+  state.socialFeedObserver.observe(sentinel);
 }
 
 function renderSocialHome(){
@@ -6434,6 +6515,7 @@ function renderSocialHome(){
   const posts = socialFeedPosts();
   const rewards = state.rewards || {};
   if($('socialComposerAvatar')) $('socialComposerAvatar').textContent = initials;
+  if($('socialComposerAvatarHome')) $('socialComposerAvatarHome').textContent = initials;
   if($('socialHomeConditions')) $('socialHomeConditions').textContent = current
     ? `Wind ${formatMarineMetric(current.wind_kts,'kt')}, wave ${formatMarineMetric(current.wave_m,'m')}, swell ${formatMarineMetric(current.swell_m,'m')}.`
     : 'Load Windy conditions for your area.';
@@ -6449,9 +6531,18 @@ function renderSocialHome(){
   bindSectionButtons($('socialHomeStories'));
 
   if($('socialHomeFeed')){
-    $('socialHomeFeed').innerHTML = posts.length ? posts.slice(0, 8).map(renderSocialFeedCard).join('') : renderSocialFeedEmpty();
+    const feedHtml = posts.length ? posts.map(renderSocialFeedCard).join('') : renderSocialFeedEmpty();
+    const paginationHtml = posts.length
+      ? `<div class="oc-feed-sentinel" id="socialHomeFeedSentinel">${state.socialFeedLoadingMore
+        ? 'Loading more posts...'
+        : state.socialFeedHasMore
+          ? '<button class="oc-feed-load-more" type="button" onclick="loadMoreSocialHomeFeed()">Show more posts</button>'
+          : 'You are up to date.'}</div>`
+      : '';
+    $('socialHomeFeed').innerHTML = `${feedHtml}${paginationHtml}`;
     bindSectionButtons($('socialHomeFeed'));
     attachCommunityVideoViewListeners($('socialHomeFeed'));
+    observeSocialFeedSentinel();
   }
 }
 
@@ -8575,6 +8666,7 @@ async function likeCommunityPost(id){
     const j = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/like`,`/social/content/${encodeURIComponent(id)}/like`,`/api/community/posts/${encodeURIComponent(id)}/like`,`/community/posts/${encodeURIComponent(id)}/like`], {method:'POST', body:JSON.stringify({})});
     const post = (state.communityPosts || []).find(x=>String(x.id) === String(id));
     if(post) post.likes_count = j.likes_count;
+    syncSocialFeedPost(id, {likes_count:Number(j.likes_count || 0), metrics:{likes:Number(j.likes_count || 0)}});
     if(String(state.watchPostId || '') === String(id) && $('btnWatchLike')) $('btnWatchLike').textContent = `Like ${Number(j.likes_count || 0)}`;
     refreshCommunitySurfaces();
     if(rewardAwardMessage(j.rewards)) setCommunityMsg(`Community milestone reached.${rewardAwardMessage(j.rewards)}`);
@@ -8609,6 +8701,8 @@ async function submitCommunityComment(id){
     const body = input?.value?.trim() || '';
     if(!body) throw new Error('Write a comment first.');
     const posted = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/comments`,`/social/content/${encodeURIComponent(id)}/comments`,`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`], {method:'POST', body:JSON.stringify({body})});
+    const commentsCount = Number(posted?.comments_count);
+    if(Number.isFinite(commentsCount)) syncSocialFeedPost(id, {comments_count:commentsCount, metrics:{comments:commentsCount}});
     if(input) input.value = '';
     const j = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/comments`,`/social/content/${encodeURIComponent(id)}/comments`,`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`]);
     renderCommunityCommentsBox(id, Array.isArray(j.comments) ? j.comments : []);
@@ -8627,6 +8721,7 @@ async function reportCommunityPost(id){
     await apiFirst([`/api/social/content/${encodeURIComponent(id)}/report`,`/social/content/${encodeURIComponent(id)}/report`,`/api/community/posts/${encodeURIComponent(id)}/report`,`/community/posts/${encodeURIComponent(id)}/report`], {method:'POST', body:JSON.stringify({reason:'user_report'})});
     if(getSetting('community.hideReportedPosts') !== false){
       state.communityPosts = (state.communityPosts || []).filter(x=>String(x.id) !== String(id));
+      state.socialFeed = (state.socialFeed || []).filter(x=>String(x?.id || '') !== String(id));
       refreshCommunitySurfaces({ includeWatch:String(state.watchPostId || '') === String(id) });
     }
     setCommunityMsg('Post reported for admin review.');
