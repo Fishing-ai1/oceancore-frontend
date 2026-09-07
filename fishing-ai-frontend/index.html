@@ -2996,7 +2996,7 @@ if(Math.abs(Number(state.selectedLat || 0)) < 0.000001 && Math.abs(Number(state.
 localStorage.setItem('oceancore_api_url', state.apiUrl);
 
 $('apiUrl').value = state.apiUrl;
-if(!$('apiUrl').value){ $('apiUrl').placeholder = 'http://YOUR-PC-IP:4000'; }
+if(!$('apiUrl').value){ $('apiUrl').placeholder = isHostedProductionFrontend() ? 'Production API' : 'http://YOUR-PC-IP:4000'; }
 $('mapLat').value = state.selectedLat;
 $('mapLng').value = state.selectedLng;
 
@@ -5981,11 +5981,13 @@ function applyVisualPolish(){
   const connectionHeading = $('connectionHeading');
   const apiField = $('apiUrl')?.closest('.fld');
   const saveApiRow = $('btnSaveApi')?.closest('.row');
+  const localApiButtons = [$('btnUseLocalApi'), $('btnGateUseLocalApi')].filter(Boolean);
   const betaNotesHeading = $('betaNotesHeading');
   const betaNotesBox = betaNotesHeading?.nextElementSibling;
   if(connectionHeading) connectionHeading.style.display = devView ? '' : 'none';
   if(apiField) apiField.style.display = devView ? '' : 'none';
   if(saveApiRow) saveApiRow.style.display = devView ? '' : 'none';
+  localApiButtons.forEach((btn)=>{ btn.style.display = isHostedProductionFrontend() ? 'none' : ''; });
   if(betaNotesHeading) betaNotesHeading.style.display = devView ? '' : 'none';
   if(betaNotesBox) betaNotesBox.style.display = devView ? '' : 'none';
 
@@ -7332,7 +7334,16 @@ async function signOut(){
 }
 
 async function saveApiUrl(){
-  state.apiUrl = normalizeApiUrl($('apiUrl').value);
+  const nextUrl = normalizeApiUrl($('apiUrl').value);
+  if(isHostedProductionFrontend() && isUnsafeProductionApiUrl(nextUrl)){
+    localStorage.removeItem('oceancore_api_url');
+    state.apiUrl = sameOriginProxyApiUrl();
+    if($('apiUrl')) $('apiUrl').value = state.apiUrl;
+    setAuthFeedback('Production uses the secure OceanCore cloud API.');
+    await refreshHealth();
+    return;
+  }
+  state.apiUrl = nextUrl;
   localStorage.setItem('oceancore_api_url', state.apiUrl);
   $('apiUrl').value = state.apiUrl;
   setStatusMessage('authMsg', state.apiUrl ? 'Connection saved.' : 'Connection cleared.');
@@ -7340,7 +7351,7 @@ async function saveApiUrl(){
 }
 
 async function useCloudApiUrl(){
-  state.apiUrl = configuredApiUrl();
+  state.apiUrl = isHostedProductionFrontend() ? sameOriginProxyApiUrl() : configuredApiUrl();
   localStorage.setItem('oceancore_api_url', state.apiUrl);
   if($('apiUrl')) $('apiUrl').value = state.apiUrl;
   setAuthFeedback(`Using cloud backend: ${state.apiUrl}`);
@@ -7348,6 +7359,14 @@ async function useCloudApiUrl(){
 }
 
 async function useLocalApiUrl(){
+  if(isHostedProductionFrontend()){
+    localStorage.removeItem('oceancore_api_url');
+    state.apiUrl = sameOriginProxyApiUrl();
+    if($('apiUrl')) $('apiUrl').value = state.apiUrl;
+    setAuthFeedback('Production uses the secure OceanCore cloud API.');
+    await refreshHealth();
+    return;
+  }
   state.apiUrl = normalizeApiUrl(localBackendUrl());
   localStorage.setItem('oceancore_api_url', state.apiUrl);
   if($('apiUrl')) $('apiUrl').value = state.apiUrl;
