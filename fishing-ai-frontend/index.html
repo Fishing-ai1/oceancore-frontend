@@ -3663,7 +3663,10 @@ function firstSentence(text, fallback){
 }
 
 function getRedirectTarget(){
-  return /^https?:/i.test(location.href) ? location.href : '';
+  // Keep auth emails on a stable public page. The backend also enforces this
+  // in production, so a stale local build can never create a localhost link.
+  if(/^https?:$/i.test(location.protocol)) return `${location.origin}${location.pathname}`;
+  return 'https://oceancore-frontend.vercel.app/';
 }
 
 function consumeAuthTokensFromUrl(){
