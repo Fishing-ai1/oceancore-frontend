@@ -3753,6 +3753,7 @@ async function signIn(source = 'account'){
     setAuthFeedback(j.message || 'Signed in.');
     await loadMe();
     await loadAll();
+    await loadSavedCommunityPostIds().catch(()=>null);
     await loadCommunityPosts().catch(()=>null);
     await loadCloudChats().catch(()=>null);
     showSection('home');
@@ -3786,6 +3787,7 @@ async function signUp(source = 'account'){
       if($('legalDisclaimer')) $('legalDisclaimer').checked = true;
       await acceptLegal();
       await loadAll();
+      await loadSavedCommunityPostIds().catch(()=>null);
       showSection('home');
       return;
     }
@@ -6181,14 +6183,31 @@ function refreshCommunitySurfaces({ includeWatch=false } = {}){
   if(includeWatch) renderVideoWatch();
 }
 
-function toggleSavedCommunityPost(id){
+async function toggleSavedCommunityPost(id){
   const key = String(id || '');
   if(!key) return;
   const saved = savedCommunityPostIds();
-  const next = saved.includes(key) ? saved.filter(value=>value !== key) : [...saved, key];
+  let next = saved.includes(key) ? saved.filter(value=>value !== key) : [...saved, key];
+  if(isSignedIn()){
+    try{
+      const result = await apiFirst([`/api/social/content/${encodeURIComponent(key)}/save`,`/social/content/${encodeURIComponent(key)}/save`,`/api/community/posts/${encodeURIComponent(key)}/save`,`/community/posts/${encodeURIComponent(key)}/save`], {method:'POST', body:JSON.stringify({})});
+      next = result?.saved ? [...saved.filter(value=>value !== key), key] : saved.filter(value=>value !== key);
+    }catch(error){
+      setCommunityMsg(error.message || 'Could not sync this saved post.');
+      return;
+    }
+  }
   localStorage.setItem('oceancore_saved_community_posts', JSON.stringify(next));
-  setCommunityMsg(saved.includes(key) ? 'Removed from saved posts.' : 'Saved to your OceanCore profile.');
+  setCommunityMsg(next.includes(key) ? (isSignedIn() ? 'Saved to your OceanCore profile.' : 'Saved on this device. Sign in to keep it across devices.') : 'Removed from saved posts.');
   if(String(state.watchPostId || '') === key && $('btnWatchSave')) $('btnWatchSave').textContent = next.includes(key) ? 'Saved' : 'Save';
+  refreshCommunitySurfaces();
+}
+
+async function loadSavedCommunityPostIds(){
+  if(!isSignedIn()) return;
+  const result = await apiFirst(['/api/social/saves','/social/saves','/api/community/saves','/community/saves']);
+  const ids = Array.isArray(result?.post_ids) ? result.post_ids.map(String).filter(Boolean) : [];
+  localStorage.setItem('oceancore_saved_community_posts', JSON.stringify(ids));
   refreshCommunitySurfaces();
 }
 
@@ -9155,6 +9174,7 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
     initAuth();
     await refreshHealth();
     await loadAll();
+    await loadSavedCommunityPostIds().catch(()=>null);
     await loadCommunityPosts().catch(()=>null);
     await loadSocialHomeFeed(state.socialFeedMode || 'home').catch(()=>renderSocialHome());
     await loadCloudChats().catch(()=>null);
