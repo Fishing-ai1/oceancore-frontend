@@ -2697,6 +2697,18 @@ function isHostedProductionFrontend(){
   return !!sameOriginProxyApiUrl();
 }
 
+function isUnsafeProductionApiUrl(value){
+  const apiUrl = normalizeApiUrl(value);
+  if(!apiUrl) return false;
+  if(isLocalDevApiUrl(apiUrl)) return true;
+  try{
+    const parsed = new URL(apiUrl);
+    return parsed.protocol !== 'https:' && isHostedProductionFrontend();
+  }catch(_e){
+    return true;
+  }
+}
+
 function isRenderCloudApiUrl(value){
   return /^https:\/\/fishing-ai-backend\.onrender\.com$/i.test(normalizeApiUrl(value));
 }
@@ -2710,7 +2722,7 @@ function defaultApiUrl(){
     return saved && isLocalDevApiUrl(saved) ? saved : localBackendUrl();
   }
   if(isHostedProductionFrontend()){
-    if(saved && saved !== origin){
+    if(saved && (saved !== origin || isUnsafeProductionApiUrl(saved))){
       localStorage.removeItem('oceancore_api_url');
     }
     return origin;
