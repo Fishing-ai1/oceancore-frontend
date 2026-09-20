@@ -1,4 +1,4 @@
-const CACHE_NAME = "oceancore-app-v2026-09-07-prod-login-route-v2";
+const CACHE_NAME = "oceancore-app-v2026-09-20-ocean-current-v11";
 const NATIVE_APP_OFFLINE_PATH = "/app/offline.html";
 const NATIVE_APP_CONFIG_PATH = "/app/assets/native-config.js";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
@@ -9,6 +9,11 @@ const APP_SHELL = [
   appPath("offline.html"),
   appPath("manifest.webmanifest"),
   appPath("assets/native-config.js"),
+  `${appPath("assets/ocean-current.css")}?v=20260920j`,
+  `${appPath("assets/ocean-current.js")}?v=20260920j`,
+  appPath("assets/ocean-current/sunshine-coast-mackerel.png"),
+  appPath("assets/ocean-current/coastal-camp-sunset.png"),
+  appPath("assets/ocean-current/sunshine-coast-expedition.png"),
   appPath("assets/icons/favicon.svg"),
   appPath("assets/icons/icon-192.png"),
   appPath("assets/icons/icon-512.png"),
@@ -33,9 +38,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
+  // Authenticated responses, administrative data and private AI history must never enter a shared device cache.
+  if (request.headers.has("Authorization")) return;
 
   const url = new URL(request.url);
-  if (url.pathname.startsWith("/auth/") || url.pathname.startsWith("/api/") || url.pathname.startsWith("/billing/") || url.pathname.startsWith("/catches") || url.pathname.startsWith("/community/")) {
+  if (/^\/(media|storage|auth|api|admin|ai|saved-areas|social|feedback|rewards|billing|catches|community)(\/|$)/.test(url.pathname)) {
     return;
   }
 
@@ -43,8 +50,10 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(appPath(), copy));
+          if (response.ok && [appPath(),appPath("index.html")].includes(url.pathname)) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(appPath(), copy));
+          }
           return response;
         })
         .catch(() => caches.match(appPath()).then((cached) => cached || caches.match(appPath("offline.html"))))
