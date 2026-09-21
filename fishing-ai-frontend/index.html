@@ -1,12 +1,12 @@
-<!-- OceanCore AI frontend V31/V32: OceanCore mobile core polish + Supabase-backed Community -->
+<!-- OceanCore frontend V31/V32: social-first mobile core polish + Supabase-backed Community -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>OceanCore AI</title>
-  <meta name="application-name" content="OceanCore AI"/>
-  <meta name="apple-mobile-web-app-title" content="OceanCore AI"/>
+  <title>OceanCore</title>
+  <meta name="application-name" content="OceanCore"/>
+  <meta name="apple-mobile-web-app-title" content="OceanCore"/>
   <meta name="description" content="Plan fishing trips, log catches, read marine conditions, manage boat safety, and use AI fishing support."/>
   <meta name="theme-color" content="#07191d"/>
   <meta name="color-scheme" content="dark"/>
@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="format-detection" content="telephone=no"/>
-  <meta property="og:title" content="OceanCore AI"/>
+  <meta property="og:title" content="OceanCore"/>
   <meta property="og:description" content="Plan trips, log catches, and fish with clearer marine conditions."/>
   <meta property="og:type" content="website"/>
   <meta name="oceancore-api-url" content=""/>
@@ -752,7 +752,7 @@
        ============================================================ */
     .mobile-nav{
       position:fixed;left:0;right:0;bottom:0;z-index:160;min-height:82px;
-      display:none;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;
+      display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
       padding:10px 10px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid rgba(148,163,184,.18);
       background:linear-gradient(180deg,rgba(6,10,22,.86),rgba(7,25,29,.98));
@@ -1040,7 +1040,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260920j"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260921a"/>
 </head>
 <body class="auth-loading auth-locked">
 <div id="authGate" class="auth-gate" aria-hidden="false">
@@ -1081,7 +1081,7 @@
     <div id="gateLegalDetails" class="muted-box gate-legal-details" hidden>
       <div>
         <strong>Terms of Service</strong>
-        <p>OceanCore AI is a beta trip planning, catch logging, boating, marine assistant, and rewards app. OceanPoints have no cash value and may be withheld or reversed for duplicate, unsafe, misleading, or abusive activity.</p>
+        <p>OceanCore is a fishing, boating and outdoor community with trip planning, catch logging, marine intelligence and rewards. OceanPoints have no cash value and may be withheld or reversed for duplicate, unsafe, misleading, or abusive activity.</p>
       </div>
       <div>
         <strong>Privacy Policy</strong>
@@ -1089,7 +1089,7 @@
       </div>
       <div>
         <strong>Marine Disclaimer</strong>
-        <p>OceanCore AI is not a substitute for official forecasts, charts, notices to mariners, local knowledge, safety checks, or seamanship.</p>
+        <p>OceanCore is not a substitute for official forecasts, charts, notices to mariners, local knowledge, safety checks, or seamanship.</p>
       </div>
       <div class="legal-link-grid">
         <button class="btn ghost" data-legal-url="/legal/terms-of-service" type="button">Open Terms</button>
@@ -1110,8 +1110,8 @@
     <div class="brand">
       <div class="logo"></div>
       <div>
-        <h1>OceanCore AI</h1>
-        <div class="subtle" style="font-size:12px">Trip planning, catch logging, and AI support built around your own fishing data.</div>
+        <h1>OceanCore</h1>
+        <div class="subtle" style="font-size:12px">Fish. Boat. Explore. Share.</div>
       </div>
     </div>
     <div class="top-search" role="search">
@@ -1138,16 +1138,16 @@
       <button class="btn block nav-btn" data-section="create">Create</button>
       <button class="btn block nav-btn" data-section="community">Community</button>
       <button class="btn block nav-btn" data-section="messages">Messages</button>
-      <button class="btn block nav-btn" data-section="ai">AI</button>
-      <button class="btn block nav-btn" data-section="profile">Profile</button>
+        <button class="btn block nav-btn" data-section="profile">Profile</button>
       <details class="nav-group">
-        <summary>Fishing tools</summary>
+        <summary>OceanCore Tools</summary>
         <button class="btn block nav-btn" data-section="catch">Catch Log</button>
         <button class="btn block nav-btn" data-section="map">Map & Conditions</button>
         <button class="btn block nav-btn" data-section="boat-ai">Boat AI</button>
         <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
         <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
         <button class="btn block nav-btn" data-section="rewards">Rewards</button>
+        <button class="btn block nav-btn" data-section="ai">Fishing AI</button>
       </details>
       <details class="nav-group">
         <summary>More</summary>
@@ -1155,7 +1155,7 @@
         <button class="btn block nav-btn" data-section="billing">Plans</button>
         <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
         <button class="btn block nav-btn" data-section="feedback">Help & Feedback</button>
-        <button class="btn block nav-btn" data-section="beta-checklist">Beta Checklist</button>
+        <button class="btn block nav-btn admin-nav-btn" data-section="beta-checklist">Launch Checklist</button>
         <button class="btn block nav-btn admin-nav-btn" data-section="admin">Admin</button>
       </details>
       <details class="nav-group nav-developer">
@@ -1204,7 +1204,7 @@
 
         <div class="oc-simple-actions" aria-label="Main actions">
           <button class="oc-simple-action" type="button" data-section="map"><strong>Check conditions</strong><span>Windy map, swell, ramps and nearby fuel.</span></button>
-          <button class="oc-simple-action" type="button" data-section="ai"><strong>Ask OceanCore AI</strong><span>Get help planning a trip, choosing gear or targeting fish.</span></button>
+          <button class="oc-simple-action" type="button" data-section="ai"><strong>Ask Fishing AI</strong><span>Get help planning a trip, choosing gear or targeting fish.</span></button>
           <button class="oc-simple-action" type="button" data-section="catch"><strong>Log a catch</strong><span>Save a photo, species, measurements and private location.</span></button>
           <button class="oc-simple-action" type="button" data-section="community"><strong>See community</strong><span>View local reports, catches, videos and boat updates.</span></button>
         </div>
@@ -1293,7 +1293,7 @@
               <div class="list">
                 <div class="item">
                   <h4>Finish account setup</h4>
-                  <p>Sign in, save your profile, and accept the legal documents so the beta feels like a real product.</p>
+                  <p>Sign in, save your profile, and accept the legal documents so OceanCore can personalize your feed and tools.</p>
                   <div class="actions"><button class="btn" data-jump="account">Open My Account</button></div>
                 </div>
                 <div class="item">
@@ -1302,7 +1302,7 @@
                   <div class="actions"><button class="btn" data-jump="map">Open Map & Conditions</button></div>
                 </div>
                 <div class="item">
-                  <h4>Ask OceanCore AI</h4>
+                  <h4>Ask Fishing AI</h4>
                   <p>The AI uses your recent catches, selected area, nearby ramps and fuel, and loaded conditions.</p>
                   <div class="actions"><button class="btn primary" data-jump="ai">Open AI Chat</button></div>
                 </div>
@@ -1788,8 +1788,8 @@
               <div id="map"></div>
               <div class="mapbox-setup" id="mapboxSetup">
                 <div class="setup-card">
-                  <h3>Mapbox token needed</h3>
-                  <p>Set <strong>MAPBOX_PUBLIC_TOKEN</strong> in the backend environment, redeploy, then OceanCore will load the premium Mapbox chart engine here.</p>
+                  <h3>Chart layer unavailable</h3>
+                  <p>Marine chart layers are not available right now. Wind, waves and conditions still work here.</p>
                 </div>
               </div>
               <div class="chartplotter-tools" id="chartplotterTools" aria-label="Chart display layers">
@@ -1816,7 +1816,7 @@
                 </div>
                 <div class="scientific-scale" aria-hidden="true"></div>
                 <div class="satellite-layer-meta"><span id="satelliteLayerName">SST + thermal fronts</span><span id="satelliteLayerDate">Latest available</span></div>
-                <div class="pelagic-source-status"><span class="live">SST live</span><span class="live">Fronts live</span><span>Chlorophyll pending</span><span>Currents pending</span><span>Eddies pending</span></div>
+                <div class="pelagic-source-status"><span class="live">Temperature</span><span class="live">Fronts</span><span>Habitat model</span><span>Current view</span><span>Structure</span></div>
               </div>
             </div>
 
@@ -2271,7 +2271,7 @@
               <label class="setting-row"><span><strong>Default saved-area privacy</strong><small>Exact GPS stays private unless you change it.</small></span><select data-setting="privacy.defaultAreaPrivacy"><option value="private">Private</option><option value="area_only">General area only</option><option value="public">Public</option></select></label>
               <label class="setting-row"><span><strong>Hide exact GPS in AI context</strong><small>AI gets rounded/general locations unless needed.</small></span><input type="checkbox" data-setting="privacy.hideExactGpsInAi"/></label>
               <label class="setting-row"><span><strong>Strip photo metadata</strong><small>Recommended for catch and community uploads.</small></span><input type="checkbox" data-setting="privacy.stripPhotoMetadata"/></label>
-              <label class="setting-row"><span><strong>Community message privacy</strong><small>Public beta uses accepted friends only to prevent unsolicited messages.</small></span><select data-setting="privacy.messagePermission" disabled><option value="friends">Friends only</option></select></label>
+              <label class="setting-row"><span><strong>Community message privacy</strong><small>Messages use accepted friends only to prevent unsolicited contact.</small></span><select data-setting="privacy.messagePermission" disabled><option value="friends">Friends only</option></select></label>
             </div></div></div>
 
             <div class="settings-panel" data-settings-panel-root="notifications"><div class="panel"><div class="hd"><h2>Notifications</h2></div><div class="bd settings-grid">
@@ -2340,7 +2340,7 @@
               <label class="setting-row"><span><strong>Stats time range</strong><small>Default insights window.</small></span><select data-setting="stats.timeRange"><option value="30">30 days</option><option value="90">90 days</option><option value="365">12 months</option><option value="all">All time</option></select></label>
               <label class="setting-row"><span><strong>Include unknown species</strong><small>Shows uncertain catches in totals.</small></span><input type="checkbox" data-setting="stats.includeUnknownSpecies"/></label>
               <label class="setting-row"><span><strong>Show legal ratio</strong><small>Displays legal vs undersize KPI.</small></span><input type="checkbox" data-setting="stats.showLegalRatio"/></label>
-              <label class="setting-row"><span><strong>Share anonymous product analytics</strong><small>Helps improve beta screens.</small></span><input type="checkbox" data-setting="stats.shareAnonymousUsage"/></label>
+              <label class="setting-row"><span><strong>Share anonymous product analytics</strong><small>Helps improve OceanCore screens.</small></span><input type="checkbox" data-setting="stats.shareAnonymousUsage"/></label>
             </div></div></div>
 
             <div class="settings-panel" data-settings-panel-root="billing"><div class="panel"><div class="hd"><h2>Plans Settings</h2><button class="btn" id="btnRefreshBillingFromSettings" type="button">Refresh Billing</button></div><div class="bd settings-grid">
@@ -2352,7 +2352,7 @@
             </div></div></div>
 
             <div class="settings-panel" data-settings-panel-root="legal"><div class="panel"><div class="hd"><h2>Legal Acceptance</h2><button class="btn ghost" data-jump="legal" type="button">Read documents</button></div><div class="bd">
-              <div id="legalAcceptSummary" class="muted-box">Read the documents, then accept terms, privacy, and disclaimer for the beta.</div>
+              <div id="legalAcceptSummary" class="muted-box">Read the documents, then accept terms, privacy, and disclaimer.</div>
               <div class="legal-link-grid">
                 <button class="btn ghost" data-legal-url="/legal/terms-of-service" type="button">Open Terms</button>
                 <button class="btn ghost" data-legal-url="/legal/privacy-policy" type="button">Open Privacy</button>
@@ -2478,7 +2478,7 @@
         <div class="panel">
           <div class="hd"><h2>Feedback / Bug Report</h2></div>
           <div class="bd">
-            <div class="muted-box" style="margin-bottom:12px">Send beta feedback, bug reports, feature requests, or anything that feels confusing. This goes to the admin control room.</div>
+            <div class="muted-box" style="margin-bottom:12px">Send feedback, bug reports, feature requests, or anything that feels confusing. This goes to the OceanCore team.</div>
             <div class="row"><div class="fld"><select id="feedbackType"><option value="bug">Bug / something broke</option><option value="feedback">General feedback</option><option value="feature">Feature request</option><option value="confusing">Confusing screen</option></select></div><div class="fld"><input id="feedbackPage" placeholder="Page or feature, e.g. Catch Log"/></div></div>
             <div class="row" style="margin-top:10px"><div class="fld" style="flex:1 1 100%"><textarea id="feedbackMessage" placeholder="Tell us what happened, what you expected, and what device you used..."></textarea></div></div>
             <div class="row" style="margin-top:10px"><button class="btn primary" id="btnSubmitFeedback">Send Feedback</button></div>
@@ -2535,7 +2535,7 @@
 
             <div class="grid-2" style="margin-top:14px">
               <div class="muted-box">
-                <strong>Beta notice</strong><br/>
+                <strong>Launch note</strong><br/>
                 <span id="legalBeta"></span>
               </div>
               <div class="muted-box">
@@ -2606,7 +2606,7 @@
       </section>
 
 
-      <div class="footer">OceanCore AI beta frontend · V19 Beta Polish</div>
+      <div class="footer">OceanCore</div>
     </main>
   </div>
 </div>
@@ -2640,7 +2640,6 @@
   <button class="mobile-tab" data-section="explore" type="button" aria-label="Explore">E<span>Explore</span></button>
   <button class="mobile-tab plus-tab" data-section="create" type="button" aria-label="Create">+<span>Create</span></button>
   <button class="mobile-tab" data-section="watch" type="button" aria-label="Watch">W<span>Watch</span></button>
-  <button class="mobile-tab" data-section="community" type="button" aria-label="Community">C<span>Crew</span></button>
   <button class="mobile-tab" data-section="profile" type="button" aria-label="Profile">P<span>Profile</span></button>
 </div>
 
@@ -3041,16 +3040,16 @@ function loginGateFeedback(text){
   const lower = msg.toLowerCase();
   if(!msg) return '';
   if(window.location.protocol === 'file:' || lower.includes('origin: null') || lower.includes('local file')){
-    return 'This local HTML file cannot reliably sign in. Open OceanCore from http://127.0.0.1:4000/app/ with the backend running, or use the hosted/mobile build.';
+    return 'OceanCore cannot sign in from this copy of the app. Open the hosted app and try again.';
   }
   if(/localhost:4000|127\.0\.0\.1:4000/i.test(msg) && /could not reach|failed to fetch|networkerror|unable to connect/i.test(msg)){
-    return 'The local backend is not running on port 4000. Start the backend, then open http://127.0.0.1:4000/app/.';
+    return 'OceanCore cannot connect right now. Try again shortly.';
   }
   if(/allowed_origins|cors|origin/i.test(lower)){
-    return 'The backend is blocking this app address. Add this frontend URL to ALLOWED_ORIGINS, restart or redeploy the backend, then try again.';
+    return 'OceanCore cannot connect from this app address. Please try again from the hosted app.';
   }
   if(/failed to fetch|networkerror|load failed|could not reach|unable to connect/i.test(lower)){
-    return 'OceanCore could not reach the backend. Check the backend is awake, then try again.';
+    return 'OceanCore cannot connect right now. Check your connection and try again.';
   }
   return msg;
 }
@@ -3064,16 +3063,16 @@ function setAuthFeedback(msg){
 function apiReachabilityMessage(apiBase){
   const base = normalizeApiUrl(apiBase || state.apiUrl || defaultApiUrl());
   if(window.location.protocol === 'file:'){
-    return `Could not reach ${base}. This page is opened as a local file, so cloud backends can reject it as Origin: null. For testing, run the local backend and click Use local backend, or open the hosted/mobile app build.`;
+    return 'OceanCore cannot connect from this copy of the app. Open the hosted app and try again.';
   }
   const origin = currentHttpOrigin();
   if(origin && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(origin) && !/(:4000)$/i.test(origin)){
-    return `Could not reach ${base}. If you are testing from ${origin}, add that origin to ALLOWED_ORIGINS on the backend and redeploy, or click Use local backend with the backend running on port 4000.`;
+    return 'OceanCore cannot connect right now. Check your connection and try again.';
   }
   if(origin){
-    return `Could not reach ${base}. Add ${origin} to the backend ALLOWED_ORIGINS setting and redeploy/restart the backend, then try again.`;
+    return 'OceanCore cannot connect right now. Please try again shortly.';
   }
-  return `Could not reach ${base}. Check the backend URL, CORS allowed origins, and whether the backend is running.`;
+  return 'OceanCore cannot connect right now. Please try again shortly.';
 }
 
 function mirrorAuthEmail(value = ''){
@@ -3111,13 +3110,13 @@ function updateLoginGate(){
   const hint = $('gateHint');
   if(hint){
     if(!authConfigured){
-      hint.textContent = 'Backend auth is not configured yet. Finish the backend auth setup, then this login screen will work normally.';
+      hint.textContent = 'Sign-in is temporarily unavailable. Please try again soon.';
     }else if(signedIn){
       hint.textContent = `Signed in as ${state.authUser?.email || state.authEmail || 'your account'}.`;
     }else if(state.token){
       hint.textContent = 'Restoring saved login on this device...';
     }else{
-      hint.textContent = 'Sign in to enter OceanCore AI.';
+      hint.textContent = 'Sign in to enter OceanCore.';
     }
   }
 
@@ -3362,6 +3361,9 @@ function stopBackgroundMedia(options={}){
 }
 
 function showSection(name){
+  if((name === 'admin' || name === 'beta-checklist') && !state.admin?.isAdmin){
+    name = 'home';
+  }
   stopBackgroundMedia({ keepWatch: name === 'watch' });
   const mapOnlyContent = $('mapOnlyContent');
   if(mapOnlyContent) mapOnlyContent.hidden = name !== 'map';
@@ -3551,7 +3553,7 @@ async function fetchApiCandidate(apiBase, path, opts, headers){
 async function api(path, opts = {}, allowRefresh = true, apiBaseOverride = ''){
   const apiBase = normalizeApiUrl(apiBaseOverride || state.apiUrl);
   if(!apiBase){
-    throw new Error('API URL is empty. Put your backend URL in the Backend box first.');
+    throw new Error('OceanCore cannot connect right now. Please try again shortly.');
   }
   const headers = new Headers(opts.headers || {});
   if(!headers.has('Content-Type') && opts.body && !(opts.body instanceof FormData)){
@@ -3621,7 +3623,7 @@ async function apiFirst(paths, opts = {}, allowRefresh = true){
   }
   const missingBackend = /fishing-ai-backend\.onrender\.com/i.test(state.apiUrl || '');
   if(missingBackend){
-    throw new Error('The saved Render backend is missing this route. Deploy the updated server.ts, or tap Use local backend and open http://localhost:4000/app/ while testing.');
+    throw new Error('This OceanCore feature is temporarily unavailable. Please try again soon.');
   }
   throw lastError || new Error('Request failed.');
 }
@@ -3647,7 +3649,7 @@ async function refreshHealth(){
     }
     setStatusMessage('gateHint', state.token ? 'Restoring saved login on this device...' : 'Sign in to open OceanCore.');
     if(!j?.auth_api_configured){
-      setAuthFeedback('Backend is up, but auth is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY in backend .env, then restart.');
+      setAuthFeedback('Sign-in is temporarily unavailable. Please try again soon.');
     }
   }catch(e){
     setBadge('apiBadge', 'API OFF', 'bad');
@@ -3861,7 +3863,7 @@ async function updatePassword(){
 function featureSettingsSyncLabel(){
   const sync = state.featureSettingsSync || {};
   if(sync.storage === 'supabase') return 'Synced to your OceanCore account.';
-  if(sync.storage === 'memory') return 'Saved on this device and backend memory. Run the Supabase schema migration for permanent cloud sync.';
+  if(sync.storage === 'memory') return 'Saved on this device. Sign in later to keep settings across devices.';
   if(sync.storage === 'device') return 'Saved on this device. Sign in to sync settings across devices.';
   return 'Settings are ready.';
 }
@@ -4019,7 +4021,7 @@ function updateAuthUi(){
 
   $('legalAcceptSummary').textContent = legalAccepted
     ? `Legal accepted for version ${state.me?.legal?.version || state.legalDocs?.version || 'current'}.`
-    : 'Read the documents, then accept terms, privacy, and disclaimer for the beta.';
+    : 'Read the documents, then accept terms, privacy, and disclaimer.';
 
   const displayName = profile.full_name || profile.boat_name || (signedIn && email.includes('@') ? email.split('@')[0] : 'OceanCore Member');
   const handleBase = String(profile.role_plan || profile.boat_name || displayName || 'oceancore')
@@ -4220,7 +4222,7 @@ async function deleteMyAccount(){
     clearAuth();
     state.me = null;
     state.authUser = null;
-    setAccountSettingsMsg('Account deleted from the backend.');
+    setAccountSettingsMsg('Account deleted.');
     setAuthFeedback('Account deleted.');
     showSection('home');
     updateAuthUi();
@@ -4826,7 +4828,7 @@ function ensureMap(){
   $('mapWrap')?.classList.toggle('mapbox-missing', needsMapbox && !token);
   if(!needsMapbox) return;
   if(!token || !window.mapboxgl){
-    setStatusMessage('mapMsg','Mapbox is not configured yet. Add MAPBOX_PUBLIC_TOKEN to the backend environment and redeploy.');
+    setStatusMessage('mapMsg','Marine chart layers are unavailable right now. Wind and wave maps still work.');
     return;
   }
   mapboxgl.accessToken = token;
@@ -5157,7 +5159,7 @@ function clearChat(){
 
 async function checkSpeciesHandshake(){
   const health = await api('/health').catch(() => null);
-  const backendBuild = health?.build_id || 'unknown-backend-build';
+  const backendBuild = health?.build_id || '';
   const hasRouteFlag = !!health?.has_species_detect_route;
 
   try{
@@ -5175,11 +5177,7 @@ async function checkSpeciesHandshake(){
     }
   }catch(_e){}
 
-  const buildPart = backendBuild ? ` Running backend build: ${backendBuild}.` : '';
-  const routePart = hasRouteFlag
-    ? ' Health says species detect should exist, so an old backend process may still be hanging around.'
-    : ' Backend does not report the species route yet.';
-  throw new Error(`Species route handshake failed.${buildPart}${routePart}`);
+  throw new Error('Species detection is temporarily unavailable.');
 }
 
 
@@ -5193,11 +5191,11 @@ async function detectSpecies(){
 
     let handshake = null;
     try{
-      setStatusMessage('catchMsg','Checking backend species route...');
+      setStatusMessage('catchMsg','Preparing species detection...');
       handshake = await checkSpeciesHandshake();
     }catch(e){
       console.warn('Species handshake skipped:', e);
-      setStatusMessage('catchMsg','Handshake failed, trying direct species detect...');
+      setStatusMessage('catchMsg','Trying species detection another way...');
     }
 
     const j = await apiFirst(
@@ -5240,11 +5238,11 @@ async function loadLegal(){
     $('legalVersionChip').textContent = `Version ${j.version || '—'}`;
     $('legalContactChip').textContent = j.contact_email || 'support@oceancore.ai';
     $('legalBeta').textContent = j.beta_notice || '';
-    $('legalWhatYouAccept').textContent = 'You are confirming you have read the beta terms, privacy policy, and marine disclaimer before relying on the app.';
-    $('legalTermsSummary').textContent = firstSentence(j.terms, 'Core terms for the beta build.');
-    $('legalPrivacySummary').textContent = firstSentence(j.privacy, 'Core privacy summary for the beta build.');
+    $('legalWhatYouAccept').textContent = 'You are confirming you have read the terms, privacy policy, and marine disclaimer before relying on the app.';
+    $('legalTermsSummary').textContent = firstSentence(j.terms, 'Core terms for OceanCore.');
+    $('legalPrivacySummary').textContent = firstSentence(j.privacy, 'Core privacy summary for OceanCore.');
     $('legalDataRightsSummary').textContent = firstSentence(j.data_rights, 'How export and account deletion work.');
-    $('legalDisclaimerSummary').textContent = firstSentence(j.disclaimer, 'Marine safety disclaimer for the beta build.');
+    $('legalDisclaimerSummary').textContent = firstSentence(j.disclaimer, 'Marine safety disclaimer for OceanCore.');
     $('legalTermsFull').textContent = j.terms || '';
     $('legalPrivacyFull').textContent = j.privacy || '';
     $('legalDataRightsFull').textContent = j.data_rights || '';
@@ -5340,7 +5338,7 @@ async function loadRewards(){
       return;
     }
     const j = await api('/rewards/me');
-    state.rewards = {...state.rewards, ...j, loading:false, message:j.storage === 'local' ? 'OceanPoints loaded. Run the Supabase rewards migration before production launch.' : 'OceanPoints are up to date.'};
+    state.rewards = {...state.rewards, ...j, loading:false, message:j.storage === 'local' ? 'OceanPoints are saved on this device.' : 'OceanPoints are up to date.'};
   }catch(e){
     state.rewards.loading = false;
     state.rewards.message = e.message || String(e);
@@ -5543,7 +5541,7 @@ async function loadBilling(){
     state.billing.beta_manual_plan_access = j.beta_manual_plan_access;
     state.billing.plans = j.plans || null;
     state.billing.plan_order = j.plan_order || null;
-    state.billing.message = j.beta_manual_plan_access ? 'Billing loaded. Beta manual plan mode is on.' : 'Billing loaded.';
+    state.billing.message = 'Plans loaded.';
   }catch(e){
     state.billing.message = e.message || String(e);
   }finally{
@@ -5556,12 +5554,12 @@ async function startCheckout(plan, interval='monthly'){
   try{
     if(!isSignedIn()) throw new Error('Sign in first, then choose a plan.');
     plan = normalizePlanKeyClient(plan);
-    // If Stripe/prices are not configured yet, keep beta users on manual plan activation.
+    // Keep checkout graceful when direct payment activation is not available yet.
     const priceKey = `${String(plan || '').toLowerCase()}_${String(interval || 'monthly').toLowerCase()}`;
     const priceReady = !!state.billing?.prices_configured?.[priceKey];
     const isStripeLikelyOff = !state.billing?.stripe_configured || !priceReady;
     if(isStripeLikelyOff){
-      setStatusMessage('billingMsg', `${planLabel(plan)} is ready for beta testing. Stripe is off for now — set this user plan manually in Admin.`);
+      setStatusMessage('billingMsg', `${planLabel(plan)} is ready. The OceanCore team can activate this plan for your account.`);
       return;
     }
     setStatusMessage('billingMsg', `Opening ${planLabel(plan)} checkout...`);
@@ -5570,7 +5568,7 @@ async function startCheckout(plan, interval='monthly'){
     location.href = j.url;
   }catch(e){
     const msg = e.message || String(e);
-    if(/stripe|price id missing|not configured/i.test(msg)) setStatusMessage('billingMsg', `${planLabel(plan)} is ready, but payments are off during beta. Set the user plan manually in Admin.`);
+    if(/stripe|price id missing|not configured/i.test(msg)) setStatusMessage('billingMsg', `${planLabel(plan)} is ready. The OceanCore team can activate this plan for your account.`);
     else setStatusMessage('billingMsg', msg);
   }
 }
@@ -5602,7 +5600,7 @@ function adminSafeDate(value){
 
 function setAdminNavVisible(visible){
   document.querySelectorAll('.admin-nav-btn').forEach(el=>{
-    el.classList.remove('hidden');
+    el.classList.toggle('hidden', !visible);
     el.title = visible ? 'Admin tools' : 'Admin access requires ADMIN_EMAILS on backend';
   });
 }
@@ -5994,7 +5992,7 @@ function updateCatchPhotoPickerUi(){
 }
 
 function applyVisualPolish(){
-  document.title = 'OceanCore AI';
+  document.title = 'OceanCore';
 
   const brand = document.querySelector('.brand > div:last-child');
   const brandBadge = brand?.querySelector('.badge');
@@ -6423,8 +6421,8 @@ function renderSocialFeedEmpty(){
   if(state.socialFeedLoading){
     return `<div class="community-skeleton" style="min-height:180px"></div><div class="community-skeleton" style="min-height:180px"></div>`;
   }
-  const message = state.socialFeedMessage || 'No posts loaded yet. Share a catch, video, boat update or local report to wake this feed up.';
-  return `<article class="oc-feed-card"><div class="oc-feed-body"><h3>Build your OceanCore feed</h3><p>${escapeHtml(message)}</p><div class="oc-tag-row"><button class="btn primary" type="button" data-section="create">Create</button><button class="btn ghost" type="button" data-section="community">Open community</button></div></div></article>`;
+  const message = state.socialFeedMessage || 'Be the first to post today\'s local report, catch, video or boat update.';
+  return `<article class="oc-feed-card"><div class="oc-feed-body"><h3>Start the local feed</h3><p>${escapeHtml(message)}</p><div class="oc-tag-row"><button class="btn primary" type="button" data-section="create">Create post</button><button class="btn ghost" type="button" data-section="explore">Explore nearby</button></div></div></article>`;
 }
 
 function renderSocialFeedCard(post){
@@ -6494,11 +6492,11 @@ async function loadSocialHomeFeed(feed = state.socialFeedMode || 'home'){
     mergeSocialFeedItems(j?.items);
     state.socialFeedNextCursor = String(j?.next_cursor || '');
     state.socialFeedHasMore = Boolean(j?.has_more && state.socialFeedNextCursor);
-    state.socialFeedMessage = state.socialFeed.length ? '' : 'No ranked posts came back for this feed yet.';
+    state.socialFeedMessage = state.socialFeed.length ? '' : 'Your crew has not posted here yet. Explore nearby anglers or share the first update.';
   }catch(e){
     if(requestId !== state.socialFeedRequestId) return;
     state.socialFeed = [];
-    state.socialFeedMessage = e.message || String(e);
+    state.socialFeedMessage = 'The feed is quiet right now. You can still create a post, watch videos or explore local reports.';
   }finally{
     if(requestId !== state.socialFeedRequestId) return;
     state.socialFeedLoading = false;
@@ -7249,7 +7247,7 @@ async function loadPelagicGrid(force=false){
       if(state.mapView === 'satellite') renderMap();
     }
     setStatusMessage('satelliteHeatmapMsg',/not found/i.test(message)
-      ? 'Pelagic grid service is waiting for the backend deployment. The raw patch-image fallback has been disabled.'
+      ? 'Ocean intelligence is warming up. Try this layer again shortly.'
       : message);
   }finally{
     state.pelagicGridLoading = false;
@@ -7867,8 +7865,8 @@ async function shareCatchCard(){
     if(navigator.canShare && navigator.canShare({ files:[file] })){
       await navigator.share({
         files:[file],
-        title:'OceanCore AI Catch Card',
-        text:'OceanCore AI catch card — spot safe, GPS hidden.'
+        title:'OceanCore Catch Card',
+        text:'OceanCore catch card - Spot Safe, GPS hidden.'
       });
       return;
     }
@@ -7895,7 +7893,7 @@ function betaChecklistRows(){
   return [
     {title:'Login/session', done:signedIn, desc:signedIn ? 'Signed in and session token active.' : 'Sign in and confirm the app unlocks.'},
     {title:'Profile', done:profileReady, desc:profileReady ? 'Profile fields saved.' : 'Save name, boat, home port and favourite species.'},
-    {title:'Legal acceptance', done:legalOk, desc:legalOk ? 'Terms, privacy and disclaimer accepted.' : 'Accept legal documents before wider beta.'},
+    {title:'Legal acceptance', done:legalOk, desc:legalOk ? 'Terms, privacy and disclaimer accepted.' : 'Accept legal documents before wider launch.'},
     {title:'Catch log', done:catchesOk, desc:catchesOk ? `${state.catches.length} catch record(s) loaded.` : 'Log one test catch with photo.'},
     {title:'Saved areas', done:areasOk, desc:areasOk ? `${state.savedAreas.length} saved area(s) loaded.` : 'Save at least one test area.'},
     {title:'Conditions', done:conditionsOk, desc:conditionsOk ? 'Marine/map conditions loaded.' : 'Load Map & Conditions once.'},
@@ -7915,7 +7913,7 @@ function renderBetaChecklist(){
       <div class="status-pill ${item.done ? 'ok' : 'warn'}">${item.done ? 'PASS' : 'CHECK'}</div>
     </div>
   `).join('');
-  setStatusMessage('betaChecklistMsg', `${done}/${rows.length} beta checks passing. Fix CHECK items before wider tester rollout.`);
+  setStatusMessage('betaChecklistMsg', `${done}/${rows.length} launch checks passing. Fix CHECK items before wider rollout.`);
 }
 
 async function runBetaChecklist(){
@@ -8096,7 +8094,7 @@ function renderChat(){
   $('chatTitleInput').value = session?.title || '';
   const messages = session?.messages || [];
   if(!messages.length){
-    root.innerHTML = `<div class="muted-box">No chat yet. Ask OceanCore AI for fishing, trip planning, or conditions advice.${state.aiBrain.cloudReady ? ' Your chats are saved to your account.' : ''}</div>`;
+    root.innerHTML = `<div class="muted-box">No chat yet. Ask Fishing AI for fishing, trip planning, or conditions advice.${state.aiBrain.cloudReady ? ' Your chats are saved to your account.' : ''}</div>`;
     return;
   }
   root.innerHTML = messages.map(msg=>`
@@ -8149,7 +8147,7 @@ async function sendChat(promptOverride = ''){
     persistChatState();
     renderChat();
     $('chatInput').value = '';
-    setStatusMessage('chatMsg','OceanCore AI Brain is thinking...');
+    setStatusMessage('chatMsg','Fishing AI is thinking...');
 
     const j = await api('/ai/chat/smart', {
       method:'POST',
@@ -8537,10 +8535,10 @@ async function loadCommunityPosts(){
     const tab = state.communityTab || 'feed';
     const j = await apiFirst([`/api/community/posts?filter=${encodeURIComponent(tab)}`,`/community/posts?filter=${encodeURIComponent(tab)}`]);
     state.communityPosts = Array.isArray(j?.posts) ? j.posts : [];
-    if(j?.storage === 'local') setCommunityMsg('Community is saving through the local backend store until Supabase community_posts is connected.');
+    if(j?.storage === 'local') setCommunityMsg('Your post is saved on this device.');
   }catch(e){
     state.communityPosts = [];
-    setCommunityMsg(`Community backend is not ready: ${e.message || String(e)}`);
+    setCommunityMsg('Community is quiet right now. You can still draft a post or try again soon.');
   }
   renderCommunityFeed();
   renderCommunityLiveModules();
@@ -9668,5 +9666,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260920j"></script></body>
+<script src="assets/ocean-current.js?v=20260921a"></script></body>
 </html>
