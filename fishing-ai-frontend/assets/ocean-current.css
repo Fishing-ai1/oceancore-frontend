@@ -24,7 +24,7 @@ body.oc-current-ready{
   color:var(--oc-ink);
 }
 body.oc-current-preview.auth-locked .shell,body.oc-current-preview.auth-loading .shell{filter:none;opacity:1;pointer-events:auto;user-select:auto}
-body.oc-current-preview .auth-gate{display:none!important}
+body.oc-current-preview:not(.auth-prompt) .auth-gate{display:none!important}
 body.oc-current-ready .auth-dev-actions,
 body.oc-current-ready .nav-developer,
 body.oc-current-ready .admin-nav-btn.hidden,

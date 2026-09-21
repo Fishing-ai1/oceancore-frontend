@@ -517,7 +517,9 @@
         rgba(7,25,29,.82);
       backdrop-filter:blur(16px);
     }
-    body:not(.auth-locked) .auth-gate{display:none}
+    body:not(.auth-locked):not(.auth-prompt) .auth-gate{display:none}
+    body.auth-prompt .auth-gate{z-index:220}
+    body.auth-prompt .shell{filter:none;opacity:1;pointer-events:auto;user-select:auto}
     .auth-card{
       width:min(560px,100%);padding:24px;border-radius:24px;border:1px solid rgba(148,163,184,.18);
       background:linear-gradient(180deg,rgba(10,18,38,.98),rgba(6,10,22,.99));box-shadow:var(--shadow);
@@ -752,7 +754,7 @@
        ============================================================ */
     .mobile-nav{
       position:fixed;left:0;right:0;bottom:0;z-index:160;min-height:82px;
-      display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
+      display:none;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;
       padding:10px 10px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid rgba(148,163,184,.18);
       background:linear-gradient(180deg,rgba(6,10,22,.86),rgba(7,25,29,.98));
@@ -983,6 +985,7 @@
     .oc-watch-rec-meta{display:flex!important;gap:6px;flex-wrap:wrap;margin-top:6px}.oc-watch-rec-meta i{font-style:normal;border:1px solid rgba(148,163,184,.12);background:rgba(4,22,26,.42);border-radius:999px;padding:3px 6px;color:#cfe8ff;font-size:10px}
     .auth-dev-actions{display:none}
     .auth-secondary-action{display:none}
+    #btnGateClose.auth-secondary-action{display:inline-flex}
     .auth-signup-step{display:none;margin-top:12px}
     .auth-signup-step.active{display:grid}
     .auth-card .auth-actions{gap:8px}
@@ -1040,10 +1043,10 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260921a"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260921d"/>
 </head>
-<body class="auth-loading auth-locked">
-<div id="authGate" class="auth-gate" aria-hidden="false">
+<body>
+<div id="authGate" class="auth-gate" aria-hidden="true" hidden>
   <div class="auth-card">
     <div class="auth-brand">
       <div class="logo"></div>
@@ -1066,6 +1069,7 @@
       <button class="btn" id="btnGateSignUp">Create Account</button>
       <button class="btn ghost" id="btnGateResetPassword">Forgot password</button>
       <button class="btn ghost auth-secondary-action" id="btnGateMagicLink">Email sign-in link</button>
+      <button class="btn ghost auth-secondary-action" id="btnGateClose" type="button">Continue browsing</button>
     </div>
     <div class="auth-actions auth-dev-actions" id="gateDeveloperActions">
       <button class="btn ghost" id="btnGateUseCloudApi" type="button">Use cloud API</button>
@@ -2640,6 +2644,7 @@
   <button class="mobile-tab" data-section="explore" type="button" aria-label="Explore">E<span>Explore</span></button>
   <button class="mobile-tab plus-tab" data-section="create" type="button" aria-label="Create">+<span>Create</span></button>
   <button class="mobile-tab" data-section="watch" type="button" aria-label="Watch">W<span>Watch</span></button>
+  <button class="mobile-tab" data-section="community" type="button" aria-label="Crew">C<span>Crew</span></button>
   <button class="mobile-tab" data-section="profile" type="button" aria-label="Profile">P<span>Profile</span></button>
 </div>
 
@@ -3103,9 +3108,8 @@ function getAuthPassword(source = 'account'){
 function updateLoginGate(){
   const signedIn = isSignedIn();
   const authConfigured = state.lastHealth?.auth_api_configured !== false;
-  const locked = authConfigured && !signedIn;
-  document.body.classList.toggle('auth-locked', locked);
-  document.body.classList.remove('auth-loading');
+  document.body.classList.remove('auth-loading','auth-locked');
+  if(signedIn) closeLoginPrompt();
 
   const hint = $('gateHint');
   if(hint){
@@ -3116,7 +3120,7 @@ function updateLoginGate(){
     }else if(state.token){
       hint.textContent = 'Restoring saved login on this device...';
     }else{
-      hint.textContent = 'Sign in to enter OceanCore.';
+      hint.textContent = 'Browse OceanCore freely. Sign in when you want to post, save, join a crew, or use personal tools.';
     }
   }
 
@@ -3364,6 +3368,9 @@ function showSection(name){
   if((name === 'admin' || name === 'beta-checklist') && !state.admin?.isAdmin){
     name = 'home';
   }
+  if(name === 'catch' && !requireSignIn('Sign in to log catches and keep your private fishing history safe.')) return;
+  if(name === 'messages' && !requireSignIn('Sign in to message crews and anglers.')) return;
+  if(name === 'billing' && !requireSignIn('Sign in to manage OceanCore plans.')) return;
   stopBackgroundMedia({ keepWatch: name === 'watch' });
   const mapOnlyContent = $('mapOnlyContent');
   if(mapOnlyContent) mapOnlyContent.hidden = name !== 'map';
@@ -3548,6 +3555,35 @@ async function fetchApiCandidate(apiBase, path, opts, headers){
   }finally{
     clearTimeout(timer);
   }
+}
+
+function openLoginPrompt(reason='Sign in to continue.'){
+  if(isSignedIn()) return true;
+  document.body.classList.remove('auth-loading','auth-locked');
+  document.body.classList.add('auth-prompt');
+  const gate = $('authGate');
+  if(gate){
+    gate.hidden = false;
+    gate.setAttribute('aria-hidden','false');
+  }
+  if($('gateHint')) $('gateHint').textContent = reason;
+  setAuthFeedback(reason);
+  setTimeout(()=>$('gateEmail')?.focus(), 40);
+  return false;
+}
+
+function closeLoginPrompt(){
+  document.body.classList.remove('auth-prompt','auth-locked','auth-loading');
+  const gate = $('authGate');
+  if(gate){
+    gate.hidden = true;
+    gate.setAttribute('aria-hidden','true');
+  }
+  setAuthFeedback('');
+}
+
+function requireSignIn(reason='Sign in to continue.'){
+  return isSignedIn() || openLoginPrompt(reason);
 }
 
 async function api(path, opts = {}, allowRefresh = true, apiBaseOverride = ''){
@@ -3759,6 +3795,7 @@ async function signIn(source = 'account'){
       body: JSON.stringify({ email, password }),
     });
     persistAuth(j.session || null, j.user || { email, is_guest:false });
+    closeLoginPrompt();
     clearAuthPasswords();
     setAuthFeedback(j.message || 'Signed in.');
     await loadMe();
@@ -3789,6 +3826,7 @@ async function signUp(source = 'account'){
     });
     if(j.session?.access_token){
       persistAuth(j.session, j.user || { email, is_guest:false });
+      closeLoginPrompt();
       clearAuthPasswords();
       setAuthFeedback(j.message || 'Account created and signed in.');
       await loadMe();
@@ -4154,7 +4192,7 @@ function setAccountSettingsMsg(msg){ setStatusMessage('accountSettingsMsg', msg)
 
 async function uploadAccountAvatar(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to update your profile.')) return;
     const file = $('accountAvatarFile')?.files?.[0];
     ensureUploadFile(file, IMAGE_UPLOAD_MIMES, AVATAR_IMAGE_MAX_BYTES, 'Avatar image');
     setAccountSettingsMsg('Uploading avatar...');
@@ -4171,7 +4209,7 @@ async function uploadAccountAvatar(){
 
 async function changeAccountEmail(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to change your email.')) return;
     const email = $('accountNewEmail')?.value?.trim() || '';
     if(!email) throw new Error('Enter the new email address first.');
     setAccountSettingsMsg('Updating email...');
@@ -4184,7 +4222,7 @@ async function changeAccountEmail(){
 
 async function changeAccountPassword(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to change your password.')) return;
     const password = $('accountNewPassword')?.value || '';
     if(!password || password.length < 6) throw new Error('Enter a new password with at least 6 characters.');
     const j = await api('/auth/update-password', { method:'POST', body:JSON.stringify({ password }) });
@@ -4195,7 +4233,7 @@ async function changeAccountPassword(){
 
 async function exportMyData(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to export your OceanCore data.')) return;
     setAccountSettingsMsg('Preparing export...');
     const data = await api('/auth/export-data');
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -4213,7 +4251,7 @@ async function exportMyData(){
 
 async function deleteMyAccount(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to delete your account.')) return;
     const confirmText = $('accountDeleteConfirm')?.value?.trim() || '';
     if(confirmText !== 'DELETE') throw new Error('Type DELETE in the box first.');
     if(!confirm('Delete this OceanCore account and remove your personal data? This cannot be undone.')) return;
@@ -4491,6 +4529,7 @@ function clearCatchLocation(){
 
 async function saveCatch(){
   try{
+    if(!requireSignIn('Sign in to save catches to your private Catch Log.')) return;
     setStatusMessage('catchMsg','Saving catch...');
     const photoDataUrl = await getCatchPhotoDataUrl(false);
 
@@ -5183,6 +5222,7 @@ async function checkSpeciesHandshake(){
 
 async function detectSpecies(){
   try{
+    if(!requireSignIn('Sign in to use AI species detection with your Catch Log.')) return;
     const photoDataUrl = await getCatchPhotoDataUrl(true);
 
     $('speciesDetectCard').classList.remove('hidden');
@@ -5348,7 +5388,7 @@ async function loadRewards(){
 
 async function syncRewards(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first to sync your contribution history.');
+    if(!requireSignIn('Sign in to sync your contribution history.')) return;
     setStatusMessage('rewardsMsg','Checking existing catches and community contributions...');
     const j = await api('/rewards/reconcile',{method:'POST',body:JSON.stringify({})});
     await loadRewards();
@@ -5552,7 +5592,7 @@ async function loadBilling(){
 }
 async function startCheckout(plan, interval='monthly'){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first, then choose a plan.');
+    if(!requireSignIn('Sign in first, then choose a plan.')) return;
     plan = normalizePlanKeyClient(plan);
     // Keep checkout graceful when direct payment activation is not available yet.
     const priceKey = `${String(plan || '').toLowerCase()}_${String(interval || 'monthly').toLowerCase()}`;
@@ -5579,7 +5619,7 @@ function setBillingInterval(interval){
 }
 async function openBillingPortal(){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to open billing.')) return;
     setStatusMessage('billingMsg', 'Opening billing portal...');
     const j = await api('/billing/portal', { method:'POST', body:JSON.stringify({}) });
     if(!j?.url) throw new Error('Billing portal URL was not returned.');
@@ -6199,6 +6239,7 @@ function refreshCommunitySurfaces({ includeWatch=false } = {}){
 async function toggleSavedCommunityPost(id){
   const key = String(id || '');
   if(!key) return;
+  if(!requireSignIn('Sign in to save posts and build your OceanCore profile.')) return;
   const saved = savedCommunityPostIds();
   let next = saved.includes(key) ? saved.filter(value=>value !== key) : [...saved, key];
   if(isSignedIn()){
@@ -6242,7 +6283,7 @@ async function loadWatchComments(id){
 
 async function submitWatchComment(id){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to comment on videos.')) return;
     const body = String($('watchCommentInput')?.value || '').trim();
     if(!body) throw new Error('Write a comment first.');
     const result = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/comments`,`/social/content/${encodeURIComponent(id)}/comments`,`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`], {method:'POST', body:JSON.stringify({body})});
@@ -8131,6 +8172,7 @@ async function sendAiFeedback(messageId, rating){
 
 async function sendChat(promptOverride = ''){
   try{
+    if(!requireSignIn('Sign in to use Fishing AI with your catch history and personal patterns.')) return;
     const question = (promptOverride || $('chatInput').value).trim();
     if(!question) return;
     let session = getActiveChatSession();
@@ -8220,6 +8262,7 @@ $('btnGateSignUp').addEventListener('click', ()=>{
 });
 $('btnGateResetPassword').addEventListener('click', ()=>sendResetPassword('gate'));
 $('btnGateMagicLink').addEventListener('click', ()=>sendMagicLink('gate'));
+$('btnGateClose')?.addEventListener('click', closeLoginPrompt);
 $('btnGateUseCloudApi')?.addEventListener('click', useCloudApiUrl);
 $('btnGateUseLocalApi')?.addEventListener('click', useLocalApiUrl);
 $('btnGateResetDevice')?.addEventListener('click', resetGateDeviceState);
@@ -8646,6 +8689,7 @@ function validateCommunityPayload(payload){
 async function publishCommunityPost(){
   const publishButton=$('btnPublishCommunityPost');
   try{
+    if(!requireSignIn('Sign in to post catches, videos, trip reports and crew updates.')) return;
     setCommunityMsg('Posting...');
     if(publishButton){ publishButton.disabled=true; publishButton.textContent='Publishing...'; }
     const commentPermission = getSetting('community.commentPermission') || (getSetting('community.allowComments') === false ? 'off' : 'everyone');
@@ -8694,7 +8738,7 @@ async function publishCommunityPost(){
 
 async function likeCommunityPost(id){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to like posts and follow the local feed.')) return;
     const j = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/like`,`/social/content/${encodeURIComponent(id)}/like`,`/api/community/posts/${encodeURIComponent(id)}/like`,`/community/posts/${encodeURIComponent(id)}/like`], {method:'POST', body:JSON.stringify({})});
     const post = (state.communityPosts || []).find(x=>String(x.id) === String(id));
     if(post) post.likes_count = j.likes_count;
@@ -8728,7 +8772,7 @@ async function toggleCommunityComments(id){
 
 async function submitCommunityComment(id){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to comment on posts.')) return;
     const input = document.getElementById(`communityCommentInput-${id}`);
     const body = input?.value?.trim() || '';
     if(!body) throw new Error('Write a comment first.');
@@ -8748,7 +8792,7 @@ async function submitCommunityComment(id){
 
 async function reportCommunityPost(id){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to report community content.')) return;
     if(!confirm('Report this community post for review?')) return;
     await apiFirst([`/api/social/content/${encodeURIComponent(id)}/report`,`/social/content/${encodeURIComponent(id)}/report`,`/api/community/posts/${encodeURIComponent(id)}/report`,`/community/posts/${encodeURIComponent(id)}/report`], {method:'POST', body:JSON.stringify({reason:'user_report'})});
     if(getSetting('community.hideReportedPosts') !== false){
@@ -8762,7 +8806,7 @@ async function reportCommunityPost(id){
 
 async function deleteCommunityPost(id){
   try{
-    if(!isSignedIn()) throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to delete your post.')) return;
     if(!confirm('Delete this community post?')) return;
     await apiFirst([`/api/community/posts/${encodeURIComponent(id)}`,`/community/posts/${encodeURIComponent(id)}`], {method:'DELETE'});
     state.communityPosts = (state.communityPosts || []).filter(x=>String(x.id) !== String(id));
@@ -8843,7 +8887,7 @@ function renderCommunityMessages(){
   if(canSend)thread.scrollTop=thread.scrollHeight;
 }
 async function loadCommunityFriends(){
-  if(!isSignedIn())throw new Error('Sign in first.');
+  if(!requireSignIn('Sign in to manage crews, friends and messages.')) return;
   state.communityFriends.loading=true;
   try{
     const result=await apiFirst(['/api/community/friends','/community/friends']);
@@ -8854,7 +8898,7 @@ async function loadCommunityFriends(){
   }
 }
 async function loadCommunityConversations(){
-  if(!isSignedIn())throw new Error('Sign in first.');
+  if(!requireSignIn('Sign in to view private messages.')) return;
   state.communityMessages.loading=true;
   try{
     const result=await apiFirst(['/api/community/messages/conversations','/community/messages/conversations']);
@@ -8876,7 +8920,7 @@ async function loadCommunityMessages(id){
 }
 async function requestCommunityFriend(id){
   try{
-    if(!isSignedIn())throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to join crews and add anglers.')) return;
     const result=await apiFirst([`/api/community/friends/${encodeURIComponent(id)}`,`/community/friends/${encodeURIComponent(id)}`],{method:'POST',body:'{}'});
     setCommunityMsg(result.message||'Friend request sent.');
     await loadCommunityFriends();
@@ -8884,6 +8928,7 @@ async function requestCommunityFriend(id){
 }
 async function acceptCommunityFriend(id){
   try{
+    if(!requireSignIn('Sign in to accept crew requests.')) return;
     const result=await apiFirst([`/api/community/friends/${encodeURIComponent(id)}`,`/community/friends/${encodeURIComponent(id)}`],{method:'PATCH',body:'{}'});
     setCommunityMessagesMsg(result.success?'Friend request accepted. You can now message each other.':'Could not accept the request.');
     await loadCommunityFriends();
@@ -8891,7 +8936,7 @@ async function acceptCommunityFriend(id){
 }
 async function openCommunityMessages(recipientId){
   try{
-    if(!isSignedIn())throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to message crews and anglers.')) return;
     showSection('messages');
     const result=await apiFirst(['/api/community/messages/conversations','/community/messages/conversations'],{method:'POST',body:JSON.stringify({recipient_id:recipientId})});
     state.communityMessages.activeConversationId=result?.conversation?.id||'';
@@ -8901,7 +8946,7 @@ async function openCommunityMessages(recipientId){
 }
 async function blockCommunityUser(id){
   try{
-    if(!isSignedIn())throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to manage message safety.')) return;
     if(!confirm('Block this OceanCore member? They will not be able to friend or message you.'))return;
     await apiFirst([`/api/community/users/${encodeURIComponent(id)}/block`,`/community/users/${encodeURIComponent(id)}/block`],{method:'POST',body:'{}'});
     setCommunityMessagesMsg('Member blocked.');
@@ -8911,7 +8956,7 @@ async function blockCommunityUser(id){
 }
 async function reportCommunityMessage(id){
   try{
-    if(!isSignedIn())throw new Error('Sign in first.');
+    if(!requireSignIn('Sign in to report messages.')) return;
     if(!confirm('Report this message for a safety review?'))return;
     const result=await apiFirst([`/api/community/messages/${encodeURIComponent(id)}/report`,`/community/messages/${encodeURIComponent(id)}/report`],{method:'POST',body:JSON.stringify({reason:'message_safety'})});
     setCommunityMessagesMsg(result?.success?'Message reported. Our team will review it.':'Could not report this message.');
@@ -8919,6 +8964,7 @@ async function reportCommunityMessage(id){
 }
 async function sendCommunityMessage(){
   try{
+    if(!requireSignIn('Sign in to send private messages.')) return;
     const id=state.communityMessages.activeConversationId;
     const input=$('communityMessageInput');
     const body=input?.value?.trim()||'';
@@ -9149,6 +9195,7 @@ function configureCommunityComposer(type){
 }
 function selectCommunityPostType(type){configureCommunityComposer(type);}
 function openCommunityComposer(type='discussion', focus=true){
+  if(!requireSignIn('Sign in to post, create a crew, or share an update.')) return;
   showSection('community');
   $('communityComposerPanel')?.classList.remove('hidden');
   selectCommunityPostType(type);
@@ -9666,5 +9713,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260921a"></script></body>
+<script src="assets/ocean-current.js?v=20260921d"></script></body>
 </html>

@@ -148,7 +148,7 @@
     const camp = posts.find((post,index)=>index>0 && /camp|trip|boat/i.test(`${post?.post_type || ''} ${post?.category || ''} ${post?.title || ''}`)) || posts[1] || null;
     const weather = renderConditions();
     section.innerHTML = `<div class="oc-current-home">
-      <div class="oc-current-toolbar"><div class="oc-current-context">${icon('map-pin')}<span><strong>${safe(postArea(primary))}</strong> · ${safe(weather.temp)} · ${safe(weather.wind)}</span></div><button class="oc-current-primary" type="button" data-section="create" aria-label="Share a catch, trip, boat update, video or question">${icon('plus')}<span>Share</span></button></div>
+      <div class="oc-current-toolbar"><div class="oc-current-context">${icon('map-pin')}<span><strong>${safe(postArea(primary))}</strong> · ${safe(weather.temp)} · ${safe(weather.wind)}</span></div><button class="oc-current-primary" type="button" onclick="openCommunityComposer('fishing_report')" aria-label="Share a catch, trip, boat update, video or question">${icon('plus')}<span>Share</span></button></div>
       <div class="oc-current-layout">
         <div class="oc-current-river">${renderPrimary(primary)}${renderCamp(camp)}
           <section class="oc-current-more"><div class="oc-current-section-head"><h3>Stories and reports</h3><div class="oc-current-tabs" aria-label="Feed filters"><button class="${state.socialFeedMode==='home'?'active':''}" type="button" data-home-feed="home">For you</button><button class="${state.socialFeedMode==='following'?'active':''}" type="button" data-home-feed="following">Following</button><button class="${state.socialFeedMode==='local'?'active':''}" type="button" data-home-feed="local">Local</button><button class="${state.socialFeedMode==='latest'?'active':''}" type="button" data-home-feed="latest">Latest</button></div></div><div id="socialHomeFeed">${renderMore(posts)}</div></section>
@@ -189,7 +189,7 @@
       if(!summary || group.classList.contains('nav-developer')) return;
       summary.innerHTML = `${icon(index === 0 ? 'box' : 'menu')}<span>${index === 0 ? 'Tools' : 'More'}</span>`;
     });
-    const mobileIcons = {home:'home',explore:'compass',create:'plus',watch:'play',profile:'user'};
+    const mobileIcons = {home:'home',explore:'compass',create:'plus',watch:'play',community:'users',profile:'user'};
     document.querySelectorAll('.mobile-tab').forEach(button=>{
       const label = button.querySelector('span');
       const name = mobileIcons[button.dataset.section];
@@ -209,7 +209,6 @@
       const gate = document.getElementById('authGate');
       if(gate){ gate.hidden = true; gate.setAttribute('aria-hidden','true'); }
     };
-    updateLoginGate = unlock;
     unlock();
   }
 
