@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260922b"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260922c"/>
 </head>
 <body>
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -1053,7 +1053,7 @@
       <div>
         <div class="badge ok" style="display:inline-flex;margin-bottom:10px">Login</div>
         <h2>Welcome back</h2>
-        <p>Sign in to check conditions, ask AI, log catches and see your community.</p>
+        <p>Sign in to post, save, log catches and use your personal tools.</p>
       </div>
     </div>
 
@@ -5463,11 +5463,15 @@ function renderBillingPlans(effective){
     const featured = key === 'premium';
     const price = formatAudPrice(planPrice(plan, interval), interval);
     const productId = planProductId(plan, interval);
+    const priceKey = `${key}_${interval}`;
+    const checkoutUnavailable = state.billing?.stripe_configured === false || state.billing?.prices_configured?.[priceKey] === false;
     const features = Array.isArray(plan.features) ? plan.features : [];
     const excluded = Array.isArray(plan.excluded || plan.excluded_features) ? (plan.excluded || plan.excluded_features) : [];
     const button = key === 'free'
       ? `<button class="btn ghost" type="button" disabled>${isCurrent ? 'Current plan' : 'Included'}</button>`
-      : `<button class="btn primary" type="button" data-plan-checkout="${escapeHtml(key)}" data-plan-interval="${escapeHtml(interval)}">${isCurrent ? 'Current plan' : `Choose ${escapeHtml(planLabel(key))}`}</button>`;
+      : checkoutUnavailable
+        ? '<button class="btn ghost" type="button" disabled>Coming soon</button>'
+        : `<button class="btn primary" type="button" data-plan-checkout="${escapeHtml(key)}" data-plan-interval="${escapeHtml(interval)}">${isCurrent ? 'Current plan' : `Choose ${escapeHtml(planLabel(key))}`}</button>`;
     return `<div class="plan-card ${featured ? 'featured' : ''}" id="planCard${escapeHtml(key)}">
       ${isCurrent ? '<div class="plan-current">Current</div>' : ''}
       ${plan.badge ? `<div class="plan-badge">${escapeHtml(plan.badge)}</div>` : ''}
@@ -5500,6 +5504,7 @@ function renderBilling(){
   if($('billingAiRemain')) $('billingAiRemain').textContent = showUsageWarnings && usage.remaining != null ? `${usage.remaining} AI questions left today.` : (showUsageWarnings ? 'AI usage resets daily.' : 'Usage warnings hidden in settings.');
   renderBillingPlans(effective);
   let message = state.billing.message || `Current plan: ${planLabel(effective)}. ${ads ? 'Ads are enabled on this plan.' : 'Ads are off on this plan.'}`;
+  if(state.billing?.stripe_configured === false) message = 'Paid plans are coming soon. No payment will be taken yet.';
   if(showUsageWarnings && usage.remaining != null && Number(usage.limit || 0) > 0 && Number(usage.remaining) <= Math.max(2, Number(usage.limit) * 0.15)){
     message += ` AI usage is running low today (${usage.remaining} left).`;
   }
@@ -6654,6 +6659,10 @@ function exploreCard(title, copy, section, label){
 
 function renderExplore(filter='trending'){
   const posts = Array.isArray(state.communityPosts) ? state.communityPosts : [];
+  const creators = Array.from(new Map(posts.map(post=>[
+    String(post.user_id || post.user_email || post.author_name || post.id || '').toLowerCase(),
+    post
+  ])).values()).slice(0,4);
   const catches = Array.isArray(state.catches) ? state.catches : [];
   const cards = {
     trending:[
@@ -6671,8 +6680,8 @@ function renderExplore(filter='trending'){
     '4wd':[['4WD community','Tracks, setups and trip reports.','community','4WD'],['Trip planner','Plan fuel, weather and safety.','ai','AI'],['Create a report','Share practical track intel.','create','Create'],['Explore areas','Search and save useful regions.','map','Map']]
   };
   if($('exploreDiscoveryGrid')) $('exploreDiscoveryGrid').innerHTML = (cards[filter] || cards.trending).map(row=>exploreCard(...row)).join('');
-  if($('exploreCreators')) $('exploreCreators').innerHTML = posts.length
-    ? posts.slice(0,4).map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.author_name || post.user_email || 'OceanCore creator')}</strong><span>${Number(post.likes_count || 0)} likes</span></div>`).join('')
+  if($('exploreCreators')) $('exploreCreators').innerHTML = creators.length
+    ? creators.map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.author_name || post.user_email || 'OceanCore creator')}</strong><span>${Number(post.likes_count || 0)} likes</span></div>`).join('')
     : '<div class="muted-box">Creators will appear as the community grows.</div>';
   if($('exploreCatches')) $('exploreCatches').innerHTML = catches.length
     ? catches.slice(0,4).map(row=>`<div class="community-mini-item"><strong>${escapeHtml(displaySpecies(row.species))}</strong><span>${escapeHtml(formatCatchMeasures(row))}</span></div>`).join('')
@@ -9742,5 +9751,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260922b"></script></body>
+<script src="assets/ocean-current.js?v=20260922c"></script></body>
 </html>
