@@ -36,7 +36,11 @@
   }
 
   function postImage(post, fallback){
-    return post?.media_url || post?.photo_url || fallback;
+    const url = post?.media_url || post?.photo_url || '';
+    const mediaType = String(post?.media_type || '').toLowerCase();
+    const mediaMime = String(post?.media_mime || '').toLowerCase();
+    if(mediaType === 'video' || mediaMime.startsWith('video/') || /\.(mp4|mov|webm)(?:$|\?)/i.test(url)) return fallback;
+    return url || fallback;
   }
 
   function actionHandler(post, action){
@@ -63,8 +67,8 @@
     const title = postTitle(post, 'Magic conditions on the Sunshine Coast');
     const copy = postCopy(post, 'Unreal morning on the water. Plenty of action, a few solid mackerel and good company. Not giving spots, but this coastline is alive at the moment.');
     const image = postImage(post, FALLBACK_HERO);
-    const likes = Number(post?.likes_count || 128);
-    const comments = Number(post?.comments_count || 24);
+    const likes = Number(post ? (post.likes_count ?? 0) : 128);
+    const comments = Number(post ? (post.comments_count ?? 0) : 24);
     const weather = renderConditions();
     return `<article class="oc-current-chapter" data-social-post-id="${safe(post?.id)}">
       <div class="oc-current-hero" style="background-image:url('${safe(image)}')">
@@ -104,14 +108,17 @@
   function renderCamp(post){
     const author = post?.author_name || post?.user_email || 'Kate Williams';
     const title = postTitle(post, 'Camp life hits different');
-    const copy = postCopy(post, 'Set up for the long weekend. Good firewood, unreal sunsets and a few flathead in the esky. This is what it is all about.');
+    const isCamp = /camp|4wd|trip/i.test(`${post?.post_type || ''} ${post?.category || ''} ${post?.title || ''}`);
+    const isVideo = /video/i.test(`${post?.post_type || ''} ${post?.media_type || ''} ${post?.media_mime || ''}`);
+    const kicker = isCamp ? 'Camp & explore' : isVideo ? 'Watch & learn' : 'Community update';
+    const copy = postCopy(post, post ? 'Shared with the OceanCore community.' : 'Set up for the long weekend. Good firewood, unreal sunsets and a few flathead in the esky. This is what it is all about.');
     const image = postImage(post, FALLBACK_CAMP);
     return `<article class="oc-current-chapter">
       <div class="oc-current-camp" style="background-image:url('${safe(image)}')">
-        <div class="oc-current-hero-copy"><div class="oc-current-kicker">Camp & explore</div><h3>${safe(title)}</h3><p>${safe(copy)}</p></div>
+        <div class="oc-current-hero-copy"><div class="oc-current-kicker">${safe(kicker)}</div><h3>${safe(title)}</h3><p>${safe(copy)}</p></div>
       </div>
-      <div class="oc-current-byline"><div class="oc-current-avatar">${safe(initials(author))}</div><div><strong>${safe(author)}</strong><span>${safe(postDate(post,'5h ago'))} · ${safe(postArea(post,'Bribie Island, QLD'))} · Camping · Boating</span><span class="oc-spot-safe-badge">${icon('shield-check')} Spot Safe area only</span></div></div>
-      <div class="oc-current-actions"><button class="like" type="button" onclick="${actionHandler(post,'like')}">${icon('heart')} ${Number(post?.likes_count || 96).toLocaleString()}</button><button type="button" onclick="${actionHandler(post,'comment')}">${icon('message-circle')} ${Number(post?.comments_count || 12).toLocaleString()}</button><button type="button" onclick="${actionHandler(post,'share')}">${icon('send')} Share</button><button type="button" onclick="${actionHandler(post,'save')}">${icon('bookmark')} Save</button><button class="join" type="button" data-section="community">Join conversation ${icon('arrow-right')}</button></div>
+      <div class="oc-current-byline"><div class="oc-current-avatar">${safe(initials(author))}</div><div><strong>${safe(author)}</strong><span>${safe(postDate(post,'5h ago'))} · ${safe(postArea(post,'Bribie Island, QLD'))} · ${safe(kicker)}</span><span class="oc-spot-safe-badge">${icon('shield-check')} Spot Safe area only</span></div></div>
+      <div class="oc-current-actions"><button class="like" type="button" onclick="${actionHandler(post,'like')}">${icon('heart')} ${Number(post ? (post.likes_count ?? 0) : 96).toLocaleString()}</button><button type="button" onclick="${actionHandler(post,'comment')}">${icon('message-circle')} ${Number(post ? (post.comments_count ?? 0) : 12).toLocaleString()}</button><button type="button" onclick="${actionHandler(post,'share')}">${icon('send')} Share</button><button type="button" onclick="${actionHandler(post,'save')}">${icon('bookmark')} Save</button><button class="join" type="button" data-section="community">Join conversation ${icon('arrow-right')}</button></div>
     </article>`;
   }
 
@@ -134,7 +141,7 @@
 
   function renderMore(posts){
     const remaining = posts.slice(2);
-    if(!remaining.length) return `<div class="oc-current-caught-up"><div>${icon('check-circle-2')}<span><strong>You are caught up</strong><small>Be the first to post today's local report, boat update or camp trip.</small></span></div><button type="button" data-section="create">Create post</button></div>`;
+    if(!remaining.length) return `<div class="oc-current-caught-up"><div>${icon('check-circle-2')}<span><strong>You are caught up</strong><small>You've seen every community update. Share the next report, catch, video or trip.</small></span></div><button type="button" data-section="create">Create post</button></div>`;
     const feedHtml = remaining.map(renderSocialFeedCard).join('');
     const pagination = state.socialFeedHasMore ? `<div class="oc-feed-sentinel" id="socialHomeFeedSentinel"><button class="oc-feed-load-more" type="button" onclick="loadMoreSocialHomeFeed()">Show more posts</button></div>` : '';
     return `${feedHtml}${pagination}`;
