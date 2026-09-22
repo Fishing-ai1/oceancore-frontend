@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260922c"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260922d"/>
 </head>
 <body>
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -3370,6 +3370,7 @@ function showSection(name){
   }
   if(name === 'catch' && !requireSignIn('Sign in to log catches and keep your private fishing history safe.')) return;
   if(name === 'messages' && !requireSignIn('Sign in to message crews and anglers.')) return;
+  if(name === 'profile' && !requireSignIn('Sign in to view your profile, catches and creator dashboard.')) return;
   if(name === 'billing' && !requireSignIn('Sign in to manage OceanCore plans.')) return;
   stopBackgroundMedia({ keepWatch: name === 'watch' });
   const mapOnlyContent = $('mapOnlyContent');
@@ -9751,5 +9752,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260922c"></script></body>
+<script src="assets/ocean-current.js?v=20260922d"></script></body>
 </html>
