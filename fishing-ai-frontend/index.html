@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260921d"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260922a"/>
 </head>
 <body>
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -3747,15 +3747,35 @@ function consumeAuthTokensFromUrl(){
   const refreshToken = merged.refresh_token || '';
   const type = String(merged.type || '').toLowerCase();
 
+  if(merged.error || merged.error_description){
+    const message = String(merged.error_description || merged.error || 'This email link is invalid or has expired.').replaceAll('+',' ');
+    const cleanUrl = `${location.origin}${location.pathname}`;
+    history.replaceState({}, document.title, cleanUrl);
+    openLoginPrompt(`${message} Request a fresh password reset email and use the newest link.`);
+    return;
+  }
+
   if(accessToken){
     persistAuth({ access_token: accessToken, refresh_token: refreshToken || null }, { email: state.authEmail || '', is_guest:false });
-    state.recoveryMode = type === 'recovery' || type === 'magiclink' || type === 'signup';
+    state.recoveryMode = type === 'recovery';
     const cleanUrl = `${location.origin}${location.pathname}`;
     history.replaceState({}, document.title, cleanUrl);
     setAuthFeedback(state.recoveryMode
-      ? 'Email link accepted. You are signed in on this device.'
+      ? 'Password reset link accepted. Choose a new password below.'
       : 'Signed in from email link.');
+    if(state.recoveryMode){
+      requestAnimationFrame(()=>setTimeout(openPasswordRecoveryPanel, 40));
+    }
   }
+}
+
+function openPasswordRecoveryPanel(){
+  showSection('account');
+  openSettingsPanel('profile');
+  updateRecoveryUi();
+  const recovery = $('authRecoveryBlock');
+  recovery?.scrollIntoView({ behavior:'smooth', block:'center' });
+  setTimeout(()=>$('recoveryNewPassword')?.focus(), 120);
 }
 
 function humanizeAuthError(message, mode = 'general'){
@@ -6247,8 +6267,11 @@ async function toggleSavedCommunityPost(id){
       const result = await apiFirst([`/api/social/content/${encodeURIComponent(key)}/save`,`/social/content/${encodeURIComponent(key)}/save`,`/api/community/posts/${encodeURIComponent(key)}/save`,`/community/posts/${encodeURIComponent(key)}/save`], {method:'POST', body:JSON.stringify({})});
       next = result?.saved ? [...saved.filter(value=>value !== key), key] : saved.filter(value=>value !== key);
     }catch(error){
-      setCommunityMsg(error.message || 'Could not sync this saved post.');
-      return;
+      if(!(error?.status === 404 || /not found|404/i.test(String(error?.message || '')))){
+        setCommunityMsg(error.message || 'Could not sync this saved post.');
+        return;
+      }
+      setCommunityMsg('Saved on this device. Cloud save is temporarily unavailable.');
     }
   }
   localStorage.setItem('oceancore_saved_community_posts', JSON.stringify(next));
@@ -6528,9 +6551,15 @@ async function loadSocialHomeFeed(feed = state.socialFeedMode || 'home'){
   renderSocialHome();
   try{
     const query = `feed=${encodeURIComponent(state.socialFeedMode)}&limit=12`;
-    const j = await apiFirst([`/api/social/feed?${query}`, `/social/feed?${query}`]);
+    const communityFilter = state.socialFeedMode === 'home' ? 'local' : state.socialFeedMode;
+    const j = await apiFirst([
+      `/api/social/feed?${query}`,
+      `/social/feed?${query}`,
+      `/api/community/posts?filter=${encodeURIComponent(communityFilter)}`,
+      `/community/posts?filter=${encodeURIComponent(communityFilter)}`,
+    ]);
     if(requestId !== state.socialFeedRequestId) return;
-    mergeSocialFeedItems(j?.items);
+    mergeSocialFeedItems(Array.isArray(j?.items) ? j.items : j?.posts);
     state.socialFeedNextCursor = String(j?.next_cursor || '');
     state.socialFeedHasMore = Boolean(j?.has_more && state.socialFeedNextCursor);
     state.socialFeedMessage = state.socialFeed.length ? '' : 'Your crew has not posted here yet. Explore nearby anglers or share the first update.';
@@ -8838,7 +8867,7 @@ async function shareCommunityPost(id=''){
     setCommunityMsg('Could not open sharing on this device. Try again or copy the post details.');
   }
 }
-async function followCommunityUser(id){try{const j=await apiFirst([`/api/community/profile/${encodeURIComponent(id)}/follow`,`/community/profile/${encodeURIComponent(id)}/follow`],{method:'POST',body:'{}'});setCommunityMsg(j.following?'Added to your crew.':'Removed from your crew.');if(state.communityTab==='following')await loadCommunityPosts();}catch(e){setCommunityMsg(e.message||String(e));}}
+async function followCommunityUser(id){try{if(!requireSignIn('Sign in to follow anglers and build your crew feed.'))return;const j=await apiFirst([`/api/community/profile/${encodeURIComponent(id)}/follow`,`/community/profile/${encodeURIComponent(id)}/follow`],{method:'POST',body:'{}'});setCommunityMsg(j.following?'Added to your crew.':'Removed from your crew.');if(state.communityTab==='following')await loadCommunityPosts();}catch(e){setCommunityMsg(e.message||String(e));}}
 function setCommunityMessagesMsg(message){setStatusMessage('communityMessagesMsg',message||'');}
 function formatCommunityMessageTime(value){
   if(!value)return '';
@@ -8977,7 +9006,7 @@ async function sendCommunityMessage(){
     await loadCommunityConversations();
   }catch(error){setCommunityMessagesMsg(error.message||String(error));}
 }
-async function voteCommunityPoll(id,optionId){try{const j=await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/vote`,`/community/posts/${encodeURIComponent(id)}/vote`],{method:'POST',body:JSON.stringify({option_id:optionId})});const post=(state.communityPosts||[]).find(x=>String(x.id)===String(id));if(post)post.poll_options=j.poll_options;refreshCommunitySurfaces();}catch(e){setCommunityMsg(e.message||String(e));}}
+async function voteCommunityPoll(id,optionId){try{if(!requireSignIn('Sign in to vote in community polls.'))return;const j=await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/vote`,`/community/posts/${encodeURIComponent(id)}/vote`],{method:'POST',body:JSON.stringify({option_id:optionId})});const post=(state.communityPosts||[]).find(x=>String(x.id)===String(id));if(post)post.poll_options=j.poll_options;refreshCommunitySurfaces();}catch(e){setCommunityMsg(e.message||String(e));}}
 
 window.likeCommunityPost = likeCommunityPost;
 window.toggleCommunityComments = toggleCommunityComments;
@@ -9713,5 +9742,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260921d"></script></body>
+<script src="assets/ocean-current.js?v=20260922a"></script></body>
 </html>
