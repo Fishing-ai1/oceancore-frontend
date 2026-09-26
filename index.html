@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926c"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926d"/>
 </head>
 <body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -2645,11 +2645,30 @@
   </div>
 </div>
 
+<div class="mobile-tools-menu" id="mobileToolsMenu" aria-hidden="true" hidden>
+  <div class="mobile-tools-sheet" role="dialog" aria-modal="true" aria-labelledby="mobileToolsTitle">
+    <div class="mobile-tools-heading">
+      <div><strong id="mobileToolsTitle">OceanCore Tools</strong><span>Plan, log and learn</span></div>
+      <button id="btnCloseMobileTools" type="button" aria-label="Close tools">X</button>
+    </div>
+    <div class="mobile-tools-grid">
+      <button type="button" data-section="catch" data-tool-icon="fish">Catch Log</button>
+      <button type="button" data-section="map" data-tool-icon="map">Map &amp; Conditions</button>
+      <button type="button" data-section="boat-ai" data-tool-icon="ship">Boat AI</button>
+      <button type="button" data-section="areas" data-tool-icon="bookmark">Saved Areas</button>
+      <button type="button" data-section="stats" data-tool-icon="bar-chart-3">Stats &amp; Insights</button>
+      <button type="button" data-section="rewards" data-tool-icon="trophy">Rewards</button>
+      <button type="button" data-section="ai" data-tool-icon="sparkles">Fishing AI</button>
+    </div>
+  </div>
+</div>
+
 <div class="mobile-nav" aria-label="Mobile app navigation">
   <button class="mobile-tab active" data-section="home" type="button" aria-label="Home">H<span>Home</span></button>
   <button class="mobile-tab" data-section="explore" type="button" aria-label="Explore">E<span>Explore</span></button>
   <button class="mobile-tab plus-tab" data-section="create" type="button" aria-label="Create">+<span>Create</span></button>
   <button class="mobile-tab" data-section="community" type="button" aria-label="Crew">C<span>Crew</span></button>
+  <button class="mobile-tab" id="btnMobileTools" data-mobile-tools type="button" aria-label="Tools" aria-expanded="false">T<span>Tools</span></button>
   <button class="mobile-tab" data-section="profile" type="button" aria-label="Profile">P<span>Profile</span></button>
 </div>
 
@@ -3456,8 +3475,35 @@ document.querySelectorAll('[data-jump]').forEach(btn=>{
 document.querySelectorAll('[data-legal-url]').forEach(btn=>{
   btn.addEventListener('click',()=>openLegalUrl(btn.dataset.legalUrl));
 });
+function setMobileToolsOpen(open){
+  const menu = $('mobileToolsMenu');
+  const button = $('btnMobileTools');
+  if(!menu || !button) return;
+  menu.hidden = !open;
+  menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+  button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.body.classList.toggle('mobile-tools-open', open);
+}
 document.querySelectorAll('.mobile-tab').forEach(btn=>{
-  btn.addEventListener('click',()=>showSection(btn.dataset.section));
+  btn.addEventListener('click',()=>{
+    if(btn.hasAttribute('data-mobile-tools')){
+      setMobileToolsOpen($('mobileToolsMenu')?.hidden !== false);
+      return;
+    }
+    $('btnMobileTools')?.classList.remove('active');
+    setMobileToolsOpen(false);
+    showSection(btn.dataset.section);
+  });
+});
+$('btnCloseMobileTools')?.addEventListener('click',()=>setMobileToolsOpen(false));
+$('mobileToolsMenu')?.addEventListener('click',(event)=>{
+  if(event.target === $('mobileToolsMenu')) setMobileToolsOpen(false);
+});
+document.querySelectorAll('#mobileToolsMenu [data-section]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    setMobileToolsOpen(false);
+    $('btnMobileTools')?.classList.add('active');
+  });
 });
 document.querySelectorAll('button[data-section]:not(.nav-btn):not(.mobile-tab)').forEach(btn=>{
   btn.addEventListener('click',()=>showSection(btn.dataset.section));
@@ -9757,5 +9803,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260926b"></script></body>
+<script src="assets/ocean-current.js?v=20260926c"></script></body>
 </html>

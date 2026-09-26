@@ -246,11 +246,19 @@
     const mobileIcons = {home:'home',explore:'compass',create:'plus',watch:'play',community:'users',profile:'user'};
     document.querySelectorAll('.mobile-tab').forEach(button=>{
       const label = button.querySelector('span');
-      const name = mobileIcons[button.dataset.section];
+      const name = button.hasAttribute('data-mobile-tools') ? 'wrench' : mobileIcons[button.dataset.section];
       if(name) button.childNodes.forEach(node=>{ if(node.nodeType===Node.TEXT_NODE) node.textContent=''; });
       if(name && !button.querySelector('[data-lucide]')) button.insertAdjacentHTML('afterbegin',icon(name));
       if(label) button.appendChild(label);
     });
+    document.querySelectorAll('#mobileToolsMenu [data-tool-icon]').forEach(button=>{
+      if(!button.querySelector('[data-lucide]')) button.insertAdjacentHTML('afterbegin',icon(button.dataset.toolIcon));
+    });
+    const closeMobileTools = document.getElementById('btnCloseMobileTools');
+    if(closeMobileTools && !closeMobileTools.querySelector('[data-lucide]')){
+      closeMobileTools.textContent = '';
+      closeMobileTools.insertAdjacentHTML('afterbegin',icon('x'));
+    }
     if(window.lucide) window.lucide.createIcons({attrs:{'stroke-width':1.8}});
   }
 
