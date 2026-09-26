@@ -182,6 +182,17 @@
   }
 
   function start(){
+    const fitViewport=()=>{
+      const height=window.visualViewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty('--oc-visible-height',height+'px');
+      const editing=document.activeElement?.matches('input,textarea');
+      document.body.classList.toggle('oc-keyboard-open',Boolean(editing && height < window.innerHeight-140));
+    };
+    window.visualViewport?.addEventListener('resize',fitViewport);
+    window.addEventListener('resize',fitViewport);
+    document.addEventListener('focusin',fitViewport);
+    document.addEventListener('focusout',()=>requestAnimationFrame(fitViewport));
+    fitViewport();
     decorateChrome();
     enableLocalPreview();
     renderSocialHome = renderOceanCurrentHome;

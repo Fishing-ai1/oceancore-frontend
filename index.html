@@ -1043,11 +1043,11 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926g"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926h"/>
 </head>
 <body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
-  <div class="auth-card">
+  <div class="auth-card" role="dialog" aria-modal="true" aria-label="OceanCore sign in">
     <div class="auth-brand">
       <div class="logo"></div>
       <div>
@@ -1060,8 +1060,8 @@
     <div id="gateHint" class="auth-note">Checking saved login…</div>
 
     <div class="auth-grid" style="margin-top:14px">
-      <div class="fld"><input id="gateEmail" placeholder="you@email.com" autocomplete="email"/></div>
-      <div class="fld"><input id="gatePass" type="password" placeholder="Password" autocomplete="current-password"/></div>
+      <div class="fld"><input id="gateEmail" type="email" inputmode="email" aria-label="Email address" placeholder="you@email.com" autocomplete="email"/></div>
+      <div class="fld"><input id="gatePass" type="password" aria-label="Password" placeholder="Password" autocomplete="current-password"/></div>
     </div>
 
     <div class="auth-actions">
@@ -2135,7 +2135,7 @@
       <section class="section" id="section-messages">
         <div class="app-screen-title">
           <button class="btn ghost" type="button" data-section="community" aria-label="Back to community">Back</button>
-          <h2>Messages</h2>
+          <h2>Messages</h2><button class="btn ghost" type="button" onclick="refreshCommunityInbox()" aria-label="Refresh messages"><i data-lucide="refresh-cw" aria-hidden="true"></i></button>
         </div>
         <div class="oc-help-bar"><p>Private messages are only available after both people accept a friend connection. You can block a member at any time.</p></div>
         <div class="oc-messages-layout">
@@ -3285,7 +3285,7 @@ function getActiveChatSession(){
 }
 function persistAuth(session, user){
   const token = session?.access_token || null;
-  const refreshToken = session?.refresh_token || state.refreshToken || null;
+  const refreshToken = !session ? null : Object.prototype.hasOwnProperty.call(session,'refresh_token') ? (session.refresh_token || null) : (state.refreshToken || null);
   const expiresAt = session?.expires_at != null ? Number(session.expires_at) : (session?.expires_in ? Math.floor(Date.now() / 1000) + Number(session.expires_in) : state.sessionExpiresAt);
 
   state.token = token;
@@ -3310,6 +3310,8 @@ function persistAuth(session, user){
 }
 
 function clearAuth(){
+  sessionStorage.removeItem('oceancore_recovery_pending');
+  state.recoveryMode=false;
   state.token = null;
   state.refreshToken = null;
   state.sessionExpiresAt = null;
@@ -3448,8 +3450,8 @@ function showSection(name){
     loadRewards().catch(()=>null);
   }
   if(name === 'messages'){
-    loadCommunityFriends().catch(()=>renderCommunityMessages());
-    loadCommunityConversations().catch(()=>renderCommunityMessages());
+    loadCommunityFriends().catch(error=>setCommunityMessagesMsg(error.message||'Could not load friends.'));
+    loadCommunityConversations().catch(error=>setCommunityMessagesMsg(error.message||'Could not load conversations.'));
     renderCommunityMessages();
   }
   if(name === 'stats') renderStats();
@@ -3824,6 +3826,8 @@ function consumeAuthTokensFromUrl(){
   if(accessToken){
     persistAuth({ access_token: accessToken, refresh_token: refreshToken || null }, { email: state.authEmail || '', is_guest:false });
     state.recoveryMode = type === 'recovery';
+    if(state.recoveryMode) sessionStorage.setItem('oceancore_recovery_pending','true');
+    else sessionStorage.removeItem('oceancore_recovery_pending');
     const cleanUrl = `${location.origin}${location.pathname}`;
     history.replaceState({}, document.title, cleanUrl);
     setAuthFeedback(state.recoveryMode
@@ -3854,8 +3858,8 @@ function humanizeAuthError(message, mode = 'general'){
   if(mode === 'signin' && (low.includes('invalid login credentials') || low.includes('invalid_grant') || low.includes('email not confirmed') || low.includes('invalid email or password'))){
     return 'Sign in failed. Check the password, or use Reset Password / Magic Link.';
   }
-  if(mode === 'reset' && low.includes('for security purposes')){
-    return 'If that email exists, a reset email has been sent.';
+  if(mode === 'reset' && (low.includes('for security purposes') || low.includes('rate limit') || low.includes('too many'))){
+    return 'Please wait before requesting another reset email. Check your inbox and use the newest link, or try again shortly.';
   }
   return raw || 'Authentication request failed.';
 }
@@ -3865,6 +3869,10 @@ function initAuth(){
     state.authEmail = localStorage.getItem('oceancore_auth_email') || '';
   }
   consumeAuthTokensFromUrl();
+  if(state.token && sessionStorage.getItem('oceancore_recovery_pending')==='true'){
+    state.recoveryMode=true;
+    requestAnimationFrame(()=>setTimeout(openPasswordRecoveryPanel,40));
+  }
   mirrorAuthEmail(state.authEmail || '');
   updateAuthUi();
 }
@@ -3934,6 +3942,8 @@ async function signUp(source = 'account'){
 
 
 async function sendResetPassword(source = 'account'){
+  if(state.resetPasswordPending) return;
+  state.resetPasswordPending=true;
   try{
     const email = getAuthEmail(source);
     if(!email) throw new Error('Enter your email first.');
@@ -3946,7 +3956,7 @@ async function sendResetPassword(source = 'account'){
     setAuthFeedback(j.message || 'Password reset email sent.');
   }catch(e){
     setAuthFeedback(humanizeAuthError(e.message || String(e), 'reset'));
-  }
+  }finally{ state.resetPasswordPending=false; }
 }
 
 async function sendMagicLink(source = 'account'){
@@ -3973,6 +3983,7 @@ async function updatePassword(){
       body: JSON.stringify({ password }),
     });
     $('recoveryNewPassword').value = '';
+    sessionStorage.removeItem('oceancore_recovery_pending');
     state.recoveryMode = false;
     setStatusMessage('recoveryMsg', j.message || 'Password updated.');
     setAuthFeedback('Password updated. You can now sign in normally.');
@@ -5530,7 +5541,7 @@ function renderBillingPlans(effective){
     const price = formatAudPrice(planPrice(plan, interval), interval);
     const productId = planProductId(plan, interval);
     const priceKey = `${key}_${interval}`;
-    const checkoutUnavailable = state.billing?.stripe_configured === false || state.billing?.prices_configured?.[priceKey] === false;
+    const checkoutUnavailable = state.billing?.stripe_configured !== true || state.billing?.prices_configured?.[priceKey] !== true;
     const features = Array.isArray(plan.features) ? plan.features : [];
     const excluded = Array.isArray(plan.excluded || plan.excluded_features) ? (plan.excluded || plan.excluded_features) : [];
     const button = key === 'free'
@@ -5690,7 +5701,7 @@ async function startCheckout(plan, interval='monthly'){
     const priceReady = !!state.billing?.prices_configured?.[priceKey];
     const isStripeLikelyOff = !state.billing?.stripe_configured || !priceReady;
     if(isStripeLikelyOff){
-      setStatusMessage('billingMsg', `${planLabel(plan)} is ready. The OceanCore team can activate this plan for your account.`);
+      setStatusMessage('billingMsg', 'Paid checkout is not available yet. No payment has been taken.');
       return;
     }
     setStatusMessage('billingMsg', `Opening ${planLabel(plan)} checkout...`);
@@ -8530,7 +8541,9 @@ function setCommunityUploadStatus(message='', tone='pending'){
   if(!el) return;
   el.classList.toggle('hidden', !message);
   el.dataset.tone=tone;
-  el.innerHTML=message ? `<strong>${tone === 'published' ? 'Published' : 'Ready to publish'}</strong><br>${escapeHtml(message)}` : '';
+  const label={published:'Published',uploading:'Uploading',error:'Attachment needs attention',ready:'Ready to publish'}[tone]||'Attachment';
+  el.setAttribute('role','status');
+  el.innerHTML=message ? `<strong>${label}</strong><br>${escapeHtml(message)}${tone==='error'&&state.communityMediaFile?'<button class="btn" type="button" onclick="retryCommunityMediaUpload()">Retry attachment</button>':''}${state.communityMediaFile&&tone!=='published'?'<button class="btn ghost" type="button" onclick="clearCommunityMedia()">Remove attachment</button>':''}` : '';
   const publishButton=$('btnPublishCommunityPost');
   if(publishButton && (state.communityMediaDataUrl || state.communityMediaUrl)) publishButton.textContent=state.communityMediaMime?.startsWith('video/') ? 'Publish video' : 'Publish post';
 }
@@ -8540,14 +8553,16 @@ function renderCommunityPreview(){
   if(!data){ root.innerHTML=''; return; }
   const mime=state.communityMediaMime || '';
   root.innerHTML = mime.startsWith('video/')
-    ? `<video src="${data}" controls playsinline></video>`
-    : `<img src="${data}" alt="Community upload preview"/>`;
+    ? `<video src="${escapeHtml(data)}" controls playsinline></video>`
+    : `<img src="${escapeHtml(data)}" alt="Community upload preview"/>`;
 }
-async function uploadCommunityVideoResumable(file){
-  if(!window.tus?.Upload) throw new Error('Large-video uploader did not load. Refresh and try again.');
+async function uploadCommunityVideoResumable(file, selectionId){
+  if(!window.tus?.Upload) throw new Error('Video uploader did not load. Refresh and try again.');
   const ticket=await apiFirst(['/api/community/media/upload-ticket','/community/media/upload-ticket'],{method:'POST',body:JSON.stringify({name:file.name,mime:file.type,size:file.size})});
+  if(selectionId !== state.communityMediaSelectionId) throw new Error('Attachment changed.');
   if(!ticket?.upload_token || !ticket?.resumable_endpoint || !ticket?.public_url) throw new Error('OceanCore could not prepare permanent video storage.');
   return new Promise((resolve,reject)=>{
+    const current=()=>selectionId === state.communityMediaSelectionId;
     const upload=new window.tus.Upload(file,{
       endpoint:ticket.resumable_endpoint,
       retryDelays:[0,3000,5000,10000,20000],
@@ -8556,47 +8571,94 @@ async function uploadCommunityVideoResumable(file){
       removeFingerprintOnSuccess:true,
       chunkSize:Number(ticket.chunk_size||6*1024*1024),
       metadata:{bucketName:ticket.bucket,objectName:ticket.object_path,contentType:file.type,cacheControl:'31536000'},
-      onError:error=>{state.communityMediaUpload=null;reject(new Error(`Video upload stopped: ${error?.message||error}`));},
+      onError:error=>reject(new Error('Video upload stopped: '+(error?.message||error))),
       onProgress:(uploaded,total)=>{
+        if(!current()) return;
         const percent=Math.max(0,Math.min(100,Math.round((uploaded/Math.max(1,total))*100)));
-        setCommunityMsg(`Uploading ${file.name}: ${percent}%`);
-        setCommunityUploadStatus(`${percent}% uploaded. Keep OceanCore open; interrupted uploads can resume.`);
+        setCommunityUploadStatus(percent+'% uploaded. Keep OceanCore open while the upload retries any interruptions.','uploading');
       },
-      onSuccess:()=>{state.communityMediaUpload=null;state.communityMediaUrl=ticket.public_url;resolve(ticket.public_url);}
+      onSuccess:()=>resolve(ticket.public_url)
     });
     state.communityMediaUpload=upload;
-    upload.findPreviousUploads().then(previous=>{if(previous.length) upload.resumeFromPreviousUpload(previous[0]);upload.start();}).catch(reject);
+    state.communityMediaCancel=()=>{
+      upload.abort().catch(()=>{});
+      reject(new Error('Attachment changed.'));
+    };
+    // A new signed ticket owns a new object; never resume another ticket's URL.
+    upload.start();
   });
 }
-async function handleCommunityMedia(sourceInput=$('communityMedia')){
-  const input = sourceInput?.target || sourceInput;
-  const file=input?.files?.[0];
-  if(!file){ state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus(); return false; }
+function clearCommunityMedia(){
+  state.communityMediaSelectionId=(state.communityMediaSelectionId||0)+1;
+  state.communityMediaCancel?.();
+  state.communityMediaCancel=null;
+  state.communityMediaUpload=null;
+  state.communityMediaPreparing=false;
+  state.communityMediaFailed=false;
+  state.communityMediaFile=null;
+  if(String(state.communityMediaDataUrl||'').startsWith('blob:')) URL.revokeObjectURL(state.communityMediaDataUrl);
+  state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime='';
+  for(const id of ['communityMedia','createVideoFile','profileVideoFile']) if($(id)) $(id).value='';
+  renderCommunityPreview();
+  setCommunityUploadStatus();
+}
+async function prepareCommunityMedia(file){
+  clearCommunityMedia();
+  const selectionId=state.communityMediaSelectionId;
+  state.communityMediaFile=file;
+  state.communityMediaMime=file.type||'';
+  state.communityMediaPreparing=true;
   const isVideo=String(file.type||'').startsWith('video/');
-  try{ ensureUploadFile(file, COMMUNITY_MEDIA_MIMES, isVideo?COMMUNITY_VIDEO_MAX_BYTES:COMMUNITY_MEDIA_MAX_BYTES, isVideo?'Community video':'Community media'); }
-  catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(); if(input) input.value=''; return false; }
   try{
-    state.communityMediaMime=file.type || '';
-    state.communityMediaUrl='';
+    setCommunityUploadStatus('Preparing '+file.name+'...','uploading');
     if(isVideo){
       state.communityMediaDataUrl=URL.createObjectURL(file);
       renderCommunityPreview();
-      setCommunityUploadStatus(`${file.name} is uploading directly to permanent storage.`);
-      await uploadCommunityVideoResumable(file);
+      const url=await uploadCommunityVideoResumable(file,selectionId);
+      if(selectionId !== state.communityMediaSelectionId) return false;
       URL.revokeObjectURL(state.communityMediaDataUrl);
       state.communityMediaDataUrl='';
+      state.communityMediaUrl=url;
     }else{
-      state.communityMediaDataUrl = await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=()=>reject(new Error('This media could not be read.')); r.readAsDataURL(file); });
+      const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('This image could not be read.'));reader.readAsDataURL(file);});
+      if(selectionId !== state.communityMediaSelectionId) return false;
+      state.communityMediaDataUrl=data;
     }
     renderCommunityPreview();
-    setCommunityMsg(`Ready: ${file.name}`);
-    setCommunityUploadStatus(isVideo?`${file.name} is fully uploaded. Add a caption, then tap Publish video.`:`${file.name} is selected but has not been published yet.`);
+    setCommunityUploadStatus(file.name+' is ready. Add your details, then publish.','ready');
     return true;
-  }catch(e){
-    state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus();
-    setCommunityMsg(e.message || String(e));
+  }catch(error){
+    if(selectionId !== state.communityMediaSelectionId) return false;
+    state.communityMediaFailed=true;
+    setCommunityMsg(error.message||String(error));
+    setCommunityUploadStatus('Attachment could not be prepared. Your file is kept for retry.','error');
+    return false;
+  }finally{
+    if(selectionId === state.communityMediaSelectionId){
+      state.communityMediaPreparing=false;
+      state.communityMediaUpload=null;
+      state.communityMediaCancel=null;
+    }
+  }
+}
+async function handleCommunityMedia(sourceInput=$('communityMedia')){
+  const input=sourceInput?.target||sourceInput;
+  const file=input?.files?.[0];
+  if(!file) return false;
+  const isVideo=String(file.type||'').startsWith('video/');
+  try{
+    ensureUploadFile(file,COMMUNITY_MEDIA_MIMES,isVideo?COMMUNITY_VIDEO_MAX_BYTES:COMMUNITY_MEDIA_MAX_BYTES,isVideo?'Community video':'Community image');
+  }catch(error){
+    setCommunityMsg(error.message||String(error));
+    if(input) input.value='';
     return false;
   }
+  return prepareCommunityMedia(file);
+}
+function retryCommunityMediaUpload(){
+  const file=state.communityMediaFile;
+  if(!file || state.communityMediaPreparing) return;
+  return prepareCommunityMedia(file);
 }
 function useLastCatchForCommunity(){
   const c = state.catches?.[0];
@@ -8657,6 +8719,8 @@ function communityPostMatchesTab(post){
 }
 function renderCommunityFeed(){
   const root=$('communityFeed'); if(!root){ renderNotificationCenter(); return; }
+  if(state.communityLoading){ root.innerHTML='<div class="crew-empty" role="status">Loading community posts...</div>'; return; }
+  if(state.communityFeedError){ root.innerHTML='<div class="crew-empty" role="status"><p>Could not load community posts.</p><button type="button" class="btn" onclick="loadCommunityPosts()">Try again</button></div>'; return; }
   const posts = (Array.isArray(state.communityPosts) ? state.communityPosts : []).filter(communityPostMatchesTab);
   const tabLabel = String(state.communityTab || 'local').replace(/[_-]+/g,' ');
   if($('communityFeedTitle')) $('communityFeedTitle').textContent = `${tabLabel.charAt(0).toUpperCase()}${tabLabel.slice(1)} feed`;
@@ -8681,17 +8745,27 @@ function renderCommunityFeed(){
   renderNotificationCenter();
 }
 async function loadCommunityPosts(){
-  try{
-    const tab = state.communityTab || 'feed';
-    const j = await apiFirst([`/api/community/posts?filter=${encodeURIComponent(tab)}`,`/community/posts?filter=${encodeURIComponent(tab)}`]);
-    state.communityPosts = Array.isArray(j?.posts) ? j.posts : [];
-    if(j?.storage === 'local') setCommunityMsg('Your post is saved on this device.');
-  }catch(e){
-    state.communityPosts = [];
-    setCommunityMsg('Community is quiet right now. You can still draft a post or try again soon.');
-  }
+  const requestId=(state.communityRequestId||0)+1;
+  state.communityRequestId=requestId;
+  state.communityLoading=true;
+  state.communityFeedError='';
+  state.communityPosts=[];
   renderCommunityFeed();
-  renderCommunityLiveModules();
+  try{
+    const tab=state.communityTab||'feed';
+    const j=await apiFirst([`/api/community/posts?filter=${encodeURIComponent(tab)}`,`/community/posts?filter=${encodeURIComponent(tab)}`]);
+    if(requestId!==state.communityRequestId) return;
+    state.communityPosts=Array.isArray(j?.posts)?j.posts:[];
+  }catch(error){
+    if(requestId!==state.communityRequestId) return;
+    state.communityFeedError='Could not load community posts. Please try again.';
+  }finally{
+    if(requestId===state.communityRequestId){
+      state.communityLoading=false;
+      renderCommunityFeed();
+      renderCommunityLiveModules();
+    }
+  }
 }
 function renderCommunityDashboard(){
   const dashboard=state.communityDashboard||{}, streak=dashboard.streak||{}, achievements=Array.isArray(dashboard.achievements)?dashboard.achievements:[];
@@ -8764,7 +8838,8 @@ function validateCommunityPayload(payload){
   const area = String(payload.general_area || '').trim();
   const hasMedia = Boolean(payload.media_data_url || payload.media_url);
   const isVideo = payload.media_type === 'video' || String(payload.media_mime || '').startsWith('video/');
-  if(state.communityMediaUpload) throw new Error('Wait for the upload to reach 100% before publishing.');
+  if(state.communityMediaPreparing || state.communityMediaUpload) throw new Error('Wait for the attachment to finish preparing before publishing.');
+  if(state.communityMediaFailed) throw new Error('Retry or remove the failed attachment before publishing.');
   if(type === 'video'){
     if(!hasMedia || !isVideo) throw new Error('Choose a video file before publishing a video post.');
     if(!title) throw new Error('Add a video title so people know what they are watching.');
@@ -8794,9 +8869,11 @@ function validateCommunityPayload(payload){
   if(!title && !caption && !hasMedia) throw new Error('Add a question, caption, photo or video first.');
 }
 async function publishCommunityPost(){
+  if(state.communityPublishing) return;
   const publishButton=$('btnPublishCommunityPost');
   try{
     if(!requireSignIn('Sign in to post catches, videos, trip reports and crew updates.')) return;
+    state.communityPublishing=true;
     setCommunityMsg('Posting...');
     if(publishButton){ publishButton.disabled=true; publishButton.textContent='Publishing...'; }
     const commentPermission = getSetting('community.commentPermission') || (getSetting('community.allowComments') === false ? 'off' : 'everyone');
@@ -8838,9 +8915,9 @@ async function publishCommunityPost(){
     if($('communityMedia')) $('communityMedia').value='';
     if($('createVideoFile')) $('createVideoFile').value='';
     if($('profileVideoFile')) $('profileVideoFile').value='';
-    state.communityMediaDataUrl=''; state.communityMediaUrl=''; state.communityMediaMime=''; renderCommunityPreview(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); $('communityComposerPanel')?.classList.add('hidden'); await loadCommunityPosts(); await loadCommunityDashboard(); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
-  }catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(`Upload failed: ${e.message || String(e)}. Your selected video has been kept so you can try again.`); }
-  finally{ if(publishButton){ publishButton.disabled=false; publishButton.textContent=communityPublishButtonLabel(); } }
+clearCommunityMedia(); setCommunityUploadStatus('Your post is saved in OceanCore Community.', 'published'); $('communityComposerPanel')?.classList.add('hidden'); await loadCommunityPosts(); await loadSocialHomeFeed(state.socialFeedMode||'home').catch(()=>null); await loadCommunityDashboard().catch(()=>null); await loadRewards().catch(()=>null); setCommunityMsg(`Posted to OceanCore Community.${rewardAwardMessage(j.rewards)}`);
+  }catch(e){ setCommunityMsg(e.message || String(e)); setCommunityUploadStatus(`Could not publish: ${e.message || String(e)}. Your draft has been kept.`, 'error'); }
+  finally{ state.communityPublishing=false; if(publishButton){ publishButton.disabled=false; publishButton.textContent=communityPublishButtonLabel(); } }
 }
 
 async function likeCommunityPost(id){
@@ -8977,7 +9054,7 @@ function renderCommunityMessages(){
   title.textContent=active?.other_name||'Choose a friend';
   const canSend=!!active;
   input.disabled=!canSend;
-  send.disabled=!canSend;
+  send.disabled=!canSend || !!state.communityMessages.sending;
   if(block){
     block.classList.toggle('hidden',!active?.other_user_id);
     block.onclick=()=>active?.other_user_id&&blockCommunityUser(active.other_user_id);
@@ -9022,6 +9099,7 @@ async function loadCommunityConversations(){
 async function loadCommunityMessages(id){
   if(!id)return;
   const result=await apiFirst([`/api/community/messages/conversations/${encodeURIComponent(id)}`,`/community/messages/conversations/${encodeURIComponent(id)}`]);
+  if(String(id)!==String(state.communityMessages.activeConversationId)) return;
   state.communityMessages.messages=Array.isArray(result.messages)?result.messages:[];
   renderCommunityMessages();
 }
@@ -9070,19 +9148,36 @@ async function reportCommunityMessage(id){
   }catch(error){setCommunityMessagesMsg(error.message||String(error));}
 }
 async function sendCommunityMessage(){
+  if(state.communityMessages.sending) return;
+  const input=$('communityMessageInput');
+  const id=state.communityMessages.activeConversationId;
+  const body=input?.value?.trim()||'';
   try{
     if(!requireSignIn('Sign in to send private messages.')) return;
-    const id=state.communityMessages.activeConversationId;
-    const input=$('communityMessageInput');
-    const body=input?.value?.trim()||'';
     if(!id)throw new Error('Choose a friend first.');
     if(!body)throw new Error('Write a message first.');
+    state.communityMessages.sending=true;
+    $('btnSendCommunityMessage').disabled=true;
     const result=await apiFirst([`/api/community/messages/conversations/${encodeURIComponent(id)}`,`/community/messages/conversations/${encodeURIComponent(id)}`],{method:'POST',body:JSON.stringify({body})});
-    input.value='';
-    setCommunityMessagesMsg(result?.held_for_review?'Your message is held for safety review before delivery.':'');
+    if(String(id)===String(state.communityMessages.activeConversationId) && input.value.trim()===body) input.value='';
+    setCommunityMessagesMsg(result?.held_for_review?'Your message is held for safety review before delivery.':'Message sent.');
     await loadCommunityMessages(id);
     await loadCommunityConversations();
   }catch(error){setCommunityMessagesMsg(error.message||String(error));}
+  finally{
+    state.communityMessages.sending=false;
+    $('btnSendCommunityMessage').disabled=!activeCommunityConversation();
+  }
+}
+async function refreshCommunityInbox(){
+  try{
+    if(!requireSignIn('Sign in to refresh your messages.')) return;
+    setCommunityMessagesMsg('Refreshing...');
+    await loadCommunityFriends();
+    await loadCommunityConversations();
+    await loadCommunityMessages(state.communityMessages.activeConversationId);
+    setCommunityMessagesMsg('');
+  }catch(error){setCommunityMessagesMsg('Could not refresh messages. '+(error.message||String(error)));}
 }
 async function voteCommunityPoll(id,optionId){try{if(!requireSignIn('Sign in to vote in community polls.'))return;const j=await apiFirst([`/api/community/posts/${encodeURIComponent(id)}/vote`,`/community/posts/${encodeURIComponent(id)}/vote`],{method:'POST',body:JSON.stringify({option_id:optionId})});const post=(state.communityPosts||[]).find(x=>String(x.id)===String(id));if(post)post.poll_options=j.poll_options;refreshCommunitySurfaces();}catch(e){setCommunityMsg(e.message||String(e));}}
 
@@ -9819,5 +9914,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260926g"></script></body>
+<script src="assets/ocean-current.js?v=20260926h"></script></body>
 </html>
