@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926d"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926f"/>
 </head>
 <body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -3389,6 +3389,7 @@ function stopBackgroundMedia(options={}){
 }
 
 function showSection(name){
+  setMobileToolsOpen(false);
   if((name === 'admin' || name === 'beta-checklist') && !state.admin?.isAdmin){
     name = 'home';
   }
@@ -3403,6 +3404,7 @@ function showSection(name){
   document.querySelectorAll('[data-section]').forEach(el=>el.classList.remove('active'));
   const section = document.getElementById(`section-${name}`);
   if(section) section.classList.add('active');
+  $('btnMobileTools')?.classList.toggle('active', ['catch','map','boat-ai','areas','stats','rewards','ai'].includes(name));
   document.querySelectorAll(`[data-section="${name}"]`).forEach(el=>el.classList.add('active'));
 
   // App-style screen change: every feature opens at the top instead of making users scroll down.
@@ -3483,6 +3485,7 @@ function setMobileToolsOpen(open){
   menu.setAttribute('aria-hidden', open ? 'false' : 'true');
   button.setAttribute('aria-expanded', open ? 'true' : 'false');
   document.body.classList.toggle('mobile-tools-open', open);
+  if(open) $('btnCloseMobileTools')?.focus();
 }
 document.querySelectorAll('.mobile-tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -3495,7 +3498,18 @@ document.querySelectorAll('.mobile-tab').forEach(btn=>{
     showSection(btn.dataset.section);
   });
 });
-$('btnCloseMobileTools')?.addEventListener('click',()=>setMobileToolsOpen(false));
+document.addEventListener('keydown',event=>{
+  if($('mobileToolsMenu')?.hidden !== false) return;
+  if(event.key === 'Escape'){ event.preventDefault(); setMobileToolsOpen(false); $('btnMobileTools')?.focus(); }
+  if(event.key === 'Tab'){
+    const buttons = [...$('mobileToolsMenu').querySelectorAll('button')];
+    const first = buttons[0], last = buttons[buttons.length-1];
+    if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
+    else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+  }
+});
+window.addEventListener('resize',()=>{ if(window.innerWidth > 900) setMobileToolsOpen(false); });
+$('btnCloseMobileTools')?.addEventListener('click',()=>{ setMobileToolsOpen(false); $('btnMobileTools')?.focus(); });
 $('mobileToolsMenu')?.addEventListener('click',(event)=>{
   if(event.target === $('mobileToolsMenu')) setMobileToolsOpen(false);
 });
@@ -6508,7 +6522,7 @@ function socialFeedPosts(){
   if(Array.isArray(state.socialFeed) && state.socialFeed.length){
     return state.socialFeed.map(socialFeedItemToCommunityPost);
   }
-  return Array.isArray(state.communityPosts) ? state.communityPosts : [];
+  return state.socialFeedLoading || state.socialFeedMessage ? [] : (Array.isArray(state.communityPosts) ? state.communityPosts : []);
 }
 
 function mergeSocialFeedItems(items, { append=false } = {}){
@@ -6543,7 +6557,8 @@ function renderSocialFeedEmpty(){
     return `<div class="community-skeleton" style="min-height:180px"></div><div class="community-skeleton" style="min-height:180px"></div>`;
   }
   const message = state.socialFeedMessage || 'Be the first to post today\'s local report, catch, video or boat update.';
-  return `<article class="oc-feed-card"><div class="oc-feed-body"><h3>Start the local feed</h3><p>${escapeHtml(message)}</p><div class="oc-tag-row"><button class="btn primary" type="button" data-section="create">Create post</button><button class="btn ghost" type="button" data-section="explore">Explore nearby</button></div></div></article>`;
+  const failed = String(message).startsWith('Could not load');
+  return `<article class="oc-feed-card"><div class="oc-feed-body"><h3>${failed ? 'Feed unavailable' : 'Start the local feed'}</h3><p>${escapeHtml(message)}</p><div class="oc-tag-row">${failed ? '<button class="btn primary" type="button" onclick="loadSocialHomeFeed()">Try again</button>' : '<button class="btn primary" type="button" data-section="create">Create post</button>'}<button class="btn ghost" type="button" data-section="explore">Explore nearby</button></div></div></article>`;
 }
 
 function renderSocialFeedCard(post){
@@ -6558,7 +6573,7 @@ function renderSocialFeedCard(post){
   const likes = Number(post.likes_count || 0);
   const comments = Number(post.comments_count || 0);
   const mediaInner = media
-    ? `<div class="oc-media" style="background-image:linear-gradient(rgba(4,22,26,.08),rgba(4,22,26,.62)),url('${escapeHtml(media)}');background-size:cover;background-position:center"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div>${isVideo ? '<div class="oc-play">PLAY</div>' : ''}</div>`
+    ? (isVideo ? `<video src="${escapeHtml(media)}" preload="metadata" muted playsinline aria-label="${escapeHtml(title)}" style="width:100%;max-height:420px;object-fit:contain"></video>` : `<img src="${escapeHtml(media)}" loading="lazy" alt="${escapeHtml(title)}" style="display:block;width:100%;max-height:520px;object-fit:contain"/>`)
     : `<div class="oc-media"><div><strong>${escapeHtml(title)}</strong><br/><span>${escapeHtml(area)}</span></div><div class="oc-play">${isVideo ? 'PLAY' : 'OC'}</div></div>`;
   const mediaHtml = isVideo
     ? `<button class="oc-media-button" type="button" onclick="openVideoWatch('${id}')" aria-label="Watch ${escapeHtml(title)}">${mediaInner}<span class="oc-video-overlay"><span class="oc-video-play">PLAY</span></span><span class="oc-video-stats">${views.toLocaleString()} views</span></button>`
@@ -6600,6 +6615,7 @@ async function loadSocialHomeFeed(feed = state.socialFeedMode || 'home'){
   state.socialFeedRequestId += 1;
   const requestId = state.socialFeedRequestId;
   state.socialFeedLoading = true;
+  state.socialFeed = [];
   state.socialFeedLoadingMore = false;
   state.socialFeedNextCursor = '';
   state.socialFeedHasMore = false;
@@ -6623,7 +6639,7 @@ async function loadSocialHomeFeed(feed = state.socialFeedMode || 'home'){
   }catch(e){
     if(requestId !== state.socialFeedRequestId) return;
     state.socialFeed = [];
-    state.socialFeedMessage = 'The feed is quiet right now. You can still create a post, watch videos or explore local reports.';
+    state.socialFeedMessage = 'Could not load the feed. Check your connection and try again.';
   }finally{
     if(requestId !== state.socialFeedRequestId) return;
     state.socialFeedLoading = false;
@@ -6635,6 +6651,7 @@ async function loadMoreSocialHomeFeed(){
   if(state.socialFeedLoading || state.socialFeedLoadingMore || !state.socialFeedHasMore || !state.socialFeedNextCursor) return;
   const requestId = state.socialFeedRequestId;
   state.socialFeedLoadingMore = true;
+  state.socialFeedMessage = '';
   renderSocialHome();
   try{
     const query = `feed=${encodeURIComponent(state.socialFeedMode)}&limit=12&cursor=${encodeURIComponent(state.socialFeedNextCursor)}`;
@@ -6659,7 +6676,7 @@ function observeSocialFeedSentinel(){
     state.socialFeedObserver.disconnect();
     state.socialFeedObserver = null;
   }
-  if(!sentinel || !state.socialFeedHasMore || !('IntersectionObserver' in window)) return;
+  if(!sentinel || !state.socialFeedHasMore || state.socialFeedMessage || !('IntersectionObserver' in window)) return;
   state.socialFeedObserver = new IntersectionObserver(entries=>{
     if(entries.some(entry=>entry.isIntersecting)) loadMoreSocialHomeFeed();
   }, {rootMargin:'500px 0px'});
@@ -8507,7 +8524,7 @@ $('btnRunBetaChecklist')?.addEventListener('click', runBetaChecklist);
 
 
 
-function setCommunityMsg(msg){ const el=$('communityMsg'); if(el) el.textContent = msg || ''; }
+function setCommunityMsg(msg){ for(const id of ['communityMsg','homeCommunityMsg']){ const el=$(id); if(el) el.textContent = msg || ''; } }
 function setCommunityUploadStatus(message='', tone='pending'){
   const el=$('communityUploadStatus');
   if(!el) return;
@@ -8840,7 +8857,7 @@ async function likeCommunityPost(id){
 }
 
 function renderCommunityCommentsBox(id, comments = []){
-  const root = document.getElementById(`communityComments-${id}`);
+  const root = document.querySelector('.section.active')?.querySelector(`[id="communityComments-${CSS.escape(String(id))}"]`);
   if(!root) return;
   root.classList.remove('hidden');
   root.innerHTML = `
@@ -8853,7 +8870,7 @@ function renderCommunityCommentsBox(id, comments = []){
 
 async function toggleCommunityComments(id){
   try{
-    const root = document.getElementById(`communityComments-${id}`);
+    const root = document.querySelector('.section.active')?.querySelector(`[id="communityComments-${CSS.escape(String(id))}"]`);
     if(root && !root.classList.contains('hidden')){ root.classList.add('hidden'); return; }
     const j = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/comments`,`/social/content/${encodeURIComponent(id)}/comments`,`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`]);
     renderCommunityCommentsBox(id, Array.isArray(j.comments) ? j.comments : []);
@@ -8863,7 +8880,7 @@ async function toggleCommunityComments(id){
 async function submitCommunityComment(id){
   try{
     if(!requireSignIn('Sign in to comment on posts.')) return;
-    const input = document.getElementById(`communityCommentInput-${id}`);
+    const input = document.querySelector('.section.active')?.querySelector(`[id="communityCommentInput-${CSS.escape(String(id))}"]`);
     const body = input?.value?.trim() || '';
     if(!body) throw new Error('Write a comment first.');
     const posted = await apiFirst([`/api/social/content/${encodeURIComponent(id)}/comments`,`/social/content/${encodeURIComponent(id)}/comments`,`/api/community/posts/${encodeURIComponent(id)}/comments`,`/community/posts/${encodeURIComponent(id)}/comments`], {method:'POST', body:JSON.stringify({body})});
@@ -9322,11 +9339,12 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
     renderMap();
     renderStats();
     initAuth();
+    loadSocialHomeFeed(state.socialFeedMode || 'home').catch(()=>renderSocialHome());
     await refreshHealth();
     await loadAll();
     await loadSavedCommunityPostIds().catch(()=>null);
     await loadCommunityPosts().catch(()=>null);
-    await loadSocialHomeFeed(state.socialFeedMode || 'home').catch(()=>renderSocialHome());
+
     await loadCloudChats().catch(()=>null);
   }catch(e){
     console.error(e);
@@ -9642,10 +9660,8 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
   function metric(label,value,hint){return `<div class="stat"><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div><div class="hint">${escapeHtml(hint||'')}</div></div>`;}
 
   function boatAiPosition(){
-    const lat=Number(state.selectedLat ?? state.lastLat ?? state.mapLat);
-    const lng=Number(state.selectedLng ?? state.lastLng ?? state.mapLng);
-    if(Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180)return {lat,lng,text:`${lat.toFixed(5)}, ${lng.toFixed(5)}`};
-    return {lat:null,lng:null,text:'Position unavailable - use GPS/map first'};
+    // A planning map point is not evidence of the vessel's current position.
+    return {lat:null,lng:null,text:'Not verified - read your current position from your GPS or chartplotter'};
   }
 
   function boatAiMaydayText(r=calc()){
@@ -9803,5 +9819,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260926c"></script></body>
+<script src="assets/ocean-current.js?v=20260926f"></script></body>
 </html>
