@@ -1,4 +1,4 @@
-const CACHE_NAME = "oceancore-app-v2026-09-26-mobile-social-v23";
+const CACHE_NAME = "oceancore-app-v2026-09-26-launch-hardening-v24";
 const NATIVE_APP_OFFLINE_PATH = "/app/offline.html";
 const NATIVE_APP_CONFIG_PATH = "/app/assets/native-config.js";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
@@ -21,6 +21,27 @@ const APP_SHELL = [
   appPath("assets/icons/apple-touch-icon.png")
 ];
 
+const PRIVATE_ROUTE_PREFIXES = [
+  "/auth/",
+  "/api/",
+  "/admin/",
+  "/ai/",
+  "/billing/",
+  "/catches/",
+  "/community/",
+  "/feedback/",
+  "/media/",
+  "/rewards/",
+  "/saved-areas/",
+  "/social/",
+  "/storage/"
+];
+
+function isPrivateRoute(pathname) {
+  const normalized = pathname.endsWith("/") ? pathname : `${pathname}/`;
+  return PRIVATE_ROUTE_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -42,7 +63,7 @@ self.addEventListener("fetch", (event) => {
   if (request.headers.has("Authorization")) return;
 
   const url = new URL(request.url);
-  if (/^\/(media|storage|auth|api|admin|ai|saved-areas|social|feedback|rewards|billing|catches|community)(\/|$)/.test(url.pathname)) {
+  if (isPrivateRoute(url.pathname)) {
     return;
   }
 
