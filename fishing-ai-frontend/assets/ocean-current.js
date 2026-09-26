@@ -20,7 +20,7 @@
   }
 
   function postTitle(post, fallback){
-    return post?.title || post?.species || fallback;
+    return communityPostTitle(post, fallback);
   }
 
   function postCopy(post, fallback){

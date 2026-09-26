@@ -155,6 +155,10 @@ body.oc-current-ready #section-home>.oc-advanced-home{display:none}
 .oc-current-more #socialHomeFeed{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;justify-content:stretch}
 .oc-current-more .oc-feed-card{background:#fff;border:1px solid var(--oc-line);border-radius:8px;color:var(--oc-ink);box-shadow:none;overflow:hidden}
 .oc-current-more .oc-feed-head,.oc-current-more .oc-feed-body{color:var(--oc-ink)}
+.oc-current-more .oc-feed-head{display:grid;grid-template-columns:40px minmax(0,1fr)}
+.oc-current-more .oc-feed-head strong,.oc-current-more .oc-feed-head span{white-space:normal;overflow-wrap:anywhere}
+.oc-current-more .oc-feed-head .crew-card-member-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.oc-current-more .oc-feed-head .crew-card-member-actions button{min-height:44px}
 .oc-current-more .oc-feed-head span,.oc-current-more .oc-feed-body p{color:var(--oc-copy)}
 .oc-current-more .oc-media{border-radius:0;min-height:210px}
 .oc-current-more .oc-feed-actions{border-top:1px solid var(--oc-line)}

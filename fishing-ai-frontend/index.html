@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926f"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926g"/>
 </head>
 <body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -6288,7 +6288,7 @@ function isCommunityVideo(post){
 function communityPostTitle(post, fallback='OceanCore update'){
   const rawType = String(post?.post_type || post?.type || '').replaceAll('_',' ').trim();
   const mediaType = String(post?.media_type || post?.media?.type || '').trim();
-  if(post?.title) return post.title;
+  if(post?.title && !/^unknown$/i.test(String(post.title).trim())) return post.title;
   if(post?.species && !/^unknown$/i.test(String(post.species))) return post.species;
   if(isCommunityVideo(post)) return 'OceanCore fishing video';
   if(rawType === 'poll') return 'Community poll';
@@ -9819,5 +9819,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260926f"></script></body>
+<script src="assets/ocean-current.js?v=20260926g"></script></body>
 </html>

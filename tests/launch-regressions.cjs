@@ -79,3 +79,11 @@ test('pagination errors stop automatic retry loops',()=>{
   vm.runInContext(extract(html,'observeSocialFeedSentinel','renderSocialHome'),context);
   assert.doesNotThrow(()=>context.observeSocialFeedSentinel());
 });
+
+test('placeholder titles fall back to a useful media title',()=>{
+  const context={isCommunityVideo:p=>p.media_type==='video'};
+  vm.createContext(context);
+  vm.runInContext(extract(html,'communityPostTitle','videoRecommendationHtml'),context);
+  assert.equal(context.communityPostTitle({title:'Unknown',species:'Unknown',media_type:'video'}),'OceanCore fishing video');
+  assert.equal(context.communityPostTitle({title:'My trip',media_type:'video'}),'My trip');
+});
