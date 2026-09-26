@@ -8,8 +8,8 @@
   <meta name="application-name" content="OceanCore"/>
   <meta name="apple-mobile-web-app-title" content="OceanCore"/>
   <meta name="description" content="Plan fishing trips, log catches, read marine conditions, manage boat safety, and use AI fishing support."/>
-  <meta name="theme-color" content="#07191d"/>
-  <meta name="color-scheme" content="dark"/>
+  <meta name="theme-color" content="#f4f7f5"/>
+  <meta name="color-scheme" content="light"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -1043,9 +1043,9 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260922d"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926c"/>
 </head>
-<body>
+<body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
   <div class="auth-card">
     <div class="auth-brand">
@@ -1123,6 +1123,7 @@
       <button class="btn" id="btnGlobalSearch" type="button">Search</button>
     </div>
     <div class="app-actions" aria-label="Quick actions">
+      <button class="top-icon mobile-social-action" id="btnTopMessages" data-section="messages" type="button" title="Messages" aria-label="Messages"><i data-lucide="message-circle" aria-hidden="true"></i></button>
       <button class="top-icon has-dot" id="btnTopNotifications" data-section="feedback" type="button" title="Notifications" aria-label="Notifications"><i data-lucide="bell" aria-hidden="true"></i></button>
       <button class="pro-pill" id="btnTopPro" data-section="billing" type="button"><i data-lucide="sparkles" aria-hidden="true"></i> PREMIUM</button>
     </div>
@@ -1145,22 +1146,26 @@
         <button class="btn block nav-btn" data-section="profile">Profile</button>
       <details class="nav-group">
         <summary>OceanCore Tools</summary>
-        <button class="btn block nav-btn" data-section="catch">Catch Log</button>
-        <button class="btn block nav-btn" data-section="map">Map & Conditions</button>
-        <button class="btn block nav-btn" data-section="boat-ai">Boat AI</button>
-        <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
-        <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
-        <button class="btn block nav-btn" data-section="rewards">Rewards</button>
-        <button class="btn block nav-btn" data-section="ai">Fishing AI</button>
+        <div class="nav-group-panel">
+          <button class="btn block nav-btn" data-section="catch">Catch Log</button>
+          <button class="btn block nav-btn" data-section="map">Map & Conditions</button>
+          <button class="btn block nav-btn" data-section="boat-ai">Boat AI</button>
+          <button class="btn block nav-btn" data-section="areas">Saved Areas</button>
+          <button class="btn block nav-btn" data-section="stats">Stats & Insights</button>
+          <button class="btn block nav-btn" data-section="rewards">Rewards</button>
+          <button class="btn block nav-btn" data-section="ai">Fishing AI</button>
+        </div>
       </details>
       <details class="nav-group">
         <summary>More</summary>
-        <button class="btn block nav-btn" data-section="account">Settings</button>
-        <button class="btn block nav-btn" data-section="billing">Plans</button>
-        <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
-        <button class="btn block nav-btn" data-section="feedback">Help & Feedback</button>
-        <button class="btn block nav-btn admin-nav-btn" data-section="beta-checklist">Launch Checklist</button>
-        <button class="btn block nav-btn admin-nav-btn" data-section="admin">Admin</button>
+        <div class="nav-group-panel">
+          <button class="btn block nav-btn" data-section="account">Settings</button>
+          <button class="btn block nav-btn" data-section="billing">Plans</button>
+          <button class="btn block nav-btn" data-section="legal">Terms & Privacy</button>
+          <button class="btn block nav-btn" data-section="feedback">Help & Feedback</button>
+          <button class="btn block nav-btn admin-nav-btn" data-section="beta-checklist">Launch Checklist</button>
+          <button class="btn block nav-btn admin-nav-btn" data-section="admin">Admin</button>
+        </div>
       </details>
       <details class="nav-group nav-developer">
         <summary>Developer connection</summary>
@@ -1174,7 +1179,7 @@
 
     <main>
 
-      <section class="section active" id="section-home">
+      <section class="section active" id="section-home" aria-busy="true">
         <div class="oc-home-intro">
           <div><h2>Your OceanCore feed</h2><p>Useful fishing videos, local reports and conditions chosen for you.</p></div>
           <button class="btn primary" type="button" data-section="create">Create</button>
@@ -1768,7 +1773,7 @@
             <div id="mapSearchResults" class="list"></div>
             <div class="map-source-bar marine-modebar" aria-label="Map source">
               <button class="active" data-map-view="windy" type="button">Windy map</button>
-              <button data-map-view="local" type="button">Marine chart</button>
+              <button data-map-view="local" type="button">Planning map</button>
               <button data-map-view="satellite" type="button">Satellite intel</button>
               <button data-windy-overlay="wind" type="button">Wind</button>
               <button data-windy-overlay="waves" type="button">Waves</button>
@@ -1799,17 +1804,18 @@
               <div class="chartplotter-tools" id="chartplotterTools" aria-label="Chart display layers">
                 <strong>Map style</strong>
                 <div class="chartplotter-row">
-                  <button class="active" data-chart-base="chart" type="button">Marine chart</button>
+                  <button class="active" data-chart-base="chart" type="button">Outdoor base map</button>
                   <button data-chart-base="satellite" type="button">Satellite</button>
-                  <button data-chart-base="depth" type="button">Depth relief</button>
+                  <button data-chart-base="depth" type="button">Navigation-style base</button>
                   <button id="btnRecenterMap" type="button">Center map</button>
                 </div>
                 <strong>Structure</strong>
                 <div class="chartplotter-row">
-                  <button data-chart-overlay="bathymetry" type="button">Bathymetry</button>
-                  <button data-chart-overlay="geomorphology" type="button">Seabed features</button>
-                  <button class="active" data-chart-overlay="seamarks" type="button">Reefs &amp; wrecks</button>
+                  <button data-chart-overlay="bathymetry" type="button">Depth contours</button>
+                  <button data-chart-overlay="geomorphology" type="button" disabled title="No authorised seabed-feature layer is connected">Seabed features · unavailable</button>
+                  <button class="active" data-chart-overlay="seamarks" type="button">Community seamarks</button>
                 </div>
+                <div class="muted-box" id="chartLayerStatus">Base styles and community seamarks are planning aids. They are not official navigation charts.</div>
               </div>
               <div class="satellite-map-tools" id="satelliteMapTools" aria-label="Satellite intelligence layers">
                 <strong>Ocean intelligence layer</strong>
@@ -2643,7 +2649,6 @@
   <button class="mobile-tab active" data-section="home" type="button" aria-label="Home">H<span>Home</span></button>
   <button class="mobile-tab" data-section="explore" type="button" aria-label="Explore">E<span>Explore</span></button>
   <button class="mobile-tab plus-tab" data-section="create" type="button" aria-label="Create">+<span>Create</span></button>
-  <button class="mobile-tab" data-section="watch" type="button" aria-label="Watch">W<span>Watch</span></button>
   <button class="mobile-tab" data-section="community" type="button" aria-label="Crew">C<span>Crew</span></button>
   <button class="mobile-tab" data-section="profile" type="button" aria-label="Profile">P<span>Profile</span></button>
 </div>
@@ -9752,5 +9757,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260922d"></script></body>
+<script src="assets/ocean-current.js?v=20260926b"></script></body>
 </html>

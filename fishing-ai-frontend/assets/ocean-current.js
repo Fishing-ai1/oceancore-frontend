@@ -147,6 +147,33 @@
     return `${feedHtml}${pagination}`;
   }
 
+  function renderMobileSocialStart(posts){
+    const storyPosts = posts.filter(post=>post?.media_url || post?.photo_url).slice(0,4);
+    const stories = [
+      `<button class="oc-story oc-story-create" type="button" data-quick-create="catch"><span class="oc-story-ring"><span>${icon('plus')}</span></span><strong>Your story</strong></button>`,
+      ...storyPosts.map((post,index)=>{
+        const author = post?.author_name || post?.user_email || `Angler ${index+1}`;
+        return `<button class="oc-story" type="button" data-section="community"><span class="oc-story-ring"><img src="${safe(postImage(post,index%2?FALLBACK_CAMP:FALLBACK_HERO))}" alt=""/></span><strong>${safe(String(author).split(' ')[0])}</strong></button>`;
+      }),
+      `<button class="oc-story" type="button" data-section="community"><span class="oc-story-ring"><img src="${safe(FALLBACK_COAST)}" alt=""/></span><strong>Local crew</strong></button>`
+    ].join('');
+    return `<div class="oc-mobile-social-start">
+      <div class="oc-mobile-search" role="search">
+        ${icon('search')}<input id="ocMobileSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search anglers, catches, species or places" aria-label="Search OceanCore"/><button id="ocMobileSearchButton" type="button" aria-label="Search">${icon('arrow-right')}</button>
+      </div>
+      <section class="oc-home-composer" aria-label="Create a post">
+        <div class="oc-composer-prompt"><span class="oc-current-avatar">OC</span><button type="button" data-quick-create="discussion">Share a catch, report, video or question…</button></div>
+        <div class="oc-composer-actions">
+          <button type="button" data-quick-create="catch">${icon('camera')}<span>Photo</span></button>
+          <button type="button" data-quick-create="video">${icon('video')}<span>Video</span></button>
+          <button type="button" data-quick-create="fishing_report">${icon('map-pin')}<span>Report</span></button>
+          <button type="button" data-quick-create="boat">${icon('ship-wheel')}<span>Boat</span></button>
+        </div>
+      </section>
+      <section class="oc-stories" aria-label="Fishing stories"><div class="oc-story-row">${stories}</div></section>
+    </div>`;
+  }
+
   function renderOceanCurrentHome(){
     const section = document.getElementById('section-home');
     if(!section) return;
@@ -155,7 +182,8 @@
     const camp = posts.find((post,index)=>index>0 && /camp|trip|boat/i.test(`${post?.post_type || ''} ${post?.category || ''} ${post?.title || ''}`)) || posts[1] || null;
     const weather = renderConditions();
     section.innerHTML = `<div class="oc-current-home">
-      <div class="oc-current-toolbar"><div class="oc-current-context">${icon('map-pin')}<span><strong>${safe(postArea(primary))}</strong> · ${safe(weather.temp)} · ${safe(weather.wind)}</span></div><button class="oc-current-primary" type="button" onclick="openCommunityComposer('fishing_report')" aria-label="Share a catch, trip, boat update, video or question">${icon('plus')}<span>Share</span></button></div>
+      ${renderMobileSocialStart(posts)}
+      <div class="oc-current-toolbar"><div class="oc-current-context">${icon('map-pin')}<span><strong>${safe(postArea(primary))}</strong> · ${safe(weather.temp)} · ${safe(weather.wind)}</span></div><button class="oc-current-primary" type="button" data-quick-create="fishing_report" aria-label="Share a fishing report">${icon('plus')}<span>Share report</span></button></div>
       <div class="oc-current-layout">
         <div class="oc-current-river">${renderPrimary(primary)}${renderCamp(camp)}
           <section class="oc-current-more"><div class="oc-current-section-head"><h3>Stories and reports</h3><div class="oc-current-tabs" aria-label="Feed filters"><button class="${state.socialFeedMode==='home'?'active':''}" type="button" data-home-feed="home">For you</button><button class="${state.socialFeedMode==='following'?'active':''}" type="button" data-home-feed="following">Following</button><button class="${state.socialFeedMode==='local'?'active':''}" type="button" data-home-feed="local">Local</button><button class="${state.socialFeedMode==='latest'?'active':''}" type="button" data-home-feed="latest">Latest</button></div></div><div id="socialHomeFeed">${renderMore(posts)}</div></section>
@@ -163,6 +191,8 @@
         <aside class="oc-current-signals" aria-label="Live community activity"><div class="oc-current-signals-head"><h3>Live from the Coast</h3><span class="oc-current-live">Live</span></div><div class="oc-current-timeline">${renderSignals(posts)}</div><button class="oc-current-crew-card" type="button" data-section="community">${icon('users')}<span>Find your crew<small>Fishing, boating and camping together</small></span>${icon('chevron-right')}</button></aside>
       </div>
     </div>`;
+    section.classList.add('oc-current-mounted');
+    section.removeAttribute('aria-busy');
     bindOceanCurrentControls(section);
     if(typeof bindSectionButtons === 'function') bindSectionButtons(section);
     if(typeof attachCommunityVideoViewListeners === 'function') attachCommunityVideoViewListeners(section);
@@ -171,6 +201,17 @@
   }
 
   function bindOceanCurrentControls(section){
+    const search = section.querySelector('#ocMobileSearch');
+    const runSearch = ()=>{
+      const globalSearch = document.getElementById('globalSearch');
+      if(globalSearch) globalSearch.value = String(search?.value || '').trim();
+      document.getElementById('btnGlobalSearch')?.click();
+    };
+    section.querySelector('#ocMobileSearchButton')?.addEventListener('click',runSearch);
+    search?.addEventListener('keydown',event=>{ if(event.key === 'Enter'){ event.preventDefault(); runSearch(); } });
+    section.querySelectorAll('[data-quick-create]').forEach(button=>button.addEventListener('click',()=>{
+      if(typeof openCommunityComposer === 'function') openCommunityComposer(button.dataset.quickCreate || 'discussion');
+    }));
     section.querySelectorAll('[data-home-feed]').forEach(button=>button.addEventListener('click',()=>{
       const feed = button.dataset.homeFeed || 'home';
       if(typeof loadSocialHomeFeed === 'function') loadSocialHomeFeed(feed);
@@ -195,6 +236,12 @@
       const summary = group.querySelector('summary');
       if(!summary || group.classList.contains('nav-developer')) return;
       summary.innerHTML = `${icon(index === 0 ? 'box' : 'menu')}<span>${index === 0 ? 'Tools' : 'More'}</span>`;
+      group.addEventListener('toggle',()=>{
+        if(!group.open) return;
+        document.querySelectorAll('.nav-group[open]').forEach(other=>{
+          if(other !== group && !other.classList.contains('nav-developer')) other.open = false;
+        });
+      });
     });
     const mobileIcons = {home:'home',explore:'compass',create:'plus',watch:'play',community:'users',profile:'user'};
     document.querySelectorAll('.mobile-tab').forEach(button=>{
