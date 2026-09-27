@@ -3,7 +3,7 @@
 Implemented 27 September 2026.
 
 ## Working
-- Dedicated Leaflet map, independent of the unconfigured Mapbox token.
+- Dedicated MapLibre GL JS 5.8 vector map, independent of the unconfigured Mapbox token. Leaflet removed from Fishing Intel on 27 September 2026.
 - Existing public NOAA-backed API supplies temperature cells; no synthetic observations.
 - Temperature gradients derived with latitude-adjusted central differences in C/km. Missing neighbours produce no gradient.
 - Colour scales use the loaded area's range, shown in the legend.
@@ -20,7 +20,8 @@ Implemented 27 September 2026.
 - The displayed gradient is derived from the SST analysis, not the upstream ACSPO gradient product.
 - Fine coastline masking, independent layer timestamps, uncertainty and geographic coverage tests are still required.
 - No offline downloads, private waypoint persistence, historical time slider or background ingestion yet.
-- OpenStreetMap standard tiles are used for the beta with attribution and normal browser caching. No prefetch or bulk download. Review a production tile provider before scaling paid subscriptions.
+- OpenFreeMap Liberty vector tiles replace raster street tiles, with provider attribution retained. No prefetch or bulk download. Review capacity and service guarantees before scaling paid subscriptions.
+- Ocean cells retain the source resolution. A sharp vector basemap does not increase observation resolution, and no synthetic smoothing is applied.
 
 ## Next Milestones
 1. Independent SST ingestion/cache and a layer manifest with actual timestamps, resolution, units, coverage and missing-data status.
