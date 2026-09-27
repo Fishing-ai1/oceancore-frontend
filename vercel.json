@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/fishing-intel.html",
+      "destination": "/fishing-ai-frontend/fishing-intel.html"
+    },
+    {
       "source": "/sw.js",
       "destination": "/fishing-ai-frontend/sw.js"
     },

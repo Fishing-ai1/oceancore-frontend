@@ -1774,7 +1774,7 @@
             <div class="map-source-bar marine-modebar" aria-label="Map source">
               <button class="active" data-map-view="windy" type="button">Windy map</button>
               <button data-map-view="local" type="button">Planning map</button>
-              <button data-map-view="satellite" type="button">Satellite intel</button>
+              <button data-intel-open type="button">Ocean layers</button>
               <button data-windy-overlay="wind" type="button">Wind</button>
               <button data-windy-overlay="waves" type="button">Waves</button>
               <button id="btnJumpFishingIntel" type="button">Fishing Intel</button>
@@ -1856,7 +1856,7 @@
         </div>
 
         <div id="mapOnlyContent" hidden>
-        <div class="intel-card" id="fishingIntelCard">
+        <div class="intel-card" id="fishingIntelCard" hidden style="display:none">
           <div class="intel-head">
             <div>
               <h3>OceanCore Fishing Intel</h3>
@@ -2658,6 +2658,7 @@
       <button type="button" data-section="areas" data-tool-icon="bookmark">Saved Areas</button>
       <button type="button" data-section="stats" data-tool-icon="bar-chart-3">Stats &amp; Insights</button>
       <button type="button" data-section="rewards" data-tool-icon="trophy">Rewards</button>
+      <button type="button" data-intel-open data-tool-icon="layers">Fishing Intel</button>
       <button type="button" data-section="ai" data-tool-icon="sparkles">Fishing AI</button>
     </div>
   </div>
@@ -8474,10 +8475,11 @@ $('btnRecenterMap')?.addEventListener('click', ()=>{
   state.mapNeedsRecenter = true;
   renderMap();
 });
-$('btnJumpFishingIntel')?.addEventListener('click', ()=>{
-  $('fishingIntelCard')?.scrollIntoView({ behavior:'smooth', block:'start' });
-  renderFishingIntel(true);
-});
+function openOceanIntel(){
+  location.assign('fishing-intel.html?'+new URLSearchParams({lat:state.selectedLat,lng:state.selectedLng}));
+}
+$('btnJumpFishingIntel')?.addEventListener('click', openOceanIntel);
+document.querySelectorAll('[data-intel-open]').forEach(button=>button.addEventListener('click',openOceanIntel));
 $('forecastHourSelect')?.addEventListener('change', ()=>{
   state.selectedMarineHourIndex = safeNumber($('forecastHourSelect').value, 0);
   localStorage.setItem('oceancore_marine_hour_index', String(state.selectedMarineHourIndex));
