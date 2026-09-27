@@ -1043,7 +1043,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260926h"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260927a"/>
 </head>
 <body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -4258,6 +4258,7 @@ async function saveProfile(){
     });
     state.me = state.me || {};
     state.me.profile = j.profile;
+    await Promise.allSettled([loadSocialHomeFeed(), loadCommunityPosts()]);
     setStatusMessage('profileMsg','Profile saved.');
     updateAuthUi();
   }catch(e){
@@ -6573,6 +6574,46 @@ function renderSocialFeedEmpty(){
   return `<article class="oc-feed-card"><div class="oc-feed-body"><h3>${failed ? 'Feed unavailable' : 'Start the local feed'}</h3><p>${escapeHtml(message)}</p><div class="oc-tag-row">${failed ? '<button class="btn primary" type="button" onclick="loadSocialHomeFeed()">Try again</button>' : '<button class="btn primary" type="button" data-section="create">Create post</button>'}<button class="btn ghost" type="button" data-section="explore">Explore nearby</button></div></div></article>`;
 }
 
+function communityAuthorButton(post, avatar = false){
+  const name = post.author_name || 'OceanCore member';
+  const label = avatar ? socialInitials(name) : name;
+  if(!post.user_id) return escapeHtml(label);
+  return `<button type="button" class="oc-author-link" data-member-profile="${escapeHtml(String(post.user_id))}" aria-label="View ${escapeHtml(name)} profile">${escapeHtml(label)}</button>`;
+}
+let memberProfileRequest = 0;
+document.addEventListener('click', event=>{
+  const button = event.target.closest('[data-member-profile]');
+  if(button) openMemberProfile(button.dataset.memberProfile);
+});
+async function openMemberProfile(id){
+  if(!id) return;
+  if(String(id) === String(state.authUser?.id || '')){ showSection('profile'); return; }
+  let dialog = $('memberProfileDialog');
+  if(!dialog){
+    dialog = document.createElement('dialog');
+    dialog.id = 'memberProfileDialog';
+    dialog.setAttribute('aria-label','Member profile');
+    dialog.innerHTML = '<form method="dialog"><button class="btn" aria-label="Close member profile">Close</button></form><div id="memberProfileBody" aria-live="polite"></div>';
+    document.body.append(dialog);
+  }
+  const request = ++memberProfileRequest;
+  const body = $('memberProfileBody');
+  body.textContent = 'Loading profile...';
+  if(!dialog.open) dialog.showModal();
+  try{
+    const result = await api(`/api/community/profile/${encodeURIComponent(id)}`);
+    if(request !== memberProfileRequest || !dialog.open) return;
+    const profile = result.profile;
+    if(!profile) throw new Error('Profile unavailable.');
+    body.innerHTML = `<h2>${escapeHtml(profile.name || 'OceanCore member')}</h2><p>${Number(profile.followers || 0)} followers · ${Number(profile.following || 0)} following</p><p>${Number(profile.stats?.total_posts || 0)} recent posts · ${Number(profile.stats?.total_likes || 0)} likes</p>`;
+  }catch(e){
+    if(request !== memberProfileRequest || !dialog.open) return;
+    body.textContent = 'Could not load this profile. ' + (e.message || 'Please try again.');
+    const retry = document.createElement('button');
+    retry.className = 'btn'; retry.textContent = 'Try again';
+    retry.onclick = ()=>openMemberProfile(id); body.append(retry);
+  }
+}
 function renderSocialFeedCard(post){
   const author = post.author_name || post.user_email || 'OceanCore member';
   const type = String(post.post_type || post.type || 'post').replaceAll('_',' ');
@@ -6597,7 +6638,7 @@ function renderSocialFeedCard(post){
     post.spot_safe === false ? '' : 'Spot Safe'
   ].filter(Boolean).slice(0,4);
   return `<article class="oc-feed-card" data-social-post-id="${id}">
-    <div class="oc-feed-head"><div class="oc-avatar">${escapeHtml(socialInitials(author))}</div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div>${post.user_id && String(post.user_id)!==String(state.authUser?.id||'') ? `<div class="crew-card-member-actions"><button class="chip" type="button" onclick="followCommunityUser('${escapeHtml(post.user_id)}')">Follow</button><button class="chip" type="button" onclick="requestCommunityFriend('${escapeHtml(post.user_id)}')">Add friend</button><button class="chip" type="button" onclick="openCommunityMessages('${escapeHtml(post.user_id)}')">Message</button></div>` : ''}</div>
+    <div class="oc-feed-head"><div class="oc-avatar">${communityAuthorButton(post, true)}</div><div><strong>${communityAuthorButton(post)}</strong><span>${escapeHtml(area)} - ${escapeHtml(formatFriendlyDate(post.created_at))}</span></div>${post.user_id && String(post.user_id)!==String(state.authUser?.id||'') ? `<div class="crew-card-member-actions"><button class="chip" type="button" onclick="followCommunityUser('${escapeHtml(post.user_id)}')">Follow</button><button class="chip" type="button" onclick="requestCommunityFriend('${escapeHtml(post.user_id)}')">Add friend</button><button class="chip" type="button" onclick="openCommunityMessages('${escapeHtml(post.user_id)}')">Message</button></div>` : ''}</div>
     ${mediaHtml}
     <div class="oc-feed-body">
       ${isVideo ? `<div class="oc-video-title-row"><h4>${escapeHtml(title)}</h4><span>${views.toLocaleString()} views</span></div><div class="oc-video-meta-line"><span>${escapeHtml(author)}</span><span>${escapeHtml(formatFriendlyDate(post.created_at))}</span><span>${likes.toLocaleString()} likes</span><span>${comments.toLocaleString()} comments</span></div>` : ''}
@@ -8694,7 +8735,7 @@ function renderCommunityPost(post){
   const details = [post.post_type ? String(post.post_type).replaceAll('_',' ') : '',post.bait ? `Bait: ${post.bait}` : '',post.conditions || '',post.length_cm ? `${post.length_cm} cm` : '',post.weight_kg ? `${post.weight_kg} kg` : ''].filter(Boolean);
   const poll = post.post_type === 'poll' && Array.isArray(post.poll_options) ? `<div class="crew-poll">${post.poll_options.map(option=>`<button type="button" onclick="voteCommunityPoll('${id}','${escapeHtml(option.id)}')">${escapeHtml(option.label)} · ${Number(option.votes||0)} votes</button>`).join('')}</div>` : '';
   return `<article class="crew-card">
-    <div class="crew-card-head"><div class="crew-avatar"></div><div><strong>${escapeHtml(author)}</strong><span>${escapeHtml(area)} · ${escapeHtml(when)}</span></div>${post.user_id && String(post.user_id)!==String(state.authUser?.id||'') ? `<div class="crew-card-member-actions"><button class="chip" type="button" onclick="followCommunityUser('${escapeHtml(post.user_id)}')">Follow</button><button class="chip" type="button" onclick="requestCommunityFriend('${escapeHtml(post.user_id)}')">Add friend</button><button class="chip" type="button" onclick="openCommunityMessages('${escapeHtml(post.user_id)}')">Message</button></div>` : ''}</div>
+    <div class="crew-card-head"><div class="crew-avatar">${communityAuthorButton(post, true)}</div><div><strong>${communityAuthorButton(post)}</strong><span>${escapeHtml(area)} · ${escapeHtml(when)}</span></div>${post.user_id && String(post.user_id)!==String(state.authUser?.id||'') ? `<div class="crew-card-member-actions"><button class="chip" type="button" onclick="followCommunityUser('${escapeHtml(post.user_id)}')">Follow</button><button class="chip" type="button" onclick="requestCommunityFriend('${escapeHtml(post.user_id)}')">Add friend</button><button class="chip" type="button" onclick="openCommunityMessages('${escapeHtml(post.user_id)}')">Message</button></div>` : ''}</div>
     ${communityMediaHtml(post)}
     <div class="crew-card-body">
       <h4>${escapeHtml(title)}</h4>
@@ -9916,5 +9957,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260926h"></script></body>
+<script src="assets/ocean-current.js?v=20260927a"></script></body>
 </html>

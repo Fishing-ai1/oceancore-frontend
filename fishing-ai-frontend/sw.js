@@ -1,4 +1,4 @@
-const CACHE_NAME = "oceancore-app-v2026-09-27-ocean-intel-v30";
+const CACHE_NAME = "oceancore-app-v2026-09-27-member-profile-v31";
 const NATIVE_APP_OFFLINE_PATH = "/app/offline.html";
 const NATIVE_APP_CONFIG_PATH = "/app/assets/native-config.js";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
@@ -9,8 +9,8 @@ const APP_SHELL = [
   appPath("offline.html"),
   appPath("manifest.webmanifest"),
   appPath("assets/native-config.js"),
-  `${appPath("assets/ocean-current.css")}?v=20260926h`,
-  `${appPath("assets/ocean-current.js")}?v=20260926h`,
+  `${appPath("assets/ocean-current.css")}?v=20260927a`,
+  `${appPath("assets/ocean-current.js")}?v=20260927a`,
   appPath("assets/ocean-current/sunshine-coast-mackerel.png"),
   appPath("assets/ocean-current/coastal-camp-sunset.png"),
   appPath("assets/ocean-current/sunshine-coast-expedition.png"),

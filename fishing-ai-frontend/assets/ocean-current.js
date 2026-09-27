@@ -45,7 +45,7 @@
 
 
   function renderSignals(posts){
-    return posts.slice(0,3).map(post=>`<div class="oc-current-signal"><strong>${safe(post.author_name, 'OceanCore member')}</strong><p>${safe(postTitle(post,'Community update'))}</p><small>${safe(postDate(post,''))}</small></div>`).join('') || '<p>No community updates yet.</p>';
+    return posts.slice(0,3).map(post=>`<div class="oc-current-signal"><strong>${communityAuthorButton(post)}</strong><p>${safe(postTitle(post,'Community update'))}</p><small>${safe(postDate(post,''))}</small></div>`).join('') || '<p>No community updates yet.</p>';
   }
 
   function renderMore(posts){

@@ -46,7 +46,7 @@ test('comments resolve inside the visible section',()=>{
 test('feed failures have a retry action rather than an empty-feed message',()=>{
   const context={state:{socialFeedLoading:false,socialFeedMessage:'Could not load the feed. Check your connection and try again.'},escapeHtml:x=>x};
   vm.createContext(context);
-  vm.runInContext(extract(html,'renderSocialFeedEmpty','renderSocialFeedCard'),context);
+  vm.runInContext(extract(html,'renderSocialFeedEmpty','communityAuthorButton'),context);
   assert.match(context.renderSocialFeedEmpty(),/Feed unavailable/);
   assert.match(context.renderSocialFeedEmpty(),/onclick="loadSocialHomeFeed\(\)"/);
   context.state.socialFeedLoading=true;
