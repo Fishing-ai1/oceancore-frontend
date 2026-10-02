@@ -3026,12 +3026,6 @@ const state = {
 };
 
 const BILLING_PLAN_ORDER = ['free','lite','premium','crew'];
-const BILLING_PLANS = {
-  free:{key:'free',name:'Free',tagline:'Start logging and join the community',prices:{monthly:0,yearly:0},productIds:{free:'oceancore_free'},features:['Community feed access','Upload catches','Basic catch log','Basic weather/tide preview','Limited AI questions','Demo OceanCore Offshore access','Ads enabled','Basic rewards points'],excluded:['No live fishing zones','No advanced AI pattern memory','No premium game events','No crew sharing','No premium rewards']},
-  lite:{key:'lite',name:'OceanCore Lite',badge:'Low-cost starter',tagline:'Go ad-light and unlock basic AI',prices:{monthly:4.99,yearly:39.99},productIds:{monthly:'oceancore_lite_monthly',yearly:'oceancore_lite_yearly'},features:['No banner ads','Unlimited catch log','Basic AI assistant','Limited AI predictions','Basic weather/tide tools','Basic size/legal info','Basic OceanCore Offshore game access','Delayed fishing zones','Basic rewards points','Community Lite badge','Private catch history']},
-  premium:{key:'premium',name:'OceanCore Premium',badge:'Most Popular',tagline:'Unlock the full OceanCore fishing brain',prices:{monthly:12.99,yearly:99.99},productIds:{monthly:'oceancore_premium_monthly',yearly:'oceancore_premium_yearly'},features:['Everything in Lite','Full AI fishing assistant','Full personal catch memory','Live OceanCore fishing zones','Best time/species predictions','Advanced tide/wind/moon pattern analysis','AI trip planner','Full OceanCore Offshore access','Premium game events','Better rewards rate','Voucher/giveaway access','Saved private marks','Advanced catch stats']},
-  crew:{key:'crew',name:'OceanCore Crew',tagline:'For boats, families and fishing mates',prices:{monthly:24.99,yearly:219.99},productIds:{monthly:'oceancore_crew_monthly',yearly:'oceancore_crew_yearly'},features:['Everything in Premium','3 to 5 users included','Shared boat profile','Shared catch log','Shared trip history','Shared private marks','Crew leaderboard','Shared OceanCore Offshore rewards','Shared trip planning','Crew badge']}
-};
 
 function normalizePlanKeyClient(plan){
   const p = String(plan || 'free').toLowerCase();
@@ -5527,7 +5521,7 @@ function planProductId(plan, interval){
 function billingPlansForRender(){
   const serverPlans = state.billing?.plans || {};
   const order = Array.isArray(state.billing?.plan_order) && state.billing.plan_order.length ? state.billing.plan_order : BILLING_PLAN_ORDER;
-  return order.map(key=>({...(BILLING_PLANS[key] || {}), ...(serverPlans[key] || {})})).filter(plan=>plan?.key);
+  return order.map(key=>serverPlans[key]).filter(plan=>plan?.key);
 }
 
 function renderBillingPlans(effective){
@@ -5536,7 +5530,12 @@ function renderBillingPlans(effective){
   const interval = state.billing?.interval === 'yearly' ? 'yearly' : 'monthly';
   $('btnBillingMonthly')?.classList.toggle('active', interval === 'monthly');
   $('btnBillingYearly')?.classList.toggle('active', interval === 'yearly');
-  root.innerHTML = billingPlansForRender().map(plan=>{
+  const plans = billingPlansForRender();
+  if(!plans.length){
+    root.innerHTML = '<div class="muted-box">Plans are temporarily unavailable. Please try again shortly.</div>';
+    return;
+  }
+  root.innerHTML = plans.map(plan=>{
     const key = normalizePlanKeyClient(plan.key);
     const isCurrent = normalizePlanKeyClient(effective) === key;
     const featured = key === 'premium';
@@ -5712,8 +5711,7 @@ async function startCheckout(plan, interval='monthly'){
     location.href = j.url;
   }catch(e){
     const msg = e.message || String(e);
-    if(/stripe|price id missing|not configured/i.test(msg)) setStatusMessage('billingMsg', `${planLabel(plan)} is ready. The OceanCore team can activate this plan for your account.`);
-    else setStatusMessage('billingMsg', msg);
+    setStatusMessage('billingMsg', msg);
   }
 }
 function setBillingInterval(interval){
