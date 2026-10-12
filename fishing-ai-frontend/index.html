@@ -924,6 +924,12 @@
     .oc-feed-card{border:1px solid rgba(148,163,184,.16);background:linear-gradient(180deg,rgba(10,18,38,.96),rgba(3,7,18,.98));border-radius:22px;overflow:hidden;margin-bottom:14px}
     .oc-feed-head{display:flex;gap:10px;align-items:center;padding:13px 14px}.oc-feed-head strong{display:block}.oc-feed-head span{display:block;color:var(--muted);font-size:12px}
     .oc-feed-head>div:nth-child(2){min-width:0;flex:1}.oc-feed-head strong,.oc-feed-head span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .oc-member-dialog{width:min(420px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+    .oc-member-dialog::backdrop{background:rgba(0,16,20,.66)}
+    .oc-member-dialog form{display:flex;justify-content:flex-end}.oc-member-dialog h2{font-size:22px;margin:8px 0 4px}.oc-member-dialog p{color:var(--muted);margin:0 0 12px}
+    .oc-member-actions{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}.oc-member-actions .btn{min-height:42px}
+    .oc-member-feedback{min-height:20px;color:var(--brand2);font-size:13px;margin-top:10px}
+    .oc-people-list{display:grid;gap:8px}.oc-people-row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);padding:9px 0}.oc-people-row:last-child{border-bottom:0}.oc-people-row .oc-avatar{width:38px;height:38px;flex:0 0 auto}.oc-people-row>div:nth-child(2){min-width:0;flex:1}.oc-people-row strong,.oc-people-row span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.oc-people-row span{font-size:12px;color:var(--muted)}
     .oc-media{aspect-ratio:16/9;background:radial-gradient(circle at 30% 25%,rgba(163,221,200,.30),transparent 18%),linear-gradient(135deg,#0c3152,#061121 50%,#0b4d62);display:flex;align-items:end;justify-content:space-between;padding:14px;color:white}
     .oc-media.vertical{aspect-ratio:9/13;max-height:520px;background:radial-gradient(circle at 50% 25%,rgba(85,189,170,.28),transparent 22%),linear-gradient(180deg,#0c3452,#020611)}
     .oc-play{width:58px;height:58px;border-radius:999px;background:rgba(4,22,26,.55);display:grid;place-items:center;font-size:24px;border:1px solid rgba(255,255,255,.24)}
@@ -1182,7 +1188,7 @@
       <section class="section active" id="section-home" aria-busy="true">
         <div class="oc-home-intro">
           <div><h2>Your OceanCore feed</h2><p>Useful fishing videos, local reports and conditions chosen for you.</p></div>
-          <button class="btn primary" type="button" data-section="create">Create</button>
+          <div class="row"><button class="btn ghost" type="button" data-section="explore">Find people</button><button class="btn primary" type="button" data-section="create">Create</button></div>
         </div>
         <div class="oc-composer" aria-label="Create a community post">
           <div class="oc-avatar" id="socialComposerAvatarHome">OC</div>
@@ -1404,6 +1410,7 @@
         </div>
         <div class="oc-section-title"><h2>Recommended for you</h2><button class="btn ghost" type="button" data-section="community">View Community</button></div>
         <div id="exploreDiscoveryGrid" class="oc-discovery-grid"></div>
+        <div class="panel" style="margin-top:14px"><div class="hd"><h2>People</h2></div><div class="bd oc-people-list" id="explorePeople"><div class="muted-box">Search for an angler by name or username.</div></div></div>
         <div class="grid-2" style="margin-top:14px">
           <div class="panel"><div class="hd"><h2>Trending creators</h2></div><div class="bd" id="exploreCreators"></div></div>
           <div class="panel"><div class="hd"><h2>Popular local catches</h2></div><div class="bd" id="exploreCatches"></div></div>
@@ -3539,10 +3546,11 @@ document.querySelectorAll('.oc-explore-filter').forEach(btn=>{
     renderExplore(btn.dataset.exploreFilter || 'trending');
   });
 });
-$('btnExploreSearch')?.addEventListener('click',()=>{
+$('btnExploreSearch')?.addEventListener('click',async()=>{
   const query = String($('exploreSearch')?.value || '').trim();
   if(!query) return renderExplore('trending');
   const q = query.toLowerCase();
+  await searchCommunityMembers(query);
   const matches = (state.communityPosts || []).filter(post=>JSON.stringify(post).toLowerCase().includes(q));
   if($('exploreCreators')) $('exploreCreators').innerHTML = matches.length
     ? matches.slice(0,8).map(post=>`<div class="community-mini-item"><strong>${escapeHtml(post.title || post.species || post.author_name || 'Community result')}</strong><span>${escapeHtml(post.general_area || post.post_type || 'OceanCore')}</span></div>`).join('')
@@ -6578,11 +6586,71 @@ function communityAuthorButton(post, avatar = false){
   if(!post.user_id) return escapeHtml(label);
   return `<button type="button" class="oc-author-link" data-member-profile="${escapeHtml(String(post.user_id))}" aria-label="View ${escapeHtml(name)} profile">${escapeHtml(label)}</button>`;
 }
+function renderPeopleResults(members, emptyMessage='No members found.'){
+  const root = $('explorePeople');
+  if(!root) return;
+  root.innerHTML = members.length ? members.map(member=>{
+    const id = escapeHtml(String(member.id || ''));
+    const name = escapeHtml(member.name || member.username || 'OceanCore member');
+    const detail = escapeHtml([member.username ? `@${member.username}` : '', member.home_port || ''].filter(Boolean).join(' · ') || 'OceanCore member');
+    return `<div class="oc-people-row"><div class="oc-avatar">${escapeHtml(socialInitials(member.name || member.username || 'OC'))}</div><div><strong>${name}</strong><span>${detail}</span></div><button class="btn ghost" type="button" data-member-profile="${id}">View profile</button></div>`;
+  }).join('') : `<div class="muted-box">${escapeHtml(emptyMessage)}</div>`;
+}
+async function searchCommunityMembers(query){
+  if(!isSignedIn()){
+    renderPeopleResults([], 'Sign in to search for people.');
+    return;
+  }
+  if(query.trim().length < 2){
+    renderPeopleResults([], 'Enter at least two letters to search for people.');
+    return;
+  }
+  renderPeopleResults([], 'Searching people...');
+  try{
+    const result = await apiFirst([`/api/community/members?search=${encodeURIComponent(query)}`,`/community/members?search=${encodeURIComponent(query)}`]);
+    renderPeopleResults(Array.isArray(result.members) ? result.members : []);
+  }catch(error){
+    renderPeopleResults([], error.message || 'Could not search people right now.');
+  }
+}
 let memberProfileRequest = 0;
 document.addEventListener('click', event=>{
   const button = event.target.closest('[data-member-profile]');
   if(button) openMemberProfile(button.dataset.memberProfile);
+  const action = event.target.closest('[data-member-action]');
+  if(action) performMemberAction(action.dataset.memberAction, action.dataset.memberId);
 });
+async function performMemberAction(action, id){
+  const dialog = $('memberProfileDialog');
+  if(!dialog?.open || !id) return;
+  if(!isSignedIn()){
+    dialog.close();
+    requireSignIn('Sign in to connect with OceanCore members.');
+    return;
+  }
+  const button = dialog.querySelector(`[data-member-action="${action}"]`);
+  if(button) button.disabled = true;
+  const feedback = $('memberProfileStatus');
+  if(feedback) feedback.textContent = 'Updating...';
+  try{
+    if(action === 'follow'){
+      const result = await apiFirst([`/api/community/profile/${encodeURIComponent(id)}/follow`,`/community/profile/${encodeURIComponent(id)}/follow`],{method:'POST',body:'{}'});
+      dialog.dataset.feedback = result.following ? 'Following this member.' : 'Unfollowed this member.';
+      if(state.socialFeedMode === 'following') await loadSocialHomeFeed('following');
+    }else if(action === 'friend'){
+      const result = await apiFirst([`/api/community/friends/${encodeURIComponent(id)}`,`/community/friends/${encodeURIComponent(id)}`],{method:'POST',body:'{}'});
+      dialog.dataset.feedback = result.message || 'Friend request sent.';
+    }else if(action === 'message'){
+      dialog.close();
+      await openCommunityMessages(id);
+      return;
+    }
+    await openMemberProfile(id);
+  }catch(error){
+    if(feedback) feedback.textContent = error.message || 'Could not update this connection.';
+    if(button) button.disabled = false;
+  }
+}
 async function openMemberProfile(id){
   if(!id) return;
   if(String(id) === String(state.authUser?.id || '')){ showSection('profile'); return; }
@@ -6590,6 +6658,7 @@ async function openMemberProfile(id){
   if(!dialog){
     dialog = document.createElement('dialog');
     dialog.id = 'memberProfileDialog';
+    dialog.className = 'oc-member-dialog';
     dialog.setAttribute('aria-label','Member profile');
     dialog.innerHTML = '<form method="dialog"><button class="btn" aria-label="Close member profile">Close</button></form><div id="memberProfileBody" aria-live="polite"></div>';
     document.body.append(dialog);
@@ -6599,11 +6668,20 @@ async function openMemberProfile(id){
   body.textContent = 'Loading profile...';
   if(!dialog.open) dialog.showModal();
   try{
-    const result = await api(`/api/community/profile/${encodeURIComponent(id)}`);
+    const result = await apiFirst([`/api/community/profile/${encodeURIComponent(id)}`,`/community/profile/${encodeURIComponent(id)}`]);
     if(request !== memberProfileRequest || !dialog.open) return;
     const profile = result.profile;
     if(!profile) throw new Error('Profile unavailable.');
-    body.innerHTML = `<h2>${escapeHtml(profile.name || 'OceanCore member')}</h2><p>${Number(profile.followers || 0)} followers · ${Number(profile.following || 0)} following</p><p>${Number(profile.stats?.total_posts || 0)} recent posts · ${Number(profile.stats?.total_likes || 0)} likes</p>`;
+    let connection = null;
+    if(isSignedIn()){
+      const relationships = await apiFirst(['/api/community/friends','/community/friends']).catch(()=>null);
+      connection = [...(relationships?.friends || []),...(relationships?.requests || [])].find(row=>String(row.other_id)===String(id)) || null;
+    }
+    if(request !== memberProfileRequest || !dialog.open) return;
+    const friendLabel = connection?.status === 'accepted' ? 'Friends' : connection?.direction === 'outgoing' ? 'Request sent' : connection?.direction === 'incoming' ? 'Accept request' : 'Add friend';
+    const friendDisabled = connection?.status === 'accepted' || connection?.direction === 'outgoing';
+    body.innerHTML = `<h2>${escapeHtml(profile.name || 'OceanCore member')}</h2><p>${Number(profile.followers || 0)} followers · ${Number(profile.following || 0)} following</p><p>${Number(profile.stats?.total_posts || 0)} posts · ${Number(profile.stats?.total_likes || 0)} likes</p><div class="oc-member-actions"><button class="btn primary" type="button" data-member-action="follow" data-member-id="${escapeHtml(id)}">${profile.is_following ? 'Following' : 'Follow'}</button><button class="btn" type="button" data-member-action="friend" data-member-id="${escapeHtml(id)}" ${friendDisabled ? 'disabled' : ''}>${friendLabel}</button><button class="btn ghost" type="button" data-member-action="message" data-member-id="${escapeHtml(id)}" ${connection?.status === 'accepted' ? '' : 'disabled'}>Message</button></div><div class="oc-member-feedback" id="memberProfileStatus" role="status">${escapeHtml(dialog.dataset.feedback || '')}</div>`;
+    dialog.dataset.feedback = '';
   }catch(e){
     if(request !== memberProfileRequest || !dialog.open) return;
     body.textContent = 'Could not load this profile. ' + (e.message || 'Please try again.');
@@ -6783,6 +6861,11 @@ function renderExplore(filter='trending'){
     String(post.user_id || post.user_email || post.author_name || post.id || '').toLowerCase(),
     post
   ])).values()).slice(0,4);
+  if(!String($('exploreSearch')?.value || '').trim()){
+    renderPeopleResults(creators.filter(post=>post.user_id && String(post.user_id)!==String(state.authUser?.id||'')).map(post=>({
+      id:post.user_id,name:post.author_name || 'OceanCore member',home_port:post.general_area || ''
+    })), 'Search for an angler by name or username.');
+  }
   const catches = Array.isArray(state.catches) ? state.catches : [];
   const cards = {
     trending:[
