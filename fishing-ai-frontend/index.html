@@ -1049,7 +1049,7 @@
     .map-source-bar button.active,.chartplotter-row button.active,.satellite-layer-buttons button.active{background:#a8dec6;color:#0b2526;border-color:#a8dec6}
     .hd{border-bottom-color:#31565a}
   </style>
-  <link rel="stylesheet" href="./assets/ocean-current.css?v=20260927a"/>
+  <link rel="stylesheet" href="./assets/ocean-current.css?v=20261012b"/>
 </head>
 <body class="oc-current-ready">
 <div id="authGate" class="auth-gate" aria-hidden="true" hidden>
@@ -3028,6 +3028,7 @@ const state = {
   communityPostType: "fishing_report",
   communityDashboard: null,
   communityFriends: { friends: [], requests: [], loading: false },
+  peopleSuggestions: [],
   communityMessages: { conversations: [], activeConversationId: '', messages: [], loading: false },
   watchPostId: "",
 };
@@ -3438,6 +3439,7 @@ function showSection(name){
   }
   if(name === 'explore'){
     loadCommunityPosts().then(()=>renderExplore()).catch(()=>renderExplore());
+    searchCommunityMembers('').catch(()=>null);
   }
   if(name === 'watch'){
     loadCommunityPosts().then(()=>renderVideoWatch()).catch(()=>renderVideoWatch());
@@ -6601,14 +6603,16 @@ async function searchCommunityMembers(query){
     renderPeopleResults([], 'Sign in to search for people.');
     return;
   }
-  if(query.trim().length < 2){
+  if(query.trim().length === 1){
     renderPeopleResults([], 'Enter at least two letters to search for people.');
     return;
   }
-  renderPeopleResults([], 'Searching people...');
+  renderPeopleResults([], query.trim() ? 'Searching people...' : 'Finding people...');
   try{
     const result = await apiFirst([`/api/community/members?search=${encodeURIComponent(query)}`,`/community/members?search=${encodeURIComponent(query)}`]);
-    renderPeopleResults(Array.isArray(result.members) ? result.members : []);
+    const members = Array.isArray(result.members) ? result.members : [];
+    if(!query.trim()) state.peopleSuggestions = members;
+    renderPeopleResults(members, query.trim() ? 'No members found.' : 'Search for an angler by name or username.');
   }catch(error){
     renderPeopleResults([], error.message || 'Could not search people right now.');
   }
@@ -6862,9 +6866,10 @@ function renderExplore(filter='trending'){
     post
   ])).values()).slice(0,4);
   if(!String($('exploreSearch')?.value || '').trim()){
-    renderPeopleResults(creators.filter(post=>post.user_id && String(post.user_id)!==String(state.authUser?.id||'')).map(post=>({
+    const publicCreators = creators.filter(post=>post.user_id && String(post.user_id)!==String(state.authUser?.id||'')).map(post=>({
       id:post.user_id,name:post.author_name || 'OceanCore member',home_port:post.general_area || ''
-    })), 'Search for an angler by name or username.');
+    }));
+    renderPeopleResults(state.peopleSuggestions.length ? state.peopleSuggestions : publicCreators, 'Search for an angler by name or username.');
   }
   const catches = Array.isArray(state.catches) ? state.catches : [];
   const cards = {
@@ -10038,5 +10043,5 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 <script src="assets/event-location.js" defer></script>
 <script src="assets/platform-integration.js"></script><script src="assets/boat-units.js"></script>
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script src="assets/ocean-current.js?v=20260927a"></script></body>
+<script src="assets/ocean-current.js?v=20261012b"></script></body>
 </html>

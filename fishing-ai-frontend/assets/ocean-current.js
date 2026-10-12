@@ -90,12 +90,12 @@
     section.innerHTML = `<div class="oc-current-home">
       ${renderMobileSocialStart(posts)}
       <p id="homeCommunityMsg" role="status" aria-live="polite"></p>
-      <div class="oc-current-toolbar"><button class="btn" type="button" data-section="map">${icon('map-pin')} Map &amp; Conditions</button><button class="oc-current-primary" type="button" data-quick-create="fishing_report" aria-label="Share a fishing report">${icon('plus')}<span>Share report</span></button></div>
+      <div class="oc-current-toolbar"><div class="oc-current-toolbar-links"><button class="btn" type="button" data-section="map">${icon('map-pin')} Conditions</button><button class="btn" type="button" data-section="explore">${icon('users')} People</button></div><button class="oc-current-primary" type="button" data-quick-create="fishing_report" aria-label="Share a fishing report">${icon('plus')}<span>Share report</span></button></div>
       <div class="oc-current-layout">
         <div class="oc-current-river">
           <section class="oc-current-more"><div class="oc-current-section-head"><h3>Stories and reports</h3><div class="oc-current-tabs" aria-label="Feed filters"><button class="${state.socialFeedMode==='home'?'active':''}" type="button" data-home-feed="home">For you</button><button class="${state.socialFeedMode==='following'?'active':''}" type="button" data-home-feed="following">Following</button><button class="${state.socialFeedMode==='local'?'active':''}" type="button" data-home-feed="local">Local</button><button class="${state.socialFeedMode==='latest'?'active':''}" type="button" data-home-feed="latest">Latest</button></div></div><div id="socialHomeFeed">${renderMore(posts)}</div></section>
         </div>
-        <aside class="oc-current-signals" aria-label="Community updates"><div class="oc-current-signals-head"><h3>Community updates</h3></div><div class="oc-current-timeline">${renderSignals(posts)}</div><button class="oc-current-crew-card" type="button" data-section="community">${icon('users')}<span>Find your crew<small>Fishing, boating and camping together</small></span>${icon('chevron-right')}</button></aside>
+        <aside class="oc-current-signals" aria-label="Community updates"><div class="oc-current-signals-head"><h3>Community updates</h3></div><div class="oc-current-timeline">${renderSignals(posts)}</div><button class="oc-current-crew-card" type="button" data-section="explore">${icon('users')}<span>Find your crew<small>Fishing, boating and camping together</small></span>${icon('chevron-right')}</button></aside>
       </div>
     </div>`;
     section.classList.add('oc-current-mounted');
