@@ -6596,7 +6596,7 @@ function renderPeopleResults(members, emptyMessage='No members found.'){
     const name = escapeHtml(member.name || member.username || 'OceanCore member');
     const detail = escapeHtml([member.username ? `@${member.username}` : '', member.home_port || ''].filter(Boolean).join(' · ') || 'OceanCore member');
     return `<div class="oc-people-row"><div class="oc-avatar">${escapeHtml(socialInitials(member.name || member.username || 'OC'))}</div><div><strong>${name}</strong><span>${detail}</span></div><button class="btn ghost" type="button" data-member-profile="${id}">View profile</button></div>`;
-  }).join('') : `<div class="muted-box">${escapeHtml(emptyMessage)}</div>`;
+  }).join('') : `<div class="muted-box">${escapeHtml(emptyMessage)}</div>${isSignedIn() ? '' : '<button class="btn primary" type="button" onclick="requireSignIn(\'Sign in to find and follow OceanCore members.\')">Sign in</button>'}`;
 }
 async function searchCommunityMembers(query){
   if(!isSignedIn()){
