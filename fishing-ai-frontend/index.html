@@ -3818,6 +3818,7 @@ function consumeAuthTokensFromUrl(){
   const merged = { ...query, ...hash };
   const accessToken = merged.access_token || '';
   const refreshToken = merged.refresh_token || '';
+  const tokenHash = merged.token_hash || '';
   const type = String(merged.type || '').toLowerCase();
 
   if(merged.error || merged.error_description){
@@ -3825,6 +3826,22 @@ function consumeAuthTokensFromUrl(){
     const cleanUrl = `${location.origin}${location.pathname}`;
     history.replaceState({}, document.title, cleanUrl);
     openLoginPrompt(`${message} Request a fresh password reset email and use the newest link.`);
+    return;
+  }
+
+  if(type === 'recovery' && tokenHash){
+    const cleanUrl = `${location.origin}${location.pathname}`;
+    history.replaceState({}, document.title, cleanUrl);
+    api('/auth/verify-recovery', {method:'POST', body:JSON.stringify({token_hash:tokenHash})}, false)
+      .then(j=>{
+        persistAuth(j.session, j.user || {email:state.authEmail || '', is_guest:false});
+        state.recoveryMode = true;
+        sessionStorage.setItem('oceancore_recovery_pending','true');
+        setAuthFeedback('Password reset link accepted. Choose a new password below.');
+        updateAuthUi();
+        openPasswordRecoveryPanel();
+      })
+      .catch(e=>openLoginPrompt(`${humanizeAuthError(e.message || String(e), 'reset')} Request a fresh password reset email.`));
     return;
   }
 
